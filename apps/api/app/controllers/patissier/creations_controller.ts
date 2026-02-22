@@ -121,7 +121,7 @@ export default class CreationsController {
 			.where('patissierId', profile.id)
 			.firstOrFail()
 
-		const data = request.only([
+		const data: Record<string, any> = request.only([
 			'title',
 			'description',
 			'categoryId',

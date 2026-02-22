@@ -12,7 +12,7 @@ const sessionConfig = defineConfig({
 		secure: env.get('NODE_ENV') === 'production',
 		sameSite: 'lax',
 	},
-	store: env.get('SESSION_DRIVER', 'cookie'),
+	store: env.get('SESSION_DRIVER', 'cookie') as 'cookie' | 'memory',
 	stores: {
 		cookie: stores.cookie(),
 	},

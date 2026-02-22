@@ -1,6 +1,5 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import PatissierProfile from '#models/patissier_profile'
-import User from '#models/user'
 import Workshop from '#models/workshop'
 import WorkshopBooking from '#models/workshop_booking'
 import EmailService from '#services/email_service'
@@ -136,7 +135,7 @@ export default class WorkshopsController {
 			.where('patissierId', profile.id)
 			.firstOrFail()
 
-		const data = request.only([
+		const data: Record<string, any> = request.only([
 			'title',
 			'description',
 			'images',

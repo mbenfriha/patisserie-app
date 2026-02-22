@@ -35,10 +35,10 @@ export default class NotificationService {
 			type: notification.type,
 			title: notification.title,
 			message: notification.message,
-			data: notification.data,
+			data: notification.data as any,
 			actionUrl: notification.actionUrl,
 			createdAt: notification.createdAt.toISO(),
-		})
+		} as any)
 
 		return notification
 	}

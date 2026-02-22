@@ -156,7 +156,7 @@ export default class OrdersController {
 
 	async sendMessage({ params, request, response }: HttpContext) {
 		const { orderNumber } = params
-		const { message, senderName } = request.only(['message', 'senderName'])
+		const { message } = request.only(['message', 'senderName'])
 
 		const order = await Order.findBy('orderNumber', orderNumber)
 		if (!order) {
