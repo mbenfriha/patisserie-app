@@ -11,6 +11,7 @@ interface PatissierProfile {
 	logoUrl: string | null
 	description: string | null
 	plan: 'starter' | 'pro' | 'premium'
+	stripeOnboardingComplete: boolean
 }
 
 interface User {
@@ -25,6 +26,7 @@ interface User {
 interface RegisterData {
 	email: string
 	password: string
+	passwordConfirmation: string
 	fullName?: string
 	role: 'patissier' | 'client'
 	slug?: string
