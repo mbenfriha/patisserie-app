@@ -1,0 +1,70 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "search": "Search",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "confirm": "Confirm",
+    "close": "Close",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "auth": {
+    "login": "Log in",
+    "register": "Sign up",
+    "logout": "Log out",
+    "email": "Email",
+    "password": "Password",
+    "forgotPassword": "Forgot password?",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "site": "My site",
+    "creations": "Creations",
+    "categories": "Categories",
+    "products": "Products",
+    "orders": "Orders",
+    "workshops": "Workshops",
+    "settings": "Settings",
+    "billing": "Billing",
+    "logout": "Log out"
+  },
+  "dashboard": {
+    "welcome": "Welcome",
+    "overview": "Overview",
+    "totalOrders": "Total orders",
+    "totalRevenue": "Total revenue",
+    "activeWorkshops": "Active workshops",
+    "pendingOrders": "Pending orders"
+  },
+  "home": {
+    "title": "Your online pastry showcase",
+    "subtitle": "Create your personalised website, manage orders and offer pastry workshops. All-in-one, simple and elegant.",
+    "cta_register": "Create my site",
+    "cta_login": "Log in",
+    "features_title": "Everything you need",
+    "feature_showcase": "Online showcase",
+    "feature_showcase_desc": "Present your creations with an elegant photo gallery on your own subdomain.",
+    "feature_orders": "Order management",
+    "feature_orders_desc": "Receive catalogue and custom orders with integrated tracking and messaging.",
+    "feature_workshops": "Workshops & Bookings",
+    "feature_workshops_desc": "Offer workshops with online booking and secure deposit payment."
+  },
+  "site": {
+    "creations": "Our creations",
+    "products": "Our catalogue",
+    "workshops": "Our workshops",
+    "orderNow": "Order now",
+    "bookNow": "Book now",
+    "customOrder": "Custom order",
+    "viewAll": "View all"
+  }
+}

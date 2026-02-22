@@ -1,0 +1,70 @@
+{
+  "common": {
+    "loading": "Chargement...",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "create": "Créer",
+    "search": "Rechercher",
+    "back": "Retour",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "confirm": "Confirmer",
+    "close": "Fermer",
+    "yes": "Oui",
+    "no": "Non"
+  },
+  "auth": {
+    "login": "Se connecter",
+    "register": "S'inscrire",
+    "logout": "Se déconnecter",
+    "email": "Email",
+    "password": "Mot de passe",
+    "forgotPassword": "Mot de passe oublié ?",
+    "noAccount": "Pas encore de compte ?",
+    "hasAccount": "Déjà un compte ?"
+  },
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "site": "Mon site",
+    "creations": "Créations",
+    "categories": "Catégories",
+    "products": "Produits",
+    "orders": "Commandes",
+    "workshops": "Ateliers",
+    "settings": "Paramètres",
+    "billing": "Abonnement",
+    "logout": "Déconnexion"
+  },
+  "dashboard": {
+    "welcome": "Bienvenue",
+    "overview": "Vue d'ensemble",
+    "totalOrders": "Total commandes",
+    "totalRevenue": "Revenu total",
+    "activeWorkshops": "Ateliers actifs",
+    "pendingOrders": "Commandes en attente"
+  },
+  "home": {
+    "title": "Votre vitrine pâtissière en ligne",
+    "subtitle": "Créez votre site personnalisé, gérez vos commandes et proposez des ateliers de pâtisserie. Tout-en-un, simple et élégant.",
+    "cta_register": "Créer mon site",
+    "cta_login": "Se connecter",
+    "features_title": "Tout ce qu'il vous faut",
+    "feature_showcase": "Vitrine en ligne",
+    "feature_showcase_desc": "Présentez vos créations avec une galerie photos élégante sur votre propre sous-domaine.",
+    "feature_orders": "Prise de commandes",
+    "feature_orders_desc": "Recevez des commandes catalogue et sur-mesure avec suivi et messagerie intégrés.",
+    "feature_workshops": "Ateliers & Réservations",
+    "feature_workshops_desc": "Proposez des ateliers avec réservation en ligne et paiement d'acompte sécurisé."
+  },
+  "site": {
+    "creations": "Nos créations",
+    "products": "Notre catalogue",
+    "workshops": "Nos ateliers",
+    "orderNow": "Commander",
+    "bookNow": "Réserver",
+    "customOrder": "Commande sur-mesure",
+    "viewAll": "Voir tout"
+  }
+}

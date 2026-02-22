@@ -1,0 +1,1009 @@
+'use client'
+
+import { useEffect, useState, useCallback } from 'react'
+import { api } from '@/lib/api/client'
+import { getImageUrl } from '@/lib/utils/image-url'
+
+interface SiteConfig {
+	heroSubtitle?: string
+	heroCtaLabel?: string
+	storyTitle?: string
+	storySubtitle?: string
+	storyText?: string
+	marqueeItems?: string[]
+	creationsTitle?: string
+	creationsSubtitle?: string
+	workshopsCtaTitle?: string
+	workshopsCtaSubtitle?: string
+	workshopsCtaDescription?: string
+	workshopsCtaLabel?: string
+	showStorySection?: boolean
+	showMarquee?: boolean
+	showCreationsOnHomepage?: boolean
+	showWorkshopsCta?: boolean
+	fontPreset?: 'classic' | 'modern' | 'elegant' | 'playful'
+}
+
+interface Profile {
+	id: string
+	slug: string
+	businessName: string
+	logoUrl: string | null
+	description: string | null
+	phone: string | null
+	addressStreet: string | null
+	addressCity: string | null
+	addressZip: string | null
+	addressCountry: string | null
+	socialLinks: { instagram?: string; facebook?: string; tiktok?: string; website?: string }
+	primaryColor: string
+	secondaryColor: string
+	fontFamily: string
+	heroImageUrl: string | null
+	storyImageUrl: string | null
+	siteConfig: SiteConfig
+	ordersEnabled: boolean
+	workshopsEnabled: boolean
+	operatingHours: Record<string, { open: string; close: string; closed?: boolean }> | null
+}
+
+const FONT_PRESETS = [
+	{ value: 'classic', label: 'Classique', fonts: 'Cormorant Garamond + Josefin Sans' },
+	{ value: 'modern', label: 'Moderne', fonts: 'Montserrat + Inter' },
+	{ value: 'elegant', label: 'Elegant', fonts: 'Playfair Display + Lato' },
+	{ value: 'playful', label: 'Fantaisie', fonts: 'Pacifico + Nunito' },
+] as const
+
+const DAYS = [
+	{ key: 'monday', label: 'Lundi' },
+	{ key: 'tuesday', label: 'Mardi' },
+	{ key: 'wednesday', label: 'Mercredi' },
+	{ key: 'thursday', label: 'Jeudi' },
+	{ key: 'friday', label: 'Vendredi' },
+	{ key: 'saturday', label: 'Samedi' },
+	{ key: 'sunday', label: 'Dimanche' },
+]
+
+const DEFAULT_MARQUEE = [
+	'Macarons',
+	'Cake Design',
+	'Entremets',
+	'Wedding Cake',
+	'Cupcakes',
+	'Viennoiseries',
+	'Number Cake',
+	'Layer Cake',
+]
+
+type Tab = 'apparence' | 'contenu' | 'pages' | 'contact'
+
+export default function SiteEditorPage() {
+	const [profile, setProfile] = useState<Profile | null>(null)
+	const [isLoading, setIsLoading] = useState(true)
+	const [isSaving, setIsSaving] = useState(false)
+	const [activeTab, setActiveTab] = useState<Tab>('apparence')
+	const [toast, setToast] = useState<string | null>(null)
+
+	// Form state
+	const [primaryColor, setPrimaryColor] = useState('#D4A574')
+	const [secondaryColor, setSecondaryColor] = useState('#8B6F47')
+	const [fontPreset, setFontPreset] = useState<string>('classic')
+	const [heroImageUrl, setHeroImageUrl] = useState<string | null>(null)
+	const [siteConfig, setSiteConfig] = useState<SiteConfig>({})
+	const [ordersEnabled, setOrdersEnabled] = useState(false)
+	const [workshopsEnabled, setWorkshopsEnabled] = useState(true)
+
+	// Contact state
+	const [phone, setPhone] = useState('')
+	const [addressStreet, setAddressStreet] = useState('')
+	const [addressCity, setAddressCity] = useState('')
+	const [addressZip, setAddressZip] = useState('')
+	const [addressCountry, setAddressCountry] = useState('France')
+	const [socialLinks, setSocialLinks] = useState<Profile['socialLinks']>({})
+	const [operatingHours, setOperatingHours] = useState<Profile['operatingHours']>(null)
+
+	// Marquee chip input
+	const [newMarqueeItem, setNewMarqueeItem] = useState('')
+
+	// Accordion state for content tab
+	const [openSections, setOpenSections] = useState<Record<string, boolean>>({
+		hero: true,
+	})
+
+	const loadProfile = useCallback(async () => {
+		try {
+			const res = await api.get('/patissier/profile')
+			const p = res.data.data as Profile
+			setProfile(p)
+			setPrimaryColor(p.primaryColor)
+			setSecondaryColor(p.secondaryColor)
+			setFontPreset(p.siteConfig?.fontPreset || 'classic')
+			setHeroImageUrl(p.heroImageUrl)
+			setSiteConfig(p.siteConfig || {})
+			setOrdersEnabled(p.ordersEnabled)
+			setWorkshopsEnabled(p.workshopsEnabled)
+			setPhone(p.phone || '')
+			setAddressStreet(p.addressStreet || '')
+			setAddressCity(p.addressCity || '')
+			setAddressZip(p.addressZip || '')
+			setAddressCountry(p.addressCountry || 'France')
+			setSocialLinks(p.socialLinks || {})
+			setOperatingHours(p.operatingHours)
+		} catch (e) {
+			console.error(e)
+		} finally {
+			setIsLoading(false)
+		}
+	}, [])
+
+	useEffect(() => {
+		loadProfile()
+	}, [loadProfile])
+
+	const showToast = (msg: string) => {
+		setToast(msg)
+		setTimeout(() => setToast(null), 3000)
+	}
+
+	const updateSiteConfigField = <K extends keyof SiteConfig>(key: K, value: SiteConfig[K]) => {
+		setSiteConfig((prev) => ({ ...prev, [key]: value }))
+	}
+
+	const handleSave = async () => {
+		if (!profile) return
+		setIsSaving(true)
+		try {
+			const configToSave: SiteConfig = { ...siteConfig, fontPreset: fontPreset as SiteConfig['fontPreset'] }
+
+			await api.put('/patissier/site', {
+				primaryColor,
+				secondaryColor,
+				heroImageUrl,
+				siteConfig: configToSave,
+				ordersEnabled,
+				workshopsEnabled,
+			})
+
+			await api.patch('/patissier/profile', {
+				phone: phone || null,
+				addressStreet: addressStreet || null,
+				addressCity: addressCity || null,
+				addressZip: addressZip || null,
+				addressCountry: addressCountry || null,
+				socialLinks,
+				operatingHours,
+			})
+
+			showToast('Modifications enregistrees avec succes !')
+			await loadProfile()
+		} catch (e) {
+			console.error(e)
+			showToast('Erreur lors de la sauvegarde')
+		} finally {
+			setIsSaving(false)
+		}
+	}
+
+	const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+		const file = e.target.files?.[0]
+		if (!file) return
+		const formData = new FormData()
+		formData.append('logo', file)
+		try {
+			await api.upload('/patissier/logo', formData)
+			showToast('Logo mis a jour')
+			await loadProfile()
+		} catch {
+			showToast('Erreur lors du telechargement du logo')
+		}
+	}
+
+	const handleLogoDelete = async () => {
+		try {
+			await api.delete('/patissier/logo')
+			showToast('Logo supprime')
+			await loadProfile()
+		} catch {
+			showToast('Erreur lors de la suppression du logo')
+		}
+	}
+
+	const handleHeroImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+		const file = e.target.files?.[0]
+		if (!file) return
+		const formData = new FormData()
+		formData.append('image', file)
+		try {
+			await api.upload('/patissier/hero-image', formData)
+			showToast('Image hero mise a jour')
+			await loadProfile()
+		} catch {
+			showToast('Erreur lors du telechargement')
+		}
+	}
+
+	const handleHeroImageDelete = async () => {
+		try {
+			await api.delete('/patissier/hero-image')
+			showToast('Image hero supprimee')
+			await loadProfile()
+		} catch {
+			showToast('Erreur lors de la suppression')
+		}
+	}
+
+	const handleStoryImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+		const file = e.target.files?.[0]
+		if (!file) return
+		const formData = new FormData()
+		formData.append('image', file)
+		try {
+			await api.upload('/patissier/story-image', formData)
+			showToast('Image mise a jour')
+			await loadProfile()
+		} catch {
+			showToast('Erreur lors du telechargement')
+		}
+	}
+
+	const handleStoryImageDelete = async () => {
+		try {
+			await api.delete('/patissier/story-image')
+			showToast('Image supprimee')
+			await loadProfile()
+		} catch {
+			showToast('Erreur lors de la suppression')
+		}
+	}
+
+	const toggleSection = (key: string) => {
+		setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }))
+	}
+
+	const addMarqueeItem = () => {
+		const item = newMarqueeItem.trim()
+		if (!item) return
+		const current = siteConfig.marqueeItems || DEFAULT_MARQUEE
+		updateSiteConfigField('marqueeItems', [...current, item])
+		setNewMarqueeItem('')
+	}
+
+	const removeMarqueeItem = (index: number) => {
+		const current = siteConfig.marqueeItems || DEFAULT_MARQUEE
+		updateSiteConfigField(
+			'marqueeItems',
+			current.filter((_, i) => i !== index)
+		)
+	}
+
+	const resetMarquee = () => {
+		updateSiteConfigField('marqueeItems', DEFAULT_MARQUEE)
+	}
+
+	const updateOperatingHour = (day: string, field: 'open' | 'close' | 'closed', value: string | boolean) => {
+		setOperatingHours((prev) => {
+			const current = prev || {}
+			const dayData = current[day] || { open: '09:00', close: '18:00' }
+			return {
+				...current,
+				[day]: { ...dayData, [field]: value },
+			}
+		})
+	}
+
+	if (isLoading) {
+		return <p className="text-muted-foreground">Chargement...</p>
+	}
+
+	if (!profile) {
+		return <p className="text-destructive">Impossible de charger le profil</p>
+	}
+
+	const tabs: { key: Tab; label: string }[] = [
+		{ key: 'apparence', label: 'Apparence' },
+		{ key: 'contenu', label: 'Contenu' },
+		{ key: 'pages', label: 'Pages' },
+		{ key: 'contact', label: 'Contact' },
+	]
+
+	const marqueeItems = siteConfig.marqueeItems || DEFAULT_MARQUEE
+
+	return (
+		<div className="space-y-6">
+			<h1 className="text-3xl font-bold">Mon site</h1>
+
+			{/* Tabs */}
+			<div className="flex gap-1 rounded-lg border bg-muted p-1">
+				{tabs.map((tab) => (
+					<button
+						key={tab.key}
+						type="button"
+						onClick={() => setActiveTab(tab.key)}
+						className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+							activeTab === tab.key
+								? 'bg-background text-foreground shadow-sm'
+								: 'text-muted-foreground hover:text-foreground'
+						}`}
+					>
+						{tab.label}
+					</button>
+				))}
+			</div>
+
+			{/* Tab content */}
+			<div className="space-y-6">
+				{/* ─── APPARENCE ─────────────────────────────── */}
+				{activeTab === 'apparence' && (
+					<>
+						{/* Logo */}
+						<section className="rounded-lg border p-6">
+							<h2 className="text-lg font-semibold">Logo</h2>
+							<div className="mt-4 flex items-center gap-4">
+								{profile.logoUrl ? (
+									<img
+										src={getImageUrl(profile.logoUrl)!}
+										alt="Logo"
+										className="h-16 w-16 rounded-lg border object-contain"
+									/>
+								) : (
+									<div className="flex h-16 w-16 items-center justify-center rounded-lg border bg-muted text-xs text-muted-foreground">
+										Aucun
+									</div>
+								)}
+								<div className="flex gap-2">
+									<label className="cursor-pointer rounded-md border px-3 py-2 text-sm hover:bg-muted">
+										Changer
+										<input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
+									</label>
+									{profile.logoUrl && (
+										<button
+											type="button"
+											onClick={handleLogoDelete}
+											className="rounded-md border px-3 py-2 text-sm text-destructive hover:bg-destructive/10"
+										>
+											Supprimer
+										</button>
+									)}
+								</div>
+							</div>
+						</section>
+
+						{/* Colors */}
+						<section className="rounded-lg border p-6">
+							<h2 className="text-lg font-semibold">Couleurs</h2>
+							<div className="mt-4 grid gap-4 md:grid-cols-2">
+								<div>
+									<label className="text-sm font-medium">Couleur principale</label>
+									<div className="mt-1 flex items-center gap-3">
+										<input
+											type="color"
+											value={primaryColor}
+											onChange={(e) => setPrimaryColor(e.target.value)}
+											className="h-10 w-10 cursor-pointer rounded border"
+										/>
+										<input
+											type="text"
+											value={primaryColor}
+											onChange={(e) => setPrimaryColor(e.target.value)}
+											className="rounded-md border px-3 py-2 text-sm"
+										/>
+									</div>
+								</div>
+								<div>
+									<label className="text-sm font-medium">Couleur secondaire</label>
+									<div className="mt-1 flex items-center gap-3">
+										<input
+											type="color"
+											value={secondaryColor}
+											onChange={(e) => setSecondaryColor(e.target.value)}
+											className="h-10 w-10 cursor-pointer rounded border"
+										/>
+										<input
+											type="text"
+											value={secondaryColor}
+											onChange={(e) => setSecondaryColor(e.target.value)}
+											className="rounded-md border px-3 py-2 text-sm"
+										/>
+									</div>
+								</div>
+							</div>
+						</section>
+
+						{/* Font preset */}
+						<section className="rounded-lg border p-6">
+							<h2 className="text-lg font-semibold">Police</h2>
+							<div className="mt-4 grid gap-3 sm:grid-cols-2">
+								{FONT_PRESETS.map((preset) => (
+									<label
+										key={preset.value}
+										className={`flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition-colors ${
+											fontPreset === preset.value
+												? 'border-primary bg-primary/5'
+												: 'hover:bg-muted'
+										}`}
+									>
+										<input
+											type="radio"
+											name="fontPreset"
+											value={preset.value}
+											checked={fontPreset === preset.value}
+											onChange={(e) => setFontPreset(e.target.value)}
+											className="accent-primary"
+										/>
+										<div>
+											<span className="text-sm font-medium">{preset.label}</span>
+											<span className="block text-xs text-muted-foreground">{preset.fonts}</span>
+										</div>
+									</label>
+								))}
+							</div>
+						</section>
+
+						{/* Hero image */}
+						<section className="rounded-lg border p-6">
+							<h2 className="text-lg font-semibold">Image hero</h2>
+							<p className="mt-1 text-sm text-muted-foreground">
+								Image d'arriere-plan de la section principale (5 Mo max)
+							</p>
+							<div className="mt-4 flex items-center gap-4">
+								{profile.heroImageUrl ? (
+									<img
+										src={getImageUrl(profile.heroImageUrl)!}
+										alt="Hero"
+										className="h-32 rounded-lg border object-cover"
+									/>
+								) : (
+									<div className="flex h-32 w-48 items-center justify-center rounded-lg border-2 border-dashed bg-muted text-xs text-muted-foreground">
+										Aucune image
+									</div>
+								)}
+								<div className="flex flex-col gap-2">
+									<label className="cursor-pointer rounded-md border px-3 py-2 text-center text-sm hover:bg-muted">
+										{profile.heroImageUrl ? 'Changer' : 'Ajouter'}
+										<input type="file" accept="image/*" onChange={handleHeroImageUpload} className="hidden" />
+									</label>
+									{profile.heroImageUrl && (
+										<button
+											type="button"
+											onClick={handleHeroImageDelete}
+											className="rounded-md border px-3 py-2 text-sm text-destructive hover:bg-destructive/10"
+										>
+											Supprimer
+										</button>
+									)}
+								</div>
+							</div>
+						</section>
+					</>
+				)}
+
+				{/* ─── CONTENU ─────────────────────────────── */}
+				{activeTab === 'contenu' && (
+					<>
+						{/* Hero section */}
+						<Accordion
+							title="Section Hero"
+							isOpen={openSections.hero}
+							onToggle={() => toggleSection('hero')}
+						>
+							<div className="grid gap-4">
+								<div>
+									<label className="text-sm font-medium">Sous-titre</label>
+									<input
+										type="text"
+										value={siteConfig.heroSubtitle || ''}
+										onChange={(e) => updateSiteConfigField('heroSubtitle', e.target.value)}
+										placeholder="patisserie & ateliers"
+										className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
+									/>
+								</div>
+								<div>
+									<label className="text-sm font-medium">Label du bouton CTA</label>
+									<input
+										type="text"
+										value={siteConfig.heroCtaLabel || ''}
+										onChange={(e) => updateSiteConfigField('heroCtaLabel', e.target.value)}
+										placeholder={ordersEnabled ? 'Commander' : 'Voir nos creations'}
+										className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
+									/>
+								</div>
+							</div>
+						</Accordion>
+
+						{/* Story section */}
+						<Accordion
+							title="Section Notre histoire"
+							isOpen={openSections.story}
+							onToggle={() => toggleSection('story')}
+						>
+							<div className="grid gap-4">
+								<div>
+									<label className="text-sm font-medium">Titre</label>
+									<input
+										type="text"
+										value={siteConfig.storyTitle || ''}
+										onChange={(e) => updateSiteConfigField('storyTitle', e.target.value)}
+										placeholder="Notre histoire"
+										className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
+									/>
+								</div>
+								<div>
+									<label className="text-sm font-medium">Sous-titre</label>
+									<input
+										type="text"
+										value={siteConfig.storySubtitle || ''}
+										onChange={(e) => updateSiteConfigField('storySubtitle', e.target.value)}
+										placeholder="qui sommes-nous"
+										className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
+									/>
+								</div>
+								<div>
+									<label className="text-sm font-medium">Texte</label>
+									<textarea
+										value={siteConfig.storyText || ''}
+										onChange={(e) => updateSiteConfigField('storyText', e.target.value)}
+										placeholder={profile.description || 'Votre histoire...'}
+										rows={4}
+										className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
+									/>
+								</div>
+								<div>
+									<label className="text-sm font-medium">Image</label>
+									<div className="mt-2 flex items-center gap-4">
+										{profile.storyImageUrl ? (
+											<img
+												src={getImageUrl(profile.storyImageUrl)!}
+												alt="Notre histoire"
+												className="h-24 rounded-lg border object-cover"
+											/>
+										) : (
+											<div className="flex h-24 w-24 items-center justify-center rounded-lg border-2 border-dashed bg-muted text-xs text-muted-foreground">
+												Aucune
+											</div>
+										)}
+										<div className="flex flex-col gap-2">
+											<label className="cursor-pointer rounded-md border px-3 py-2 text-center text-sm hover:bg-muted">
+												{profile.storyImageUrl ? 'Changer' : 'Ajouter'}
+												<input type="file" accept="image/*" onChange={handleStoryImageUpload} className="hidden" />
+											</label>
+											{profile.storyImageUrl && (
+												<button
+													type="button"
+													onClick={handleStoryImageDelete}
+													className="rounded-md border px-3 py-2 text-sm text-destructive hover:bg-destructive/10"
+												>
+													Supprimer
+												</button>
+											)}
+										</div>
+									</div>
+								</div>
+							</div>
+						</Accordion>
+
+						{/* Marquee */}
+						<Accordion
+							title="Bandeau defilant (Marquee)"
+							isOpen={openSections.marquee}
+							onToggle={() => toggleSection('marquee')}
+						>
+							<div className="space-y-4">
+								<div className="flex flex-wrap gap-2">
+									{marqueeItems.map((item, i) => (
+										<span
+											key={i}
+											className="inline-flex items-center gap-1.5 rounded-full border bg-muted px-3 py-1 text-sm"
+										>
+											{item}
+											<button
+												type="button"
+												onClick={() => removeMarqueeItem(i)}
+												className="text-muted-foreground hover:text-destructive"
+											>
+												<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+													<path d="M18 6L6 18M6 6l12 12" />
+												</svg>
+											</button>
+										</span>
+									))}
+								</div>
+								<div className="flex gap-2">
+									<input
+										type="text"
+										value={newMarqueeItem}
+										onChange={(e) => setNewMarqueeItem(e.target.value)}
+										onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addMarqueeItem())}
+										placeholder="Ajouter un mot..."
+										className="flex-1 rounded-md border px-3 py-2 text-sm"
+									/>
+									<button
+										type="button"
+										onClick={addMarqueeItem}
+										className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+									>
+										Ajouter
+									</button>
+								</div>
+								<button
+									type="button"
+									onClick={resetMarquee}
+									className="text-sm text-muted-foreground underline hover:text-foreground"
+								>
+									Reinitialiser par defaut
+								</button>
+							</div>
+						</Accordion>
+
+						{/* Creations section */}
+						<Accordion
+							title="Section Creations (homepage)"
+							isOpen={openSections.creations}
+							onToggle={() => toggleSection('creations')}
+						>
+							<div className="grid gap-4">
+								<div>
+									<label className="text-sm font-medium">Titre</label>
+									<input
+										type="text"
+										value={siteConfig.creationsTitle || ''}
+										onChange={(e) => updateSiteConfigField('creationsTitle', e.target.value)}
+										placeholder="Nos Creations"
+										className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
+									/>
+								</div>
+								<div>
+									<label className="text-sm font-medium">Sous-titre</label>
+									<input
+										type="text"
+										value={siteConfig.creationsSubtitle || ''}
+										onChange={(e) => updateSiteConfigField('creationsSubtitle', e.target.value)}
+										placeholder="nos specialites"
+										className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
+									/>
+								</div>
+							</div>
+						</Accordion>
+
+						{/* Workshops CTA section */}
+						<Accordion
+							title="Section CTA Ateliers (homepage)"
+							isOpen={openSections.workshopsCta}
+							onToggle={() => toggleSection('workshopsCta')}
+						>
+							<div className="grid gap-4">
+								<div>
+									<label className="text-sm font-medium">Titre</label>
+									<input
+										type="text"
+										value={siteConfig.workshopsCtaTitle || ''}
+										onChange={(e) => updateSiteConfigField('workshopsCtaTitle', e.target.value)}
+										placeholder="Des cours de patisserie pour tous"
+										className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
+									/>
+								</div>
+								<div>
+									<label className="text-sm font-medium">Sous-titre</label>
+									<input
+										type="text"
+										value={siteConfig.workshopsCtaSubtitle || ''}
+										onChange={(e) => updateSiteConfigField('workshopsCtaSubtitle', e.target.value)}
+										placeholder="master class"
+										className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
+									/>
+								</div>
+								<div>
+									<label className="text-sm font-medium">Description</label>
+									<textarea
+										value={siteConfig.workshopsCtaDescription || ''}
+										onChange={(e) => updateSiteConfigField('workshopsCtaDescription', e.target.value)}
+										placeholder="La patisserie n'aura plus de secret pour vous..."
+										rows={3}
+										className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
+									/>
+								</div>
+								<div>
+									<label className="text-sm font-medium">Label du bouton</label>
+									<input
+										type="text"
+										value={siteConfig.workshopsCtaLabel || ''}
+										onChange={(e) => updateSiteConfigField('workshopsCtaLabel', e.target.value)}
+										placeholder="Reserver votre atelier"
+										className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
+									/>
+								</div>
+							</div>
+						</Accordion>
+					</>
+				)}
+
+				{/* ─── PAGES ─────────────────────────────── */}
+				{activeTab === 'pages' && (
+					<section className="rounded-lg border p-6">
+						<h2 className="text-lg font-semibold">Visibilite des sections</h2>
+						<p className="mt-1 text-sm text-muted-foreground">
+							Activez ou desactivez les sections de votre site
+						</p>
+						<div className="mt-6 space-y-4">
+							<ToggleRow
+								label='Section "Notre histoire"'
+								checked={siteConfig.showStorySection !== false}
+								onChange={(v) => updateSiteConfigField('showStorySection', v)}
+							/>
+							<ToggleRow
+								label="Bandeau marquee"
+								checked={siteConfig.showMarquee !== false}
+								onChange={(v) => updateSiteConfigField('showMarquee', v)}
+							/>
+							<ToggleRow
+								label="Creations sur homepage"
+								checked={siteConfig.showCreationsOnHomepage !== false}
+								onChange={(v) => updateSiteConfigField('showCreationsOnHomepage', v)}
+							/>
+							<ToggleRow
+								label="CTA Ateliers sur homepage"
+								checked={siteConfig.showWorkshopsCta !== false}
+								onChange={(v) => updateSiteConfigField('showWorkshopsCta', v)}
+							/>
+							<div className="border-t pt-4">
+								<ToggleRow
+									label="Page Ateliers"
+									checked={workshopsEnabled}
+									onChange={setWorkshopsEnabled}
+								/>
+							</div>
+							<ToggleRow
+								label="Page Commandes"
+								checked={ordersEnabled}
+								onChange={setOrdersEnabled}
+							/>
+						</div>
+					</section>
+				)}
+
+				{/* ─── CONTACT ─────────────────────────────── */}
+				{activeTab === 'contact' && (
+					<>
+						<section className="rounded-lg border p-6">
+							<h2 className="text-lg font-semibold">Coordonnees</h2>
+							<div className="mt-4 grid gap-4 md:grid-cols-2">
+								<div>
+									<label className="text-sm font-medium">Telephone</label>
+									<input
+										type="tel"
+										value={phone}
+										onChange={(e) => setPhone(e.target.value)}
+										placeholder="06 12 34 56 78"
+										className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
+									/>
+								</div>
+							</div>
+						</section>
+
+						<section className="rounded-lg border p-6">
+							<h2 className="text-lg font-semibold">Adresse</h2>
+							<div className="mt-4 grid gap-4 md:grid-cols-2">
+								<div className="md:col-span-2">
+									<label className="text-sm font-medium">Rue</label>
+									<input
+										type="text"
+										value={addressStreet}
+										onChange={(e) => setAddressStreet(e.target.value)}
+										placeholder="12 rue de la Patisserie"
+										className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
+									/>
+								</div>
+								<div>
+									<label className="text-sm font-medium">Ville</label>
+									<input
+										type="text"
+										value={addressCity}
+										onChange={(e) => setAddressCity(e.target.value)}
+										placeholder="Paris"
+										className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
+									/>
+								</div>
+								<div>
+									<label className="text-sm font-medium">Code postal</label>
+									<input
+										type="text"
+										value={addressZip}
+										onChange={(e) => setAddressZip(e.target.value)}
+										placeholder="75001"
+										className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
+									/>
+								</div>
+								<div>
+									<label className="text-sm font-medium">Pays</label>
+									<input
+										type="text"
+										value={addressCountry}
+										onChange={(e) => setAddressCountry(e.target.value)}
+										placeholder="France"
+										className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
+									/>
+								</div>
+							</div>
+						</section>
+
+						<section className="rounded-lg border p-6">
+							<h2 className="text-lg font-semibold">Reseaux sociaux</h2>
+							<div className="mt-4 grid gap-4 md:grid-cols-2">
+								<div>
+									<label className="text-sm font-medium">Instagram</label>
+									<input
+										type="url"
+										value={socialLinks.instagram || ''}
+										onChange={(e) => setSocialLinks((prev) => ({ ...prev, instagram: e.target.value }))}
+										placeholder="https://instagram.com/votre-page"
+										className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
+									/>
+								</div>
+								<div>
+									<label className="text-sm font-medium">Facebook</label>
+									<input
+										type="url"
+										value={socialLinks.facebook || ''}
+										onChange={(e) => setSocialLinks((prev) => ({ ...prev, facebook: e.target.value }))}
+										placeholder="https://facebook.com/votre-page"
+										className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
+									/>
+								</div>
+								<div>
+									<label className="text-sm font-medium">TikTok</label>
+									<input
+										type="url"
+										value={socialLinks.tiktok || ''}
+										onChange={(e) => setSocialLinks((prev) => ({ ...prev, tiktok: e.target.value }))}
+										placeholder="https://tiktok.com/@votre-page"
+										className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
+									/>
+								</div>
+								<div>
+									<label className="text-sm font-medium">Site web</label>
+									<input
+										type="url"
+										value={socialLinks.website || ''}
+										onChange={(e) => setSocialLinks((prev) => ({ ...prev, website: e.target.value }))}
+										placeholder="https://votre-site.com"
+										className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
+									/>
+								</div>
+							</div>
+						</section>
+
+						<section className="rounded-lg border p-6">
+							<h2 className="text-lg font-semibold">Horaires d'ouverture</h2>
+							<div className="mt-4 space-y-3">
+								{DAYS.map((day) => {
+									const hours = operatingHours?.[day.key]
+									const isClosed = hours?.closed === true
+									return (
+										<div key={day.key} className="flex items-center gap-4">
+											<span className="w-24 text-sm font-medium">{day.label}</span>
+											<label className="flex items-center gap-2 text-sm">
+												<input
+													type="checkbox"
+													checked={!isClosed}
+													onChange={(e) => updateOperatingHour(day.key, 'closed', !e.target.checked)}
+													className="accent-primary"
+												/>
+												Ouvert
+											</label>
+											{!isClosed && (
+												<>
+													<input
+														type="time"
+														value={hours?.open || '09:00'}
+														onChange={(e) => updateOperatingHour(day.key, 'open', e.target.value)}
+														className="rounded-md border px-2 py-1 text-sm"
+													/>
+													<span className="text-sm text-muted-foreground">-</span>
+													<input
+														type="time"
+														value={hours?.close || '18:00'}
+														onChange={(e) => updateOperatingHour(day.key, 'close', e.target.value)}
+														className="rounded-md border px-2 py-1 text-sm"
+													/>
+												</>
+											)}
+										</div>
+									)
+								})}
+							</div>
+						</section>
+					</>
+				)}
+			</div>
+
+			{/* Save button */}
+			<div className="sticky bottom-0 border-t bg-background py-4">
+				<button
+					type="button"
+					onClick={handleSave}
+					disabled={isSaving}
+					className="rounded-md bg-primary px-8 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+				>
+					{isSaving ? 'Enregistrement...' : 'Enregistrer'}
+				</button>
+			</div>
+
+			{/* Toast */}
+			{toast && (
+				<div className="fixed right-4 bottom-4 z-50 rounded-lg border bg-background px-4 py-3 text-sm shadow-lg">
+					{toast}
+				</div>
+			)}
+		</div>
+	)
+}
+
+// ─── Accordion Component ────────────────────────────────────────
+
+function Accordion({
+	title,
+	isOpen,
+	onToggle,
+	children,
+}: {
+	title: string
+	isOpen: boolean
+	onToggle: () => void
+	children: React.ReactNode
+}) {
+	return (
+		<section className="rounded-lg border">
+			<button
+				type="button"
+				onClick={onToggle}
+				className="flex w-full items-center justify-between p-6 text-left"
+			>
+				<h2 className="text-lg font-semibold">{title}</h2>
+				<svg
+					width="20"
+					height="20"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					strokeWidth="2"
+					className={`transition-transform ${isOpen ? 'rotate-180' : ''}`}
+				>
+					<polyline points="6 9 12 15 18 9" />
+				</svg>
+			</button>
+			{isOpen && <div className="border-t px-6 pb-6 pt-4">{children}</div>}
+		</section>
+	)
+}
+
+// ─── Toggle Row Component ────────────────────────────────────────
+
+function ToggleRow({
+	label,
+	checked,
+	onChange,
+}: {
+	label: string
+	checked: boolean
+	onChange: (value: boolean) => void
+}) {
+	return (
+		<div className="flex items-center justify-between">
+			<span className="text-sm font-medium">{label}</span>
+			<button
+				type="button"
+				role="switch"
+				aria-checked={checked}
+				onClick={() => onChange(!checked)}
+				className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+					checked ? 'bg-primary' : 'bg-muted-foreground/30'
+				}`}
+			>
+				<span
+					className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${
+						checked ? 'translate-x-6' : 'translate-x-1'
+					}`}
+				/>
+			</button>
+		</div>
+	)
+}

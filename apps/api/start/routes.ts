@@ -1,0 +1,169 @@
+import router from '@adonisjs/core/services/router'
+import { middleware } from '#start/kernel'
+import { throttle } from '#middleware/throttle_middleware'
+
+// Health check
+router.get('/health', async ({ response }) => {
+	return response.ok({ status: 'ok', timestamp: new Date().toISOString() })
+})
+
+// Auth routes
+router
+	.group(() => {
+		router.post('/register', '#controllers/auth/auth_controller.register').use(throttle('authStrict'))
+		router.post('/login', '#controllers/auth/auth_controller.login').use(throttle('authStrict'))
+		router.post('/logout', '#controllers/auth/auth_controller.logout').use(middleware.auth())
+		router.get('/me', '#controllers/auth/auth_controller.me').use(middleware.auth())
+	})
+	.prefix('/auth')
+
+// Patissier dashboard routes
+router
+	.group(() => {
+		// Profile
+		router.get('/profile', '#controllers/patissier/profile_controller.show')
+		router.patch('/profile', '#controllers/patissier/profile_controller.update')
+		router.put('/site-design', '#controllers/patissier/profile_controller.updateDesign')
+		router.put('/site', '#controllers/patissier/profile_controller.updateSite')
+		router.post('/logo', '#controllers/patissier/profile_controller.uploadLogo')
+		router.delete('/logo', '#controllers/patissier/profile_controller.deleteLogo')
+		router.post('/hero-image', '#controllers/patissier/profile_controller.uploadHeroImage')
+		router.delete('/hero-image', '#controllers/patissier/profile_controller.deleteHeroImage')
+		router.post('/story-image', '#controllers/patissier/profile_controller.uploadStoryImage')
+		router.delete('/story-image', '#controllers/patissier/profile_controller.deleteStoryImage')
+
+		// Categories
+		router.get('/categories', '#controllers/patissier/categories_controller.index')
+		router.post('/categories', '#controllers/patissier/categories_controller.store')
+		router.put('/categories/:id', '#controllers/patissier/categories_controller.update')
+		router.delete('/categories/:id', '#controllers/patissier/categories_controller.destroy')
+		router.put('/categories/reorder', '#controllers/patissier/categories_controller.reorder')
+
+		// Creations
+		router.get('/creations', '#controllers/patissier/creations_controller.index')
+		router.post('/creations', '#controllers/patissier/creations_controller.store')
+		router.get('/creations/:id', '#controllers/patissier/creations_controller.show')
+		router.put('/creations/:id', '#controllers/patissier/creations_controller.update')
+		router.delete('/creations/:id', '#controllers/patissier/creations_controller.destroy')
+		router.post('/creations/:id/images', '#controllers/patissier/creations_controller.addImage')
+		router.delete('/creations/:id/images/:idx', '#controllers/patissier/creations_controller.removeImage')
+
+		// Products
+		router.get('/products', '#controllers/patissier/products_controller.index')
+		router.post('/products', '#controllers/patissier/products_controller.store')
+		router.get('/products/:id', '#controllers/patissier/products_controller.show')
+		router.put('/products/:id', '#controllers/patissier/products_controller.update')
+		router.delete('/products/:id', '#controllers/patissier/products_controller.destroy')
+
+		// Workshops
+		router.get('/workshops', '#controllers/patissier/workshops_controller.index')
+		router.post('/workshops', '#controllers/patissier/workshops_controller.store')
+		router.get('/workshops/:id', '#controllers/patissier/workshops_controller.show')
+		router.put('/workshops/:id', '#controllers/patissier/workshops_controller.update')
+		router.delete('/workshops/:id', '#controllers/patissier/workshops_controller.destroy')
+		router.put('/workshops/:id/status', '#controllers/patissier/workshops_controller.updateStatus')
+		router.post('/workshops/:id/illustration', '#controllers/patissier/workshops_controller.uploadIllustration')
+		router.delete('/workshops/:id/illustration', '#controllers/patissier/workshops_controller.deleteIllustration')
+		router.get('/workshops/:id/bookings', '#controllers/patissier/workshops_controller.bookings')
+		router.post('/workshops/:id/bookings', '#controllers/patissier/workshops_controller.createBooking')
+		router.put(
+			'/workshops/:id/bookings/:bookingId/status',
+			'#controllers/patissier/workshops_controller.updateBookingStatus'
+		)
+
+		// Orders
+		router.get('/orders', '#controllers/patissier/orders_controller.index')
+		router.get('/orders/:id', '#controllers/patissier/orders_controller.show')
+		router.put('/orders/:id/status', '#controllers/patissier/orders_controller.updateStatus')
+		router.put('/orders/:id/quote', '#controllers/patissier/orders_controller.quote')
+		router.get('/orders/:id/messages', '#controllers/patissier/orders_controller.messages')
+		router.post('/orders/:id/messages', '#controllers/patissier/orders_controller.sendMessage')
+
+		// Stripe Connect
+		router.post('/integrations/stripe/connect', '#controllers/patissier/integrations_controller.stripeConnect')
+		router.get('/integrations/stripe/callback', '#controllers/patissier/integrations_controller.stripeCallback')
+		router.get('/integrations/stripe/dashboard', '#controllers/patissier/integrations_controller.stripeDashboard')
+		router.get('/integrations/stripe/balance', '#controllers/patissier/integrations_controller.stripeBalance')
+
+		// Stats (Premium)
+		router.get('/stats', '#controllers/patissier/stats_controller.index')
+	})
+	.prefix('/patissier')
+	.use([throttle('api'), middleware.auth(), middleware.patissier()])
+
+// Billing routes
+router
+	.group(() => {
+		router.get('/plans', '#controllers/billing_controller.plans')
+		router.get('/current', '#controllers/billing_controller.current')
+		router.post('/subscribe', '#controllers/billing_controller.subscribe')
+		router.post('/cancel', '#controllers/billing_controller.cancel')
+		router.post('/resume', '#controllers/billing_controller.resume')
+		router.get('/invoices', '#controllers/billing_controller.invoices')
+		router.post('/portal', '#controllers/billing_controller.portal')
+	})
+	.prefix('/billing')
+	.use([throttle('api'), middleware.auth()])
+
+// Client routes
+router
+	.group(() => {
+		router.post('/orders', '#controllers/client/orders_controller.store')
+		router.get('/orders/:orderNumber', '#controllers/client/orders_controller.show')
+		router.get('/orders/:orderNumber/messages', '#controllers/client/orders_controller.messages')
+		router.post('/orders/:orderNumber/messages', '#controllers/client/orders_controller.sendMessage')
+		router.post('/workshops/:id/book', '#controllers/client/bookings_controller.store')
+		router.get('/bookings/:id', '#controllers/client/bookings_controller.show')
+		router.put('/bookings/:id/cancel', '#controllers/client/bookings_controller.cancel')
+	})
+	.prefix('/client')
+	.use([throttle('api')])
+
+// Public routes (site vitrine)
+router
+	.group(() => {
+		router.get('/check-slug/:slug', '#controllers/public_controller.checkSlug')
+		router.get('/:slug', '#controllers/public_controller.profile')
+		router.get('/:slug/categories', '#controllers/public_controller.categories')
+		router.get('/:slug/creations', '#controllers/public_controller.creations')
+		router.get('/:slug/creations/:creationSlug', '#controllers/public_controller.creationDetail')
+		router.get('/:slug/products', '#controllers/public_controller.products')
+		router.get('/:slug/workshops', '#controllers/public_controller.workshops')
+		router.get('/:slug/workshops/:workshopSlug', '#controllers/public_controller.workshopDetail')
+	})
+	.prefix('/public')
+	.use([throttle('global')])
+
+// Superadmin routes
+router
+	.group(() => {
+		router.get('/stats/dashboard', '#controllers/superadmin/stats_controller.dashboard')
+		router.get('/stats/revenue', '#controllers/superadmin/stats_controller.revenue')
+		router.get('/stats/user-growth', '#controllers/superadmin/stats_controller.userGrowth')
+		router.get('/users', '#controllers/superadmin/users_controller.index')
+		router.get('/users/:id', '#controllers/superadmin/users_controller.show')
+		router.post('/users/:id/suspend', '#controllers/superadmin/users_controller.suspend')
+		router.post('/users/:id/unsuspend', '#controllers/superadmin/users_controller.unsuspend')
+		router.get('/patissiers', '#controllers/superadmin/users_controller.patissiers')
+		router.get('/orders', '#controllers/superadmin/orders_controller.index')
+		router.get('/workshops', '#controllers/superadmin/workshops_controller.index')
+		router.get('/subscriptions', '#controllers/superadmin/subscriptions_controller.index')
+	})
+	.prefix('/superadmin')
+	.use([throttle('api'), middleware.auth(), middleware.superadmin()])
+
+// Notifications
+router
+	.group(() => {
+		router.get('/', '#controllers/notifications_controller.index')
+		router.get('/unread-count', '#controllers/notifications_controller.unreadCount')
+		router.put('/:id/read', '#controllers/notifications_controller.markRead')
+		router.put('/read-all', '#controllers/notifications_controller.markAllRead')
+	})
+	.prefix('/notifications')
+	.use([throttle('api'), middleware.auth()])
+
+// Webhooks
+router
+	.post('/webhooks/stripe', '#controllers/webhooks/stripe_controller.handle')
+	.use(throttle('webhooks'))

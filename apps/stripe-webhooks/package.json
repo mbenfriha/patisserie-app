@@ -1,0 +1,8 @@
+{
+	"name": "@patissio/stripe-webhooks",
+	"version": "0.0.0",
+	"private": true,
+	"scripts": {
+		"dev": "stripe listen --forward-to http://localhost:3333/webhooks/stripe --log-level warn"
+	}
+}

@@ -1,0 +1,174 @@
+import type { HttpContext } from '@adonisjs/core/http'
+import Category from '#models/category'
+import Creation from '#models/creation'
+import PatissierProfile from '#models/patissier_profile'
+import Product from '#models/product'
+import Workshop from '#models/workshop'
+
+export default class PublicController {
+	async checkSlug({ params, response }: HttpContext) {
+		const slug = params.slug?.toLowerCase().trim()
+
+		if (!slug || slug.length < 3) {
+			return response.ok({ data: { available: false, reason: 'too_short' } })
+		}
+
+		const existing = await PatissierProfile.findBy('slug', slug)
+
+		return response.ok({
+			data: { available: !existing, slug },
+		})
+	}
+
+	async profile({ params, response }: HttpContext) {
+		const profile = await PatissierProfile.query()
+			.where('slug', params.slug)
+			.preload('categories', (query) => {
+				query.where('isVisible', true).orderBy('sortOrder', 'asc')
+			})
+			.first()
+
+		if (!profile) {
+			return response.notFound({ success: false, message: 'Patissier not found' })
+		}
+
+		return response.ok({
+			success: true,
+			data: profile.serialize(),
+		})
+	}
+
+	async categories({ params, response }: HttpContext) {
+		const profile = await PatissierProfile.findBy('slug', params.slug)
+		if (!profile) {
+			return response.notFound({ success: false, message: 'Patissier not found' })
+		}
+
+		const categories = await Category.query()
+			.where('patissierId', profile.id)
+			.where('isVisible', true)
+			.orderBy('sortOrder', 'asc')
+
+		return response.ok({
+			success: true,
+			data: categories.map((c) => c.serialize()),
+		})
+	}
+
+	async creations({ params, request, response }: HttpContext) {
+		const profile = await PatissierProfile.findBy('slug', params.slug)
+		if (!profile) {
+			return response.notFound({ success: false, message: 'Patissier not found' })
+		}
+
+		const categoryId = request.input('category_id')
+
+		const query = Creation.query()
+			.where('patissierId', profile.id)
+			.where('isVisible', true)
+			.preload('category')
+			.orderBy('sortOrder', 'asc')
+
+		if (categoryId) {
+			query.where('categoryId', categoryId)
+		}
+
+		const creations = await query
+
+		return response.ok({
+			success: true,
+			data: creations.map((c) => c.serialize()),
+		})
+	}
+
+	async creationDetail({ params, response }: HttpContext) {
+		const profile = await PatissierProfile.findBy('slug', params.slug)
+		if (!profile) {
+			return response.notFound({ success: false, message: 'Patissier not found' })
+		}
+
+		const creation = await Creation.query()
+			.where('slug', params.creationSlug)
+			.where('patissierId', profile.id)
+			.where('isVisible', true)
+			.preload('category')
+			.first()
+
+		if (!creation) {
+			return response.notFound({ success: false, message: 'Creation not found' })
+		}
+
+		return response.ok({
+			success: true,
+			data: creation.serialize(),
+		})
+	}
+
+	async products({ params, response }: HttpContext) {
+		const profile = await PatissierProfile.findBy('slug', params.slug)
+		if (!profile) {
+			return response.notFound({ success: false, message: 'Patissier not found' })
+		}
+
+		const products = await Product.query()
+			.where('patissierId', profile.id)
+			.where('isVisible', true)
+			.preload('category')
+			.orderBy('sortOrder', 'asc')
+
+		return response.ok({
+			success: true,
+			data: products.map((p) => p.serialize()),
+		})
+	}
+
+	async workshops({ params, response }: HttpContext) {
+		const profile = await PatissierProfile.findBy('slug', params.slug)
+		if (!profile) {
+			return response.notFound({ success: false, message: 'Patissier not found' })
+		}
+
+		const workshops = await Workshop.query()
+			.where('patissierId', profile.id)
+			.where('status', 'published')
+			.where('isVisible', true)
+			.preload('category')
+			.orderBy('date', 'asc')
+
+		return response.ok({
+			success: true,
+			data: workshops.map((w) => w.serialize()),
+		})
+	}
+
+	async workshopDetail({ params, response }: HttpContext) {
+		const profile = await PatissierProfile.findBy('slug', params.slug)
+		if (!profile) {
+			return response.notFound({ success: false, message: 'Patissier not found' })
+		}
+
+		const workshop = await Workshop.query()
+			.where('slug', params.workshopSlug)
+			.where('patissierId', profile.id)
+			.preload('category')
+			.preload('bookings', (query) => {
+				query.whereNot('status', 'cancelled').select('id', 'nbParticipants')
+			})
+			.first()
+
+		if (!workshop) {
+			return response.notFound({ success: false, message: 'Workshop not found' })
+		}
+
+		const totalBooked = workshop.bookings.reduce((sum, b) => sum + b.nbParticipants, 0)
+
+		return response.ok({
+			success: true,
+			data: {
+				...workshop.serialize(),
+				spotsLeft: workshop.capacity - totalBooked,
+				slug: profile.slug,
+			},
+		})
+	}
+}
