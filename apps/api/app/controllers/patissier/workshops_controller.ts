@@ -445,7 +445,7 @@ export default class WorkshopsController {
 
 		const file = request.file('image', {
 			size: '5mb',
-			extnames: ['jpg', 'jpeg', 'png', 'webp'],
+			extnames: ['jpg', 'jpeg', 'png', 'webp', 'avif'],
 		})
 
 		if (!file) {

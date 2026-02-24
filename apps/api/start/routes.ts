@@ -31,6 +31,8 @@ router
 		router.delete('/hero-image', '#controllers/patissier/profile_controller.deleteHeroImage')
 		router.post('/story-image', '#controllers/patissier/profile_controller.uploadStoryImage')
 		router.delete('/story-image', '#controllers/patissier/profile_controller.deleteStoryImage')
+		router.post('/page-hero/:page', '#controllers/patissier/profile_controller.uploadPageHeroImage')
+		router.delete('/page-hero/:page', '#controllers/patissier/profile_controller.deletePageHeroImage')
 
 		// Categories
 		router.get('/categories', '#controllers/patissier/categories_controller.index')

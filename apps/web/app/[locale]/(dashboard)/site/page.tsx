@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { api } from '@/lib/api/client'
 import { getImageUrl } from '@/lib/utils/image-url'
+import { RichTextEditor } from '@/components/ui/rich-text-editor'
 
 interface SiteConfig {
 	heroSubtitle?: string
@@ -40,6 +41,10 @@ interface Profile {
 	secondaryColor: string
 	fontFamily: string
 	heroImageUrl: string | null
+	creationsHeroImageUrl: string | null
+	workshopsHeroImageUrl: string | null
+	productsHeroImageUrl: string | null
+	ordersHeroImageUrl: string | null
 	storyImageUrl: string | null
 	siteConfig: SiteConfig
 	ordersEnabled: boolean
@@ -256,6 +261,30 @@ export default function SiteEditorPage() {
 		}
 	}
 
+	const handlePageHeroUpload = async (page: string, e: React.ChangeEvent<HTMLInputElement>) => {
+		const file = e.target.files?.[0]
+		if (!file) return
+		const formData = new FormData()
+		formData.append('image', file)
+		try {
+			await api.upload(`/patissier/page-hero/${page}`, formData)
+			showToast('Image hero mise a jour')
+			await loadProfile()
+		} catch {
+			showToast('Erreur lors du telechargement')
+		}
+	}
+
+	const handlePageHeroDelete = async (page: string) => {
+		try {
+			await api.delete(`/patissier/page-hero/${page}`)
+			showToast('Image hero supprimee')
+			await loadProfile()
+		} catch {
+			showToast('Erreur lors de la suppression')
+		}
+	}
+
 	const toggleSection = (key: string) => {
 		setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }))
 	}
@@ -443,7 +472,7 @@ export default function SiteEditorPage() {
 						<section className="rounded-lg border p-6">
 							<h2 className="text-lg font-semibold">Image hero</h2>
 							<p className="mt-1 text-sm text-muted-foreground">
-								Image d'arriere-plan de la section principale (5 Mo max)
+								Image d'arriere-plan de la section principale (20 Mo max)
 							</p>
 							<div className="mt-4 flex items-center gap-4">
 								{profile.heroImageUrl ? (
@@ -539,13 +568,13 @@ export default function SiteEditorPage() {
 								</div>
 								<div>
 									<label className="text-sm font-medium">Texte</label>
-									<textarea
-										value={siteConfig.storyText || ''}
-										onChange={(e) => updateSiteConfigField('storyText', e.target.value)}
-										placeholder={profile.description || 'Votre histoire...'}
-										rows={4}
-										className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
-									/>
+									<div className="mt-1">
+										<RichTextEditor
+											content={siteConfig.storyText || ''}
+											onChange={(html) => updateSiteConfigField('storyText', html)}
+											placeholder={profile.description || 'Votre histoire...'}
+										/>
+									</div>
 								</div>
 								<div>
 									<label className="text-sm font-medium">Image</label>
@@ -711,6 +740,57 @@ export default function SiteEditorPage() {
 										className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
 									/>
 								</div>
+							</div>
+						</Accordion>
+
+						{/* Page Hero Images */}
+						<Accordion
+							title="Images hero des pages"
+							isOpen={openSections.pageHeroes}
+							onToggle={() => toggleSection('pageHeroes')}
+						>
+							<p className="mb-4 text-sm text-muted-foreground">
+								Ajoutez une image hero en haut de chaque page de votre site
+							</p>
+							<div className="grid gap-6">
+								{([
+									{ page: 'creations', label: 'Page Creations', field: 'creationsHeroImageUrl' },
+									{ page: 'workshops', label: 'Page Ateliers', field: 'workshopsHeroImageUrl' },
+									{ page: 'products', label: 'Page Produits', field: 'productsHeroImageUrl' },
+									{ page: 'orders', label: 'Page Commandes', field: 'ordersHeroImageUrl' },
+								] as const).map(({ page, label, field }) => (
+									<div key={page}>
+										<label className="text-sm font-medium">{label}</label>
+										<div className="mt-2 flex items-center gap-4">
+											{profile[field] ? (
+												<img
+													src={getImageUrl(profile[field])!}
+													alt={label}
+													className="h-24 rounded-lg border object-cover"
+												/>
+											) : (
+												<div className="flex h-24 w-36 items-center justify-center rounded-lg border-2 border-dashed bg-muted text-xs text-muted-foreground">
+													Aucune
+												</div>
+											)}
+											<div className="flex flex-col gap-2">
+												<label className="cursor-pointer rounded-md border px-3 py-2 text-center text-sm hover:bg-muted">
+													{profile[field] ? 'Changer' : 'Ajouter'}
+													<input type="file" accept="image/*" onChange={(e) => handlePageHeroUpload(page, e)} className="hidden" />
+												</label>
+												{profile[field] && (
+													<button
+														type="button"
+														onClick={() => handlePageHeroDelete(page)}
+														className="rounded-md border px-3 py-2 text-sm text-destructive hover:bg-destructive/10"
+													>
+														Supprimer
+													</button>
+												)}
+											</div>
+										</div>
+									</div>
+								))}
 							</div>
 						</Accordion>
 					</>

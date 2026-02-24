@@ -173,7 +173,7 @@ export default class CreationsController {
 
 		const file = request.file('image', {
 			size: '5mb',
-			extnames: ['jpg', 'jpeg', 'png', 'webp'],
+			extnames: ['jpg', 'jpeg', 'png', 'webp', 'avif'],
 		})
 
 		let imageUrl: string

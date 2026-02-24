@@ -93,6 +93,18 @@ export default class PatissierProfile extends BaseModel {
 	declare heroImageUrl: string | null
 
 	@column()
+	declare creationsHeroImageUrl: string | null
+
+	@column()
+	declare workshopsHeroImageUrl: string | null
+
+	@column()
+	declare productsHeroImageUrl: string | null
+
+	@column()
+	declare ordersHeroImageUrl: string | null
+
+	@column()
 	declare customDomain: string | null
 
 	@column()

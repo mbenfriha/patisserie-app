@@ -35,7 +35,7 @@ export default class OrdersController {
 		let customPhotoInspirationUrl: string | null = null
 		const photoFile = request.file('customPhotoInspiration', {
 			size: '5mb',
-			extnames: ['jpg', 'jpeg', 'png', 'webp'],
+			extnames: ['jpg', 'jpeg', 'png', 'webp', 'avif'],
 		})
 		if (photoFile) {
 			const storageService = new StorageService()

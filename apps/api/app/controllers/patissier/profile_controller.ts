@@ -68,7 +68,7 @@ export default class ProfileController {
 
 		const logo = request.file('logo', {
 			size: '2mb',
-			extnames: ['jpg', 'jpeg', 'png', 'webp', 'svg'],
+			extnames: ['jpg', 'jpeg', 'png', 'webp', 'avif', 'svg'],
 		})
 
 		if (!logo) {
@@ -156,7 +156,7 @@ export default class ProfileController {
 
 		const image = request.file('image', {
 			size: '20mb',
-			extnames: ['jpg', 'jpeg', 'png', 'webp'],
+			extnames: ['jpg', 'jpeg', 'png', 'webp', 'avif'],
 		})
 
 		if (!image) {
@@ -219,7 +219,7 @@ export default class ProfileController {
 
 		const image = request.file('image', {
 			size: '2mb',
-			extnames: ['jpg', 'jpeg', 'png', 'webp'],
+			extnames: ['jpg', 'jpeg', 'png', 'webp', 'avif'],
 		})
 
 		if (!image) {
@@ -275,5 +275,76 @@ export default class ProfileController {
 			success: true,
 			data: profile.serialize(),
 		})
+	}
+
+	private static pageHeroFields = {
+		creations: 'creationsHeroImageUrl',
+		workshops: 'workshopsHeroImageUrl',
+		products: 'productsHeroImageUrl',
+		orders: 'ordersHeroImageUrl',
+	} as const
+
+	async uploadPageHeroImage({ auth, request, response, params }: HttpContext) {
+		const page = params.page as string
+		const field = ProfileController.pageHeroFields[page as keyof typeof ProfileController.pageHeroFields]
+		if (!field) {
+			return response.badRequest({ success: false, message: 'Invalid page' })
+		}
+
+		const user = auth.user!
+		const profile = await PatissierProfile.findByOrFail('userId', user.id)
+
+		const image = request.file('image', {
+			size: '20mb',
+			extnames: ['jpg', 'jpeg', 'png', 'webp', 'avif'],
+		})
+
+		if (!image) {
+			return response.badRequest({ success: false, message: 'No image file provided' })
+		}
+
+		if (!image.isValid) {
+			return response.badRequest({ success: false, message: 'Invalid file', errors: image.errors })
+		}
+
+		const currentUrl = profile[field]
+		if (currentUrl && !currentUrl.startsWith('http')) {
+			try {
+				await storage.deleteImage(currentUrl)
+			} catch {
+				// Ignore
+			}
+		}
+
+		const key = await storage.uploadImage(image, `hero-${page}/${profile.id}`)
+		profile[field] = key
+		await profile.save()
+
+		return response.ok({ success: true, data: profile.serialize() })
+	}
+
+	async deletePageHeroImage({ auth, response, params }: HttpContext) {
+		const page = params.page as string
+		const field = ProfileController.pageHeroFields[page as keyof typeof ProfileController.pageHeroFields]
+		if (!field) {
+			return response.badRequest({ success: false, message: 'Invalid page' })
+		}
+
+		const user = auth.user!
+		const profile = await PatissierProfile.findByOrFail('userId', user.id)
+
+		const currentUrl = profile[field]
+		if (currentUrl && !currentUrl.startsWith('http')) {
+			try {
+				await storage.deleteImage(currentUrl)
+			} catch {
+				// Ignore
+			}
+		}
+
+		profile[field] = null
+		await profile.save()
+
+		return response.ok({ success: true, data: profile.serialize() })
 	}
 }
