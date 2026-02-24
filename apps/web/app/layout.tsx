@@ -25,6 +25,12 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
 	metadataBase: new URL(BASE_URL),
+	title: {
+		default: 'Patissio — La plateforme des artisans pâtissiers',
+		template: '%s | Patissio',
+	},
+	description:
+		'Créez votre vitrine pâtissière en ligne, recevez des commandes et proposez des ateliers. La plateforme tout-en-un pour les artisans pâtissiers.',
 	authors: [{ name: 'Patissio' }],
 	creator: 'Patissio',
 	publisher: 'Patissio',
@@ -35,22 +41,30 @@ export const metadata: Metadata = {
 	},
 	keywords: [
 		'patisserie',
-		'patissier',
-		'gateau',
-		'commande',
-		'atelier',
-		'reservation',
-		'cake',
-		'boulangerie',
+		'pâtissier',
+		'vitrine en ligne',
+		'commande gâteau',
+		'atelier pâtisserie',
+		'site pâtissier',
+		'vente en ligne pâtisserie',
+		'réservation atelier',
 	],
 	openGraph: {
 		type: 'website',
 		url: BASE_URL,
 		siteName: 'Patissio',
+		locale: 'fr_FR',
+	},
+	twitter: {
+		card: 'summary_large_image',
 	},
 	robots: {
 		index: true,
 		follow: true,
+		googleBot: {
+			index: true,
+			follow: true,
+		},
 	},
 }
 

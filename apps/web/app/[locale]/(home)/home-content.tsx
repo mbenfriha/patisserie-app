@@ -94,7 +94,7 @@ const PLAN_ENTRIES = [
 	{ key: 'premium' as const, popular: false },
 ]
 
-export default function HomePage() {
+export function HomeContent() {
 	const [scrolled, setScrolled] = useState(false)
 	const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
@@ -450,8 +450,7 @@ export default function HomePage() {
 						Prêt à lancer votre vitrine ?
 					</h2>
 					<p className="mt-6 text-lg font-light text-white/50">
-						Rejoignez des centaines de pâtissiers qui développent leur activité grâce à Patisserie
-						App.
+						Rejoignez des centaines de pâtissiers qui développent leur activité grâce à Patissio.
 					</p>
 					<Link
 						href="/register"
