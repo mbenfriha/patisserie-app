@@ -67,6 +67,7 @@ export default function OrdersPage() {
 					<p className="text-muted-foreground">Aucune commande pour le moment.</p>
 				</div>
 			) : (
+				<>
 				{/* Mobile: card list */}
 				<div className="space-y-3 sm:hidden">
 					{orders.map((order) => (
@@ -136,6 +137,7 @@ export default function OrdersPage() {
 						</tbody>
 					</table>
 				</div>
+				</>
 			)}
 		</div>
 	)
