@@ -155,7 +155,7 @@ export default class ProfileController {
 		const profile = await PatissierProfile.findByOrFail('userId', user.id)
 
 		const image = request.file('image', {
-			size: '5mb',
+			size: '20mb',
 			extnames: ['jpg', 'jpeg', 'png', 'webp'],
 		})
 
