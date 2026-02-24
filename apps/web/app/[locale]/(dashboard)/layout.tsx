@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { Link, usePathname } from '@/i18n/navigation'
 import { RoleGuard } from '@/components/auth/role-guard'
@@ -35,10 +35,56 @@ function getSiteUrl(profile: { slug: string; plan: string; customDomain?: string
 	return `${baseUrl}/${profile.slug}`
 }
 
+function NavLinks({
+	pathname,
+	t,
+	onNavigate,
+}: {
+	pathname: string
+	t: (key: string) => string
+	onNavigate?: () => void
+}) {
+	return (
+		<>
+			{navItems.map((item) => {
+				const isActive = pathname === item.href
+				return (
+					<Link
+						key={item.href}
+						href={item.href}
+						onClick={onNavigate}
+						className={`block rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+							isActive
+								? 'bg-sidebar-accent text-sidebar-accent-foreground'
+								: 'text-sidebar-foreground hover:bg-sidebar-accent/50'
+						}`}
+					>
+						{t(item.labelKey)}
+					</Link>
+				)
+			})}
+		</>
+	)
+}
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
 	const t = useTranslations('nav')
 	const pathname = usePathname()
 	const { user, logout } = useAuth()
+	const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
+	// Close mobile menu on route change
+	useEffect(() => {
+		setMobileMenuOpen(false)
+	}, [pathname])
+
+	// Prevent body scroll when mobile menu is open
+	useEffect(() => {
+		document.body.style.overflow = mobileMenuOpen ? 'hidden' : ''
+		return () => {
+			document.body.style.overflow = ''
+		}
+	}, [mobileMenuOpen])
 
 	const siteUrl = useMemo(() => {
 		if (!user?.profile?.slug) return null
@@ -48,8 +94,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 	return (
 		<RoleGuard allowedRoles={['patissier']}>
 			<div className="flex min-h-screen">
-				{/* Sidebar */}
-				<aside className="w-64 border-r bg-sidebar">
+				{/* ── Desktop Sidebar ── */}
+				<aside className="hidden w-64 shrink-0 border-r bg-sidebar lg:flex lg:flex-col">
 					<div className="p-6">
 						<h2 className="text-lg font-bold text-sidebar-foreground">
 							{user?.profile?.businessName || 'Patissio'}
@@ -71,22 +117,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 						)}
 					</div>
 					<nav className="space-y-1 px-3">
-						{navItems.map((item) => {
-							const isActive = pathname === item.href
-							return (
-								<Link
-									key={item.href}
-									href={item.href}
-									className={`block rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-										isActive
-											? 'bg-sidebar-accent text-sidebar-accent-foreground'
-											: 'text-sidebar-foreground hover:bg-sidebar-accent/50'
-									}`}
-								>
-									{t(item.labelKey)}
-								</Link>
-							)
-						})}
+						<NavLinks pathname={pathname} t={t} />
 					</nav>
 					<div className="mt-auto border-t p-4">
 						<button
@@ -94,14 +125,100 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 							onClick={logout}
 							className="w-full rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-sidebar-accent/50"
 						>
-							{t('logout' as any) || 'Déconnexion'}
+							{t('logout' as any) || 'Deconnexion'}
 						</button>
 					</div>
 				</aside>
 
-				{/* Main content */}
-				<main className="flex-1 overflow-auto">
-					<div className="p-8">
+				{/* ── Mobile Header ── */}
+				<div className="fixed inset-x-0 top-0 z-40 flex h-14 items-center justify-between border-b bg-sidebar px-4 lg:hidden">
+					<h2 className="text-sm font-bold text-sidebar-foreground">
+						{user?.profile?.businessName || 'Patissio'}
+					</h2>
+					<button
+						type="button"
+						onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+						className="flex h-9 w-9 items-center justify-center rounded-md text-sidebar-foreground hover:bg-sidebar-accent/50"
+						aria-label="Menu"
+					>
+						{mobileMenuOpen ? (
+							<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+								<path d="M18 6L6 18M6 6l12 12" />
+							</svg>
+						) : (
+							<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+								<path d="M3 12h18M3 6h18M3 18h18" />
+							</svg>
+						)}
+					</button>
+				</div>
+
+				{/* ── Mobile Drawer Overlay ── */}
+				{mobileMenuOpen && (
+					<div
+						className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+						onClick={() => setMobileMenuOpen(false)}
+					/>
+				)}
+
+				{/* ── Mobile Drawer ── */}
+				<div
+					className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-sidebar transition-transform duration-300 lg:hidden ${
+						mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+					}`}
+				>
+					<div className="flex items-center justify-between border-b p-4">
+						<h2 className="text-lg font-bold text-sidebar-foreground">
+							{user?.profile?.businessName || 'Patissio'}
+						</h2>
+						<button
+							type="button"
+							onClick={() => setMobileMenuOpen(false)}
+							className="flex h-9 w-9 items-center justify-center rounded-md text-sidebar-foreground hover:bg-sidebar-accent/50"
+							aria-label="Fermer"
+						>
+							<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+								<path d="M18 6L6 18M6 6l12 12" />
+							</svg>
+						</button>
+					</div>
+
+					{siteUrl && (
+						<div className="px-4 pt-4">
+							<a
+								href={siteUrl}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="inline-flex items-center gap-1.5 rounded-md border border-sidebar-accent px-2.5 py-1.5 text-xs font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent/50"
+							>
+								<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+									<path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" />
+									<polyline points="15 3 21 3 21 9" />
+									<line x1="10" y1="14" x2="21" y2="3" />
+								</svg>
+								Voir mon site
+							</a>
+						</div>
+					)}
+
+					<nav className="space-y-1 px-3 pt-4">
+						<NavLinks pathname={pathname} t={t} onNavigate={() => setMobileMenuOpen(false)} />
+					</nav>
+
+					<div className="mt-auto border-t p-4">
+						<button
+							type="button"
+							onClick={logout}
+							className="w-full rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-sidebar-accent/50"
+						>
+							{t('logout' as any) || 'Deconnexion'}
+						</button>
+					</div>
+				</div>
+
+				{/* ── Main Content ── */}
+				<main className="flex-1 overflow-auto pt-14 lg:pt-0">
+					<div className="p-4 sm:p-6 lg:p-8">
 						<StripeConnectBanner />
 						{children}
 					</div>

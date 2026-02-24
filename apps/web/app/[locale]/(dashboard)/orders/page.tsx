@@ -67,7 +67,36 @@ export default function OrdersPage() {
 					<p className="text-muted-foreground">Aucune commande pour le moment.</p>
 				</div>
 			) : (
-				<div className="rounded-lg border">
+				{/* Mobile: card list */}
+				<div className="space-y-3 sm:hidden">
+					{orders.map((order) => (
+						<Link
+							key={order.id}
+							href={`/orders/${order.id}`}
+							className="block rounded-lg border p-4 transition-colors hover:bg-muted/30"
+						>
+							<div className="flex items-center justify-between">
+								<span className="font-mono text-sm font-medium text-primary">{order.orderNumber}</span>
+								<span
+									className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[order.status] || 'bg-gray-100'}`}
+								>
+									{statusLabels[order.status] || order.status}
+								</span>
+							</div>
+							<div className="mt-2 flex items-center justify-between text-sm">
+								<span className="text-foreground">{order.clientName}</span>
+								<span className="font-medium">{order.total != null ? `${order.total} €` : '-'}</span>
+							</div>
+							<div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
+								<span>{typeLabels[order.type] || order.type}</span>
+								<span>{new Date(order.createdAt).toLocaleDateString('fr-FR')}</span>
+							</div>
+						</Link>
+					))}
+				</div>
+
+				{/* Desktop: table */}
+				<div className="hidden rounded-lg border sm:block">
 					<table className="w-full">
 						<thead>
 							<tr className="border-b bg-muted/50">
@@ -75,7 +104,7 @@ export default function OrdersPage() {
 								<th className="px-4 py-3 text-left text-sm font-medium">Client</th>
 								<th className="px-4 py-3 text-left text-sm font-medium">Type</th>
 								<th className="px-4 py-3 text-left text-sm font-medium">Statut</th>
-								<th className="hidden px-4 py-3 text-left text-sm font-medium sm:table-cell">Date</th>
+								<th className="hidden px-4 py-3 text-left text-sm font-medium md:table-cell">Date</th>
 								<th className="px-4 py-3 text-right text-sm font-medium">Total</th>
 							</tr>
 						</thead>
@@ -96,7 +125,7 @@ export default function OrdersPage() {
 											{statusLabels[order.status] || order.status}
 										</span>
 									</td>
-									<td className="hidden px-4 py-3 text-sm text-muted-foreground sm:table-cell">
+									<td className="hidden px-4 py-3 text-sm text-muted-foreground md:table-cell">
 										{new Date(order.createdAt).toLocaleDateString('fr-FR')}
 									</td>
 									<td className="px-4 py-3 text-right text-sm">

@@ -329,8 +329,8 @@ export default function CreationsPage() {
 
 			{/* ── Modal Create/Edit ── */}
 			{showModal && (
-				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-					<div className="w-full max-w-lg rounded-lg bg-white p-6 shadow-xl">
+				<div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center">
+					<div className="max-h-[85vh] w-full overflow-y-auto rounded-t-xl bg-white p-4 shadow-xl sm:max-w-lg sm:rounded-lg sm:p-6">
 						<h2 className="text-xl font-bold">
 							{editingId ? 'Modifier la création' : 'Nouvelle création'}
 						</h2>

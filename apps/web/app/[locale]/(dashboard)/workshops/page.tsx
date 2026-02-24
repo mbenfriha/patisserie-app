@@ -426,8 +426,8 @@ export default function WorkshopsPage() {
 
 			{/* ── Modal Create/Edit ── */}
 			{showModal && (
-				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-					<div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white p-6 shadow-xl">
+				<div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center">
+					<div className="max-h-[90vh] w-full overflow-y-auto rounded-t-xl bg-white p-4 shadow-xl sm:max-w-2xl sm:rounded-lg sm:p-6">
 						<h2 className="text-xl font-bold">
 							{editingId ? "Modifier l'atelier" : 'Nouvel atelier'}
 						</h2>
@@ -456,7 +456,7 @@ export default function WorkshopsPage() {
 							</div>
 
 							{/* Date & Time */}
-							<div className="grid grid-cols-2 gap-4">
+							<div className="grid gap-4 sm:grid-cols-2">
 								<div>
 									<label className="mb-1 block text-sm font-medium">Date *</label>
 									<input
@@ -559,7 +559,7 @@ export default function WorkshopsPage() {
 							</div>
 
 							{/* Capacity & Duration */}
-							<div className="grid grid-cols-2 gap-4">
+							<div className="grid gap-4 sm:grid-cols-2">
 								<div>
 									<label className="mb-1 block text-sm font-medium">Capacité</label>
 									<input
@@ -584,7 +584,7 @@ export default function WorkshopsPage() {
 							</div>
 
 							{/* Level & Location */}
-							<div className="grid grid-cols-2 gap-4">
+							<div className="grid gap-4 sm:grid-cols-2">
 								<div>
 									<label className="mb-1 block text-sm font-medium">Niveau</label>
 									<select

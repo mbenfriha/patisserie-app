@@ -342,13 +342,13 @@ export default function SiteEditorPage() {
 			<h1 className="text-3xl font-bold">Mon site</h1>
 
 			{/* Tabs */}
-			<div className="flex gap-1 rounded-lg border bg-muted p-1">
+			<div className="flex gap-1 overflow-x-auto rounded-lg border bg-muted p-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
 				{tabs.map((tab) => (
 					<button
 						key={tab.key}
 						type="button"
 						onClick={() => setActiveTab(tab.key)}
-						className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+						className={`shrink-0 flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
 							activeTab === tab.key
 								? 'bg-background text-foreground shadow-sm'
 								: 'text-muted-foreground hover:text-foreground'
@@ -958,8 +958,8 @@ export default function SiteEditorPage() {
 									const hours = operatingHours?.[day.key]
 									const isClosed = hours?.closed === true
 									return (
-										<div key={day.key} className="flex items-center gap-4">
-											<span className="w-24 text-sm font-medium">{day.label}</span>
+										<div key={day.key} className="flex flex-wrap items-center gap-2 sm:gap-4">
+											<span className="w-20 text-sm font-medium sm:w-24">{day.label}</span>
 											<label className="flex items-center gap-2 text-sm">
 												<input
 													type="checkbox"
@@ -1001,7 +1001,7 @@ export default function SiteEditorPage() {
 					type="button"
 					onClick={handleSave}
 					disabled={isSaving}
-					className="rounded-md bg-primary px-8 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+					className="w-full rounded-md bg-primary px-8 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 sm:w-auto"
 				>
 					{isSaving ? 'Enregistrement...' : 'Enregistrer'}
 				</button>
