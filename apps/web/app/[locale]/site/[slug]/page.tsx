@@ -174,9 +174,11 @@ export default function PatissierSitePage() {
 					{/* Text */}
 					<div>
 						<SectionTitle subtitle={config.storySubtitle} title={config.storyTitle} />
-						<p className="text-lg leading-[1.9] text-[var(--text)]" style={{ fontFamily: 'var(--font-heading)' }}>
-							{storyText}
-						</p>
+						<div
+							className="prose prose-lg max-w-none text-[var(--text)] [&_p]:leading-[1.9] [&_h2]:text-[var(--text)] [&_h3]:text-[var(--text)] [&_blockquote]:border-[var(--primary)] [&_a]:text-[var(--primary)]"
+							style={{ fontFamily: 'var(--font-heading)' }}
+							dangerouslySetInnerHTML={{ __html: storyText }}
+						/>
 					</div>
 				</section>
 			)}
