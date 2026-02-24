@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { api } from '@/lib/api/client'
 import { getImageUrl } from '@/lib/utils/image-url'
 import { RichTextEditor } from '@/components/ui/rich-text-editor'
@@ -88,6 +88,10 @@ export default function SiteEditorPage() {
 	const [isSaving, setIsSaving] = useState(false)
 	const [activeTab, setActiveTab] = useState<Tab>('apparence')
 	const [toast, setToast] = useState<string | null>(null)
+	const [showPreview, setShowPreview] = useState(false)
+	const [previewDevice, setPreviewDevice] = useState<'mobile' | 'desktop'>('mobile')
+	const iframeRef = useRef<HTMLIFrameElement>(null)
+	const [previewKey, setPreviewKey] = useState(0)
 
 	// Form state
 	const [primaryColor, setPrimaryColor] = useState('#D4A574')
@@ -114,6 +118,8 @@ export default function SiteEditorPage() {
 	const [openSections, setOpenSections] = useState<Record<string, boolean>>({
 		hero: true,
 	})
+
+	const siteUrl = profile ? `/${profile.slug}` : null
 
 	const loadProfile = useCallback(async () => {
 		try {
@@ -181,6 +187,7 @@ export default function SiteEditorPage() {
 
 			showToast('Modifications enregistrees avec succes !')
 			await loadProfile()
+			setPreviewKey((k) => k + 1)
 		} catch (e) {
 			console.error(e)
 			showToast('Erreur lors de la sauvegarde')
@@ -337,9 +344,95 @@ export default function SiteEditorPage() {
 
 	const marqueeItems = siteConfig.marqueeItems || DEFAULT_MARQUEE
 
+	const refreshPreview = () => setPreviewKey((k) => k + 1)
+
 	return (
 		<div className="space-y-6">
-			<h1 className="text-3xl font-bold">Mon site</h1>
+			<div className="flex flex-wrap items-center justify-between gap-4">
+				<h1 className="text-3xl font-bold">Mon site</h1>
+				<div className="flex items-center gap-2">
+					{siteUrl && (
+						<a
+							href={siteUrl}
+							target="_blank"
+							rel="noopener noreferrer"
+							className="rounded-md border px-3 py-2 text-sm text-muted-foreground hover:bg-muted"
+						>
+							Ouvrir le site
+						</a>
+					)}
+					<button
+						type="button"
+						onClick={() => setShowPreview(!showPreview)}
+						className={`rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
+							showPreview
+								? 'border-primary bg-primary/10 text-primary'
+								: 'text-muted-foreground hover:bg-muted'
+						}`}
+					>
+						{showPreview ? 'Masquer' : 'Previsualiser'}
+					</button>
+				</div>
+			</div>
+
+			{/* Preview panel */}
+			{showPreview && siteUrl && (
+				<div className="rounded-lg border bg-muted/30 p-4">
+					<div className="mb-3 flex items-center justify-between">
+						<div className="flex items-center gap-1 rounded-md border bg-background p-0.5">
+							<button
+								type="button"
+								onClick={() => setPreviewDevice('mobile')}
+								className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${
+									previewDevice === 'mobile' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
+								}`}
+							>
+								Mobile
+							</button>
+							<button
+								type="button"
+								onClick={() => setPreviewDevice('desktop')}
+								className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${
+									previewDevice === 'desktop' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
+								}`}
+							>
+								Desktop
+							</button>
+						</div>
+						<button
+							type="button"
+							onClick={refreshPreview}
+							className="flex items-center gap-1.5 rounded-md border bg-background px-2.5 py-1 text-xs text-muted-foreground hover:text-foreground"
+						>
+							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+								<path d="M21 2v6h-6" />
+								<path d="M3 12a9 9 0 0115-6.7L21 8" />
+								<path d="M3 22v-6h6" />
+								<path d="M21 12a9 9 0 01-15 6.7L3 16" />
+							</svg>
+							Rafraichir
+						</button>
+					</div>
+					<div className="flex justify-center">
+						<div
+							className={`overflow-hidden rounded-lg border-2 border-foreground/20 bg-white shadow-lg transition-all duration-300 ${
+								previewDevice === 'mobile' ? 'h-[600px] w-[375px]' : 'h-[500px] w-full max-w-[900px]'
+							}`}
+						>
+							<iframe
+								ref={iframeRef}
+								key={previewKey}
+								src={siteUrl}
+								className="h-full w-full"
+								title="Previsualisation du site"
+							/>
+						</div>
+					</div>
+					<p className="mt-2 text-center text-xs text-muted-foreground">
+						Enregistrez vos modifications puis cliquez sur Rafraichir pour voir les changements
+					</p>
+				</div>
+			)}
 
 			{/* Tabs */}
 			<div className="flex gap-1 overflow-x-auto rounded-lg border bg-muted p-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
