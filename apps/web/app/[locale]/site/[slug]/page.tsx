@@ -3,6 +3,10 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useSiteProfile, useSiteBasePath, useSiteConfig } from './site-provider'
+import { useInlineEdit } from './components/inline-edit-provider'
+import { EditableText } from './components/editable-text'
+import { EditableImage } from './components/editable-image'
+import { EditableRichText } from './components/editable-rich-text'
 import { SectionTitle } from './components/section-title'
 import { getImageUrl } from '@/lib/utils/image-url'
 
@@ -35,6 +39,17 @@ export default function PatissierSitePage() {
 	const profile = useSiteProfile()
 	const basePath = useSiteBasePath()
 	const config = useSiteConfig()
+	const {
+		isEditing,
+		getConfigValue,
+		updateConfig,
+		description: editedDescription,
+		updateDescription,
+		heroImagePreview,
+		storyImagePreview,
+		setHeroImageFile,
+		setStoryImageFile,
+	} = useInlineEdit()
 	const [creations, setCreations] = useState<Creation[]>([])
 
 	useEffect(() => {
@@ -55,15 +70,15 @@ export default function PatissierSitePage() {
 	}, [profile.slug])
 
 	const ctaLabel =
-		config.heroCtaLabel ||
+		getConfigValue('heroCtaLabel') ||
 		(profile.ordersEnabled ? 'Commander' : 'Voir nos cr\u00e9ations')
 	const ctaHref = profile.ordersEnabled
 		? `${basePath}/commandes`
 		: `${basePath}/creations`
 
-	const storyText = config.storyText || profile.description
-	const storyImage = getImageUrl(profile.storyImageUrl) || getImageUrl(profile.heroImageUrl)
-	const heroImage = getImageUrl(profile.heroImageUrl)
+	const storyText = getConfigValue('storyText') || (editedDescription !== null ? editedDescription : profile.description)
+	const storyImage = storyImagePreview || getImageUrl(profile.storyImageUrl) || getImageUrl(profile.heroImageUrl)
+	const heroImage = heroImagePreview || getImageUrl(profile.heroImageUrl)
 
 	return (
 		<>
@@ -103,17 +118,29 @@ export default function PatissierSitePage() {
 					}}
 				/>
 
+				{/* Hero image edit overlay */}
+				{isEditing && (
+					<EditableImage
+						src={heroImage}
+						previewSrc={null}
+						onFileSelect={setHeroImageFile}
+						className="absolute inset-0 h-full w-full object-cover"
+						fallback={null}
+					/>
+				)}
+
 				{/* Hero content */}
 				<div
 					className="relative z-10 max-w-[800px] px-6"
 					style={{ animation: 'fadeInUp 1s ease-out' }}
 				>
-					<p
+					<EditableText
+						value={getConfigValue('heroSubtitle') as string}
+						onChange={(v) => updateConfig('heroSubtitle', v)}
+						as="p"
 						className="mb-6 text-[13px] uppercase tracking-[6px] text-[var(--gold-light)]"
 						style={{ fontFamily: 'var(--font-body)' }}
-					>
-						{config.heroSubtitle}
-					</p>
+					/>
 
 					<h1
 						className="mb-4 font-light leading-[1.1] text-white"
@@ -122,13 +149,14 @@ export default function PatissierSitePage() {
 						{profile.businessName}
 					</h1>
 
-					{profile.description && (
-						<p
+					{(profile.description || isEditing) && (
+						<EditableText
+							value={editedDescription || profile.description || ''}
+							onChange={updateDescription}
+							as="p"
 							className="mx-auto mb-12 max-w-xl font-light text-white/70 italic"
 							style={{ fontSize: 'clamp(18px, 3vw, 26px)', fontFamily: 'var(--font-heading)' }}
-						>
-							{profile.description}
-						</p>
+						/>
 					)}
 
 					<Link
@@ -136,48 +164,80 @@ export default function PatissierSitePage() {
 						className="group inline-block border-2 border-[var(--gold)] bg-transparent px-12 py-4 text-xs font-normal uppercase tracking-[4px] text-[var(--gold)] transition-all duration-400 hover:bg-[var(--gold)] hover:text-[var(--dark)]"
 						style={{ fontFamily: 'var(--font-body)' }}
 					>
-						{ctaLabel}
+						{isEditing ? (
+							<EditableText
+								value={getConfigValue('heroCtaLabel') as string || (profile.ordersEnabled ? 'Commander' : 'Voir nos cr\u00e9ations')}
+								onChange={(v) => updateConfig('heroCtaLabel', v)}
+								as="span"
+							/>
+						) : (
+							ctaLabel
+						)}
 					</Link>
 				</div>
 
 				{/* Scroll indicator */}
-				<div
-					className="absolute bottom-10 left-1/2 -translate-x-1/2"
-					style={{ animation: 'float 2s ease-in-out infinite' }}
-				>
-					<div className="flex h-10 w-6 items-start justify-center rounded-xl border-2 border-[var(--gold)]/50 pt-2">
-						<div className="h-2.5 w-[3px] rounded-sm bg-[var(--gold)]" />
+				{!isEditing && (
+					<div
+						className="absolute bottom-10 left-1/2 -translate-x-1/2"
+						style={{ animation: 'float 2s ease-in-out infinite' }}
+					>
+						<div className="flex h-10 w-6 items-start justify-center rounded-xl border-2 border-[var(--gold)]/50 pt-2">
+							<div className="h-2.5 w-[3px] rounded-sm bg-[var(--gold)]" />
+						</div>
 					</div>
-				</div>
+				)}
 			</section>
 
 			{/* ══════════════════════════════════════════════════════════
 			     STORY SECTION - "Notre histoire"
 			     ══════════════════════════════════════════════════════════ */}
-			{config.showStorySection && storyText && (
+			{(config.showStorySection && storyText) && (
 				<section id="notre-histoire" className="mx-auto grid max-w-[1100px] items-center gap-16 px-6 py-24 md:grid-cols-2">
 					{/* Image */}
 					<div className="relative overflow-hidden rounded-xl" style={{ aspectRatio: '3/4' }}>
-						{storyImage ? (
-							<img
-								src={storyImage}
-								alt={profile.businessName}
-								className="h-full w-full object-cover"
-							/>
-						) : (
-							<div className="h-full w-full bg-gradient-to-br from-[var(--gold)]/20 to-[var(--cream-dark)]" />
-						)}
+						<EditableImage
+							src={storyImagePreview || getImageUrl(profile.storyImageUrl) || getImageUrl(profile.heroImageUrl)}
+							previewSrc={storyImagePreview}
+							onFileSelect={setStoryImageFile}
+							alt={profile.businessName}
+							className="h-full w-full object-cover"
+							fallback={
+								<div className="h-full w-full bg-gradient-to-br from-[var(--gold)]/20 to-[var(--cream-dark)]" />
+							}
+						/>
 						{/* Gold inner border overlay */}
-						<div className="absolute inset-0 m-4 rounded-xl border-2 border-[var(--gold)]/50" />
+						<div className="pointer-events-none absolute inset-0 m-4 rounded-xl border-2 border-[var(--gold)]/50" />
 					</div>
 
 					{/* Text */}
 					<div>
-						<SectionTitle subtitle={config.storySubtitle} title={config.storyTitle} />
-						<div
+						{isEditing ? (
+							<div className="mb-8">
+								<EditableText
+									value={getConfigValue('storySubtitle') as string}
+									onChange={(v) => updateConfig('storySubtitle', v)}
+									as="p"
+									className="mb-3 text-[12px] uppercase tracking-[5px] text-[var(--gold)]"
+									style={{ fontFamily: 'var(--font-body)' }}
+								/>
+								<EditableText
+									value={getConfigValue('storyTitle') as string}
+									onChange={(v) => updateConfig('storyTitle', v)}
+									as="h2"
+									className="text-[clamp(32px,5vw,48px)] font-light leading-[1.15] text-[var(--dark)]"
+									style={{ fontFamily: 'var(--font-heading)' }}
+								/>
+								<div className="mt-4 h-[3px] w-16 bg-[var(--gold)]" />
+							</div>
+						) : (
+							<SectionTitle subtitle={getConfigValue('storySubtitle') as string} title={getConfigValue('storyTitle') as string} />
+						)}
+						<EditableRichText
+							value={storyText}
+							onChange={(html) => updateConfig('storyText', html)}
 							className="prose prose-lg max-w-none text-[var(--text)] [&_p]:leading-[1.9] [&_h2]:text-[var(--text)] [&_h3]:text-[var(--text)] [&_blockquote]:border-[var(--primary)] [&_a]:text-[var(--primary)]"
 							style={{ fontFamily: 'var(--font-heading)' }}
-							dangerouslySetInnerHTML={{ __html: storyText }}
 						/>
 					</div>
 				</section>
@@ -190,7 +250,7 @@ export default function PatissierSitePage() {
 				<div className="overflow-hidden bg-[var(--dark)] py-5">
 					<div
 						className="flex whitespace-nowrap"
-						style={{ animation: 'marquee-scroll 20s linear infinite' }}
+						style={{ animation: isEditing ? 'none' : 'marquee-scroll 20s linear infinite' }}
 					>
 						{[...config.marqueeItems, ...config.marqueeItems, ...config.marqueeItems].map(
 							(item, i) => (
@@ -214,7 +274,27 @@ export default function PatissierSitePage() {
 			     ══════════════════════════════════════════════════════════ */}
 			{config.showCreationsOnHomepage && creations.length > 0 && (
 				<section className="mx-auto max-w-[1200px] px-6 py-24">
-					<SectionTitle subtitle={config.creationsSubtitle} title={config.creationsTitle} />
+					{isEditing ? (
+						<div className="mb-12">
+							<EditableText
+								value={getConfigValue('creationsSubtitle') as string}
+								onChange={(v) => updateConfig('creationsSubtitle', v)}
+								as="p"
+								className="mb-3 text-center text-[12px] uppercase tracking-[5px] text-[var(--gold)]"
+								style={{ fontFamily: 'var(--font-body)' }}
+							/>
+							<EditableText
+								value={getConfigValue('creationsTitle') as string}
+								onChange={(v) => updateConfig('creationsTitle', v)}
+								as="h2"
+								className="text-center text-[clamp(32px,5vw,48px)] font-light leading-[1.15] text-[var(--dark)]"
+								style={{ fontFamily: 'var(--font-heading)' }}
+							/>
+							<div className="mx-auto mt-4 h-[3px] w-16 bg-[var(--gold)]" />
+						</div>
+					) : (
+						<SectionTitle subtitle={getConfigValue('creationsSubtitle') as string} title={getConfigValue('creationsTitle') as string} />
+					)}
 
 					<div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
 						{creations.map((creation, i) => {
@@ -301,20 +381,52 @@ export default function PatissierSitePage() {
 					}}
 				>
 					<div className="relative z-10 mx-auto max-w-[700px]">
-						<SectionTitle
-							subtitle={config.workshopsCtaSubtitle}
-							title={config.workshopsCtaTitle}
-							light
+						{isEditing ? (
+							<div className="mb-8">
+								<EditableText
+									value={getConfigValue('workshopsCtaSubtitle') as string}
+									onChange={(v) => updateConfig('workshopsCtaSubtitle', v)}
+									as="p"
+									className="mb-3 text-center text-[12px] uppercase tracking-[5px] text-[var(--gold)]"
+									style={{ fontFamily: 'var(--font-body)' }}
+								/>
+								<EditableText
+									value={getConfigValue('workshopsCtaTitle') as string}
+									onChange={(v) => updateConfig('workshopsCtaTitle', v)}
+									as="h2"
+									className="text-center text-[clamp(32px,5vw,48px)] font-light leading-[1.15] text-white"
+									style={{ fontFamily: 'var(--font-heading)' }}
+								/>
+								<div className="mx-auto mt-4 h-[3px] w-16 bg-[var(--gold)]" />
+							</div>
+						) : (
+							<SectionTitle
+								subtitle={getConfigValue('workshopsCtaSubtitle') as string}
+								title={getConfigValue('workshopsCtaTitle') as string}
+								light
+							/>
+						)}
+						<EditableText
+							value={getConfigValue('workshopsCtaDescription') as string}
+							onChange={(v) => updateConfig('workshopsCtaDescription', v)}
+							as="p"
+							className="mb-10 text-xl leading-[1.8] text-white/70"
+							style={{ fontFamily: 'var(--font-heading)' }}
 						/>
-						<p className="mb-10 text-xl leading-[1.8] text-white/70" style={{ fontFamily: 'var(--font-heading)' }}>
-							{config.workshopsCtaDescription}
-						</p>
 						<Link
 							href={`${basePath}/workshops`}
 							className="inline-block bg-[var(--gold)] px-12 py-4 text-xs font-semibold uppercase tracking-[4px] text-[var(--dark)] transition-all duration-400 hover:-translate-y-0.5 hover:bg-[var(--gold-light)]"
 							style={{ fontFamily: 'var(--font-body)' }}
 						>
-							{config.workshopsCtaLabel}
+							{isEditing ? (
+								<EditableText
+									value={getConfigValue('workshopsCtaLabel') as string}
+									onChange={(v) => updateConfig('workshopsCtaLabel', v)}
+									as="span"
+								/>
+							) : (
+								config.workshopsCtaLabel
+							)}
 						</Link>
 					</div>
 				</section>

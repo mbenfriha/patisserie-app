@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, useCallback, type ReactNode } from 'react'
 import { SiteNavbar } from './components/site-navbar'
 import { SiteFooter } from './components/site-footer'
+import { InlineEditProvider } from './components/inline-edit-provider'
 
 export interface SiteConfig {
 	heroSubtitle?: string
@@ -143,7 +144,7 @@ export function useSiteConfig(): Required<SiteConfig> {
 }
 
 export function SiteProvider({
-	profile,
+	profile: initialProfile,
 	slug,
 	children,
 }: {
@@ -151,6 +152,7 @@ export function SiteProvider({
 	slug: string
 	children: ReactNode
 }) {
+	const [profile, setProfile] = useState(initialProfile)
 	const [basePath, setBasePath] = useState(`/${slug}`)
 	const fontPreset = profile.siteConfig?.fontPreset || 'classic'
 	const fonts = FONT_PRESETS[fontPreset] || FONT_PRESETS.classic
@@ -188,9 +190,11 @@ export function SiteProvider({
 					} as React.CSSProperties
 				}
 			>
-				<SiteNavbar />
-				<main>{children}</main>
-				<SiteFooter />
+				<InlineEditProvider onProfileUpdate={setProfile}>
+					<SiteNavbar />
+					<main>{children}</main>
+					<SiteFooter />
+				</InlineEditProvider>
 			</div>
 		</SiteContext.Provider>
 	)
