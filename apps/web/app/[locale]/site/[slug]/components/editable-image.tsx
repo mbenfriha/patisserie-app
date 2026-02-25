@@ -14,6 +14,8 @@ interface EditableImageProps {
 	style?: CSSProperties
 	fallback?: ReactNode
 	cropAspect?: number
+	/** Render as a floating button overlay instead of wrapping the image */
+	overlay?: boolean
 }
 
 export function EditableImage({
@@ -26,6 +28,7 @@ export function EditableImage({
 	style,
 	fallback,
 	cropAspect = 16 / 9,
+	overlay = false,
 }: EditableImageProps) {
 	const { isEditing } = useInlineEdit()
 	const inputRef = useRef<HTMLInputElement>(null)
@@ -50,11 +53,9 @@ export function EditableImage({
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const file = e.target.files?.[0]
 		if (!file) return
-		// Open cropper with the selected file
 		const url = URL.createObjectURL(file)
 		setCropSrc(url)
 		setShowMenu(false)
-		// Reset input so re-selecting same file works
 		e.target.value = ''
 	}
 
@@ -82,6 +83,118 @@ export function EditableImage({
 		onDelete?.()
 	}
 
+	const dropdownMenu = showMenu && (
+		<div
+			ref={menuRef}
+			className="absolute z-30 overflow-hidden rounded-lg border border-white/20 bg-[#1A1A1A]/95 shadow-2xl backdrop-blur-xl"
+			style={overlay ? { top: '100%', right: 0, marginTop: 8 } : { left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}
+			onClick={(e) => e.stopPropagation()}
+		>
+			<button
+				type="button"
+				onClick={() => {
+					setShowMenu(false)
+					inputRef.current?.click()
+				}}
+				className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-white/90 transition-colors hover:bg-white/10"
+			>
+				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+					<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+					<polyline points="17 8 12 3 7 8" />
+					<line x1="12" y1="3" x2="12" y2="15" />
+				</svg>
+				Changer
+			</button>
+			{displaySrc && (
+				<button
+					type="button"
+					onClick={handleEditExisting}
+					className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-white/90 transition-colors hover:bg-white/10"
+				>
+					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+						<rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+						<line x1="9" y1="3" x2="9" y2="21" />
+						<line x1="15" y1="3" x2="15" y2="21" />
+						<line x1="3" y1="9" x2="21" y2="9" />
+						<line x1="3" y1="15" x2="21" y2="15" />
+					</svg>
+					Recadrer
+				</button>
+			)}
+			{displaySrc && onDelete && (
+				<button
+					type="button"
+					onClick={handleDelete}
+					className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-red-400 transition-colors hover:bg-white/10"
+				>
+					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+						<polyline points="3 6 5 6 21 6" />
+						<path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+					</svg>
+					Supprimer
+				</button>
+			)}
+		</div>
+	)
+
+	const fileInput = (
+		<input
+			ref={inputRef}
+			type="file"
+			accept="image/jpeg,image/png,image/webp,image/avif"
+			className="hidden"
+			onChange={handleChange}
+		/>
+	)
+
+	const cropperModal = cropSrc && (
+		<ImageCropper
+			imageSrc={cropSrc}
+			aspect={cropAspect}
+			onCrop={handleCrop}
+			onCancel={handleCancelCrop}
+		/>
+	)
+
+	// ── Overlay mode: floating button in corner ──
+	if (overlay) {
+		if (!isEditing) return null
+
+		return (
+			<>
+				<div className="absolute right-4 top-4 z-20" style={{ position: 'absolute' }}>
+					<button
+						type="button"
+						onClick={(e) => {
+							e.stopPropagation()
+							setShowMenu(!showMenu)
+						}}
+						className="flex items-center gap-2 rounded-full border border-white/20 bg-[#1A1A1A]/80 px-3 py-2 text-xs font-medium text-white/90 shadow-lg backdrop-blur-sm transition-all hover:border-white/40 hover:bg-[#1A1A1A]/95"
+					>
+						<svg
+							width="14"
+							height="14"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							strokeWidth="1.5"
+							strokeLinecap="round"
+							strokeLinejoin="round"
+						>
+							<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+							<circle cx="12" cy="13" r="4" />
+						</svg>
+						Image
+					</button>
+					{dropdownMenu}
+				</div>
+				{fileInput}
+				{cropperModal}
+			</>
+		)
+	}
+
+	// ── Wrap mode: wraps the image with hover overlay ──
 	if (!isEditing) {
 		if (!displaySrc) return <>{fallback}</>
 		return <img src={displaySrc} alt={alt} className={className} style={style} />
@@ -119,76 +232,10 @@ export function EditableImage({
 					</div>
 				</div>
 
-				{/* Dropdown menu */}
-				{showMenu && (
-					<div
-						ref={menuRef}
-						className="absolute left-1/2 top-1/2 z-30 -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-lg border border-white/20 bg-[#1A1A1A]/95 shadow-2xl backdrop-blur-xl"
-						onClick={(e) => e.stopPropagation()}
-					>
-						<button
-							type="button"
-							onClick={() => {
-								setShowMenu(false)
-								inputRef.current?.click()
-							}}
-							className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-white/90 transition-colors hover:bg-white/10"
-						>
-							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-								<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-								<polyline points="17 8 12 3 7 8" />
-								<line x1="12" y1="3" x2="12" y2="15" />
-							</svg>
-							Changer
-						</button>
-						{displaySrc && (
-							<button
-								type="button"
-								onClick={handleEditExisting}
-								className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-white/90 transition-colors hover:bg-white/10"
-							>
-								<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-									<path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-									<line x1="3" y1="6" x2="21" y2="6" />
-									<path d="M16 10a4 4 0 0 1-8 0" />
-								</svg>
-								Recadrer
-							</button>
-						)}
-						{displaySrc && onDelete && (
-							<button
-								type="button"
-								onClick={handleDelete}
-								className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-red-400 transition-colors hover:bg-white/10"
-							>
-								<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-									<polyline points="3 6 5 6 21 6" />
-									<path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-								</svg>
-								Supprimer
-							</button>
-						)}
-					</div>
-				)}
-
-				<input
-					ref={inputRef}
-					type="file"
-					accept="image/jpeg,image/png,image/webp,image/avif"
-					className="hidden"
-					onChange={handleChange}
-				/>
+				{dropdownMenu}
+				{fileInput}
 			</div>
-
-			{/* Cropper modal */}
-			{cropSrc && (
-				<ImageCropper
-					imageSrc={cropSrc}
-					aspect={cropAspect}
-					onCrop={handleCrop}
-					onCancel={handleCancelCrop}
-				/>
-			)}
+			{cropperModal}
 		</>
 	)
 }

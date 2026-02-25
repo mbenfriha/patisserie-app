@@ -122,18 +122,15 @@ export default function PatissierSitePage() {
 					}}
 				/>
 
-				{/* Hero image edit overlay */}
-				{isEditing && (
-					<EditableImage
-						src={heroImage}
-						previewSrc={null}
-						onFileSelect={setHeroImageFile}
-						onDelete={deleteHeroImage}
-						cropAspect={16 / 9}
-						className="absolute inset-0 h-full w-full object-cover"
-						fallback={null}
-					/>
-				)}
+				{/* Hero image edit button */}
+				<EditableImage
+					src={heroImage}
+					previewSrc={null}
+					onFileSelect={setHeroImageFile}
+					onDelete={deleteHeroImage}
+					cropAspect={16 / 9}
+					overlay
+				/>
 
 				{/* Hero content */}
 				<div
