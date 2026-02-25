@@ -929,6 +929,20 @@ export default function SiteEditorPage() {
 								checked={ordersEnabled}
 								onChange={setOrdersEnabled}
 							/>
+							{ordersEnabled && (
+								<div className="ml-6 space-y-4 border-l pl-4">
+									<ToggleRow
+										label="Onglet Catalogue"
+										checked={siteConfig.showCatalogueTab !== false}
+										onChange={(v) => updateSiteConfigField('showCatalogueTab', v)}
+									/>
+									<ToggleRow
+										label="Onglet Sur-mesure"
+										checked={siteConfig.showCustomOrderTab !== false}
+										onChange={(v) => updateSiteConfigField('showCustomOrderTab', v)}
+									/>
+								</div>
+							)}
 						</div>
 					</section>
 				)}

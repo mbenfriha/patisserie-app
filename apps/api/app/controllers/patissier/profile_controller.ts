@@ -234,7 +234,7 @@ export default class ProfileController {
 		const profile = await getActiveProfile(ctx)
 
 		const image = request.file('image', {
-			size: '2mb',
+			size: '20mb',
 			extnames: ['jpg', 'jpeg', 'png', 'webp', 'avif'],
 		})
 

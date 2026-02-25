@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useSiteProfile, useSiteBasePath } from '../site-provider'
+import { useEffect, useState, useMemo } from 'react'
+import { useSiteProfile, useSiteBasePath, useSiteConfig } from '../site-provider'
 import { SectionTitle } from '../components/section-title'
 import { CatalogueTab } from './catalogue-tab'
 import { DevisForm } from './devis-form'
@@ -20,10 +20,20 @@ type Product = {
 export default function OrderPage() {
 	const profile = useSiteProfile()
 	const basePath = useSiteBasePath()
+	const config = useSiteConfig()
+
+	const showCatalogue = config.showCatalogueTab !== false
+	const showCustom = config.showCustomOrderTab !== false
+	const showBothTabs = showCatalogue && showCustom
+
+	const defaultTab = useMemo<'catalogue' | 'custom'>(
+		() => (showCatalogue ? 'catalogue' : 'custom'),
+		[showCatalogue]
+	)
 
 	const [products, setProducts] = useState<Product[]>([])
 	const [loading, setLoading] = useState(true)
-	const [activeTab, setActiveTab] = useState<'catalogue' | 'custom'>('catalogue')
+	const [activeTab, setActiveTab] = useState<'catalogue' | 'custom'>(defaultTab)
 	const [success, setSuccess] = useState(false)
 
 	useEffect(() => {
@@ -205,38 +215,40 @@ export default function OrderPage() {
 			</section>
 
 			{/* ── Tab Switcher ───────────────────────────────────────── */}
-			<div className="border-b border-[var(--gold)]/10 bg-white/60 backdrop-blur-sm">
-				<div className="mx-auto flex max-w-[1200px] items-center justify-center gap-0 px-6">
-					<button
-						type="button"
-						onClick={() => setActiveTab('catalogue')}
-						className="relative px-8 py-5 text-xs font-semibold uppercase tracking-[3px] transition-all duration-300"
-						style={{
-							fontFamily: "'Josefin Sans', sans-serif",
-							color: activeTab === 'catalogue' ? 'var(--gold)' : 'rgba(26,26,26,0.4)',
-							borderBottom: activeTab === 'catalogue' ? '2px solid var(--gold)' : '2px solid transparent',
-						}}
-					>
-						Catalogue
-					</button>
-					<button
-						type="button"
-						onClick={() => setActiveTab('custom')}
-						className="relative px-8 py-5 text-xs font-semibold uppercase tracking-[3px] transition-all duration-300"
-						style={{
-							fontFamily: "'Josefin Sans', sans-serif",
-							color: activeTab === 'custom' ? 'var(--gold)' : 'rgba(26,26,26,0.4)',
-							borderBottom: activeTab === 'custom' ? '2px solid var(--gold)' : '2px solid transparent',
-						}}
-					>
-						Sur-mesure
-					</button>
+			{showBothTabs && (
+				<div className="border-b border-[var(--gold)]/10 bg-white/60 backdrop-blur-sm">
+					<div className="mx-auto flex max-w-[1200px] items-center justify-center gap-0 px-6">
+						<button
+							type="button"
+							onClick={() => setActiveTab('catalogue')}
+							className="relative px-8 py-5 text-xs font-semibold uppercase tracking-[3px] transition-all duration-300"
+							style={{
+								fontFamily: "'Josefin Sans', sans-serif",
+								color: activeTab === 'catalogue' ? 'var(--gold)' : 'rgba(26,26,26,0.4)',
+								borderBottom: activeTab === 'catalogue' ? '2px solid var(--gold)' : '2px solid transparent',
+							}}
+						>
+							Catalogue
+						</button>
+						<button
+							type="button"
+							onClick={() => setActiveTab('custom')}
+							className="relative px-8 py-5 text-xs font-semibold uppercase tracking-[3px] transition-all duration-300"
+							style={{
+								fontFamily: "'Josefin Sans', sans-serif",
+								color: activeTab === 'custom' ? 'var(--gold)' : 'rgba(26,26,26,0.4)',
+								borderBottom: activeTab === 'custom' ? '2px solid var(--gold)' : '2px solid transparent',
+							}}
+						>
+							Sur-mesure
+						</button>
+					</div>
 				</div>
-			</div>
+			)}
 
 			{/* ── Content ────────────────────────────────────────────── */}
 			<section className="mx-auto max-w-[1200px] px-6 py-16">
-				{activeTab === 'catalogue' && (
+				{showCatalogue && activeTab === 'catalogue' && (
 					<CatalogueTab
 						products={products}
 						slug={profile.slug}
@@ -244,7 +256,7 @@ export default function OrderPage() {
 					/>
 				)}
 
-				{activeTab === 'custom' && (
+				{showCustom && activeTab === 'custom' && (
 					<DevisForm
 						slug={profile.slug}
 						onSuccess={() => setSuccess(true)}

@@ -22,6 +22,8 @@ export interface SiteConfig {
 	showMarquee?: boolean
 	showCreationsOnHomepage?: boolean
 	showWorkshopsCta?: boolean
+	showCatalogueTab?: boolean
+	showCustomOrderTab?: boolean
 	fontPreset?: 'classic' | 'modern' | 'elegant' | 'playful'
 }
 
@@ -80,6 +82,8 @@ const DEFAULT_SITE_CONFIG: Required<SiteConfig> = {
 	showMarquee: true,
 	showCreationsOnHomepage: true,
 	showWorkshopsCta: true,
+	showCatalogueTab: true,
+	showCustomOrderTab: true,
 	fontPreset: 'classic',
 }
 
