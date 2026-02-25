@@ -52,6 +52,10 @@ export interface PatissierProfile {
 	secondaryColor: string
 	fontFamily: string
 	heroImageUrl: string | null
+	creationsHeroImageUrl: string | null
+	workshopsHeroImageUrl: string | null
+	productsHeroImageUrl: string | null
+	ordersHeroImageUrl: string | null
 	storyImageUrl: string | null
 	siteConfig: SiteConfig
 	plan: string
