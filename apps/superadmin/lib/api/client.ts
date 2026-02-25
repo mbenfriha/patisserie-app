@@ -21,7 +21,8 @@ class ApiClient {
 	}
 
 	private buildUrl(path: string, params?: Record<string, string>): string {
-		const url = new URL(`${this.baseUrl}${path}`)
+		const base = this.baseUrl.replace(/\/+$/, '')
+		const url = new URL(`${base}${path}`)
 		if (params) {
 			Object.entries(params).forEach(([key, value]) => {
 				url.searchParams.append(key, value)

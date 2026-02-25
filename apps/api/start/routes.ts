@@ -3,6 +3,9 @@ import { middleware } from '#start/kernel'
 import { throttle } from '#middleware/throttle_middleware'
 
 // Health check
+router.get('/', async ({ response }) => {
+	return response.ok({ status: 'ok', name: 'Patissio API' })
+})
 router.get('/health', async ({ response }) => {
 	return response.ok({ status: 'ok', timestamp: new Date().toISOString() })
 })
