@@ -1,10 +1,11 @@
 'use client'
 
-import { type CSSProperties } from 'react'
+import { type CSSProperties, useCallback, useState } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
 import TextAlign from '@tiptap/extension-text-align'
+import Link from '@tiptap/extension-link'
 import { useInlineEdit } from './inline-edit-provider'
 
 interface EditableRichTextProps {
@@ -27,12 +28,21 @@ export function EditableRichText({ value, onChange, className, style }: Editable
 }
 
 function InlineRichEditor({ value, onChange, className, style }: EditableRichTextProps) {
+	const [linkInput, setLinkInput] = useState<{ show: boolean; url: string }>({
+		show: false,
+		url: '',
+	})
+
 	const editor = useEditor({
 		immediatelyRender: false,
 		extensions: [
 			StarterKit,
 			Underline,
 			TextAlign.configure({ types: ['heading', 'paragraph'] }),
+			Link.configure({
+				openOnClick: false,
+				HTMLAttributes: { target: '_blank', rel: 'noopener noreferrer' },
+			}),
 		],
 		content: value,
 		onUpdate: ({ editor: e }) => {
@@ -44,6 +54,29 @@ function InlineRichEditor({ value, onChange, className, style }: EditableRichTex
 			},
 		},
 	})
+
+	const openLinkInput = useCallback(() => {
+		if (!editor) return
+		const existing = editor.getAttributes('link').href ?? ''
+		setLinkInput({ show: true, url: existing })
+	}, [editor])
+
+	const applyLink = useCallback(() => {
+		if (!editor) return
+		const url = linkInput.url.trim()
+		if (url) {
+			editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
+		} else {
+			editor.chain().focus().extendMarkRange('link').unsetLink().run()
+		}
+		setLinkInput({ show: false, url: '' })
+	}, [editor, linkInput.url])
+
+	const removeLink = useCallback(() => {
+		if (!editor) return
+		editor.chain().focus().extendMarkRange('link').unsetLink().run()
+		setLinkInput({ show: false, url: '' })
+	}, [editor])
 
 	if (!editor) return null
 
@@ -109,7 +142,43 @@ function InlineRichEditor({ value, onChange, className, style }: EditableRichTex
 						<path d="M4.583 17.321C3.553 16.227 3 15 3 13.011c0-3.5 2.457-6.637 6.03-8.188l.893 1.378c-3.335 1.804-3.987 4.145-4.247 5.621.537-.278 1.24-.375 1.929-.311 1.804.167 3.226 1.648 3.226 3.489a3.5 3.5 0 01-3.5 3.5c-1.073 0-2.099-.49-2.748-1.179zm10 0C13.553 16.227 13 15 13 13.011c0-3.5 2.457-6.637 6.03-8.188l.893 1.378c-3.335 1.804-3.987 4.145-4.247 5.621.537-.278 1.24-.375 1.929-.311 1.804.167 3.226 1.648 3.226 3.489a3.5 3.5 0 01-3.5 3.5c-1.073 0-2.099-.49-2.748-1.179z" />
 					</svg>
 				</MiniBtn>
+				<Sep />
+				<MiniBtn active={editor.isActive('link')} onClick={openLinkInput}>
+					<svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+						<path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m9.86-2.062a4.5 4.5 0 00-1.242-7.244l-4.5-4.5a4.5 4.5 0 00-6.364 6.364L4.25 8.81" />
+					</svg>
+				</MiniBtn>
 			</div>
+
+			{/* Link input popover */}
+			{linkInput.show && (
+				<div className="absolute -top-[5.5rem] left-0 z-20 flex items-center gap-1 rounded-lg border border-white/10 bg-[#1A1A1A]/95 px-2 py-1.5 shadow-xl backdrop-blur-sm">
+					<input
+						type="url"
+						value={linkInput.url}
+						onChange={(e) => setLinkInput((s) => ({ ...s, url: e.target.value }))}
+						onKeyDown={(e) => {
+							if (e.key === 'Enter') applyLink()
+							if (e.key === 'Escape') setLinkInput({ show: false, url: '' })
+						}}
+						placeholder="https://..."
+						autoFocus
+						className="h-6 w-48 rounded border border-white/20 bg-transparent px-2 text-[11px] text-white placeholder:text-white/40 focus:outline-none focus:border-[var(--gold)]"
+					/>
+					<MiniBtn onClick={applyLink}>
+						<svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+							<path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+						</svg>
+					</MiniBtn>
+					{editor.isActive('link') && (
+						<MiniBtn onClick={removeLink}>
+							<svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+								<path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+							</svg>
+						</MiniBtn>
+					)}
+				</div>
+			)}
 
 			{/* Editor with edit indicator */}
 			<div className="outline-2 outline-dashed outline-[var(--gold)]/30 outline-offset-4 transition-all hover:outline-[var(--gold)]/50 focus-within:outline-[var(--gold)]/70 focus-within:outline-solid rounded">

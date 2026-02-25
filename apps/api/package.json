@@ -23,7 +23,8 @@
     "#config/*": "./config/*.js",
     "#start/*": "./start/*.js",
     "#utils/*": "./app/utils/*.js",
-    "#types/*": "./types/*.js"
+    "#types/*": "./types/*.js",
+    "#helpers/*": "./app/helpers/*.js"
   },
   "dependencies": {
     "@adonisjs/auth": "^9.5.1",
