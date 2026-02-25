@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState, useCallback, type ReactNode } from 'react'
+import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react'
 import { useAuth } from '@/lib/providers/auth-provider'
 import { api } from '@/lib/api/client'
 import { useSiteProfile, useSiteConfig, type SiteConfig, type PatissierProfile } from '../site-provider'
@@ -44,9 +44,26 @@ export function InlineEditProvider({
 	const profile = useSiteProfile()
 	const config = useSiteConfig()
 
-	const isOwner = !!user && user.role === 'patissier' && user.profile?.slug === profile.slug
+	const isOwner =
+		!!user &&
+		((user.role === 'patissier' && user.profile?.slug === profile.slug) ||
+			(user.role === 'superadmin' && profile.allowSupportAccess))
+
+	const isSuperadminSupport = !!user && user.role === 'superadmin' && profile.allowSupportAccess
 
 	const [isEditing, setIsEditing] = useState(false)
+
+	// Set support slug header when superadmin enters edit mode
+	useEffect(() => {
+		if (isEditing && isSuperadminSupport) {
+			api.setSupportSlug(profile.slug)
+		} else {
+			api.setSupportSlug(null)
+		}
+		return () => {
+			api.setSupportSlug(null)
+		}
+	}, [isEditing, isSuperadminSupport, profile.slug])
 	const [isSaving, setIsSaving] = useState(false)
 	const [toast, setToast] = useState('')
 	const [editedConfig, setEditedConfig] = useState<Partial<SiteConfig>>({})
@@ -178,7 +195,7 @@ export function InlineEditProvider({
 			}}
 		>
 			{children}
-			{isOwner && <EditToolbar />}
+			{isOwner && <EditToolbar isSupportMode={isSuperadminSupport} />}
 
 			{toast && (
 				<div className="fixed bottom-20 left-1/2 z-[110] -translate-x-1/2 rounded-lg bg-[#1A1A1A] px-4 py-2.5 text-sm text-white shadow-xl">
@@ -189,7 +206,7 @@ export function InlineEditProvider({
 	)
 }
 
-function EditToolbar() {
+function EditToolbar({ isSupportMode }: { isSupportMode: boolean }) {
 	const { isEditing, toggleEdit, save, cancel, isSaving, hasChanges } = useInlineEdit()
 
 	return (
@@ -239,7 +256,7 @@ function EditToolbar() {
 						<path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
 						<path d="m15 5 4 4" />
 					</svg>
-					Modifier la page
+					{isSupportMode ? 'Mode assistance' : 'Modifier la page'}
 				</button>
 			)}
 		</div>

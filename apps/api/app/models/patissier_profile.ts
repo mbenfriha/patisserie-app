@@ -154,6 +154,9 @@ export default class PatissierProfile extends BaseModel {
 	@column()
 	declare defaultDepositPercent: number
 
+	@column()
+	declare allowSupportAccess: boolean
+
 	@column.dateTime({ autoCreate: true })
 	declare createdAt: DateTime
 

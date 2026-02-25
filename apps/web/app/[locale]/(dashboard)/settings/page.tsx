@@ -159,6 +159,44 @@ export default function SettingsPage() {
 				<section className="rounded-lg border p-6">
 					<div className="flex items-start justify-between">
 						<div>
+							<h2 className="text-xl font-semibold">Assistance</h2>
+							<p className="mt-2 text-sm text-muted-foreground">
+								Autorisez l'equipe Patissio a acceder a votre site pour vous aider a le configurer.
+								Vous pouvez desactiver cet acces a tout moment.
+							</p>
+						</div>
+						{profile?.allowSupportAccess && (
+							<span className="shrink-0 rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-800">
+								Actif
+							</span>
+						)}
+					</div>
+					<div className="mt-4">
+						<label className="flex cursor-pointer items-center gap-3">
+							<input
+								type="checkbox"
+								checked={profile?.allowSupportAccess ?? false}
+								onChange={async (e) => {
+									const checked = e.target.checked
+									try {
+										await api.patch('/patissier/profile', { allowSupportAccess: checked })
+										setProfile((p: any) => ({ ...p, allowSupportAccess: checked }))
+									} catch (err) {
+										console.error(err)
+									}
+								}}
+								className="h-4 w-4 rounded border"
+							/>
+							<span className="text-sm font-medium">
+								Autoriser l'acces au support Patissio
+							</span>
+						</label>
+					</div>
+				</section>
+
+				<section className="rounded-lg border p-6">
+					<div className="flex items-start justify-between">
+						<div>
 							<h2 className="text-xl font-semibold">Paiements - Stripe Connect</h2>
 							<p className="mt-2 text-sm text-muted-foreground">
 								{profile?.stripeOnboardingComplete

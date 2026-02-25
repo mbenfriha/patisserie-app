@@ -6,9 +6,14 @@ interface RequestOptions extends RequestInit {
 
 class ApiClient {
 	private baseUrl: string
+	private supportSlug: string | null = null
 
 	constructor(baseUrl: string) {
 		this.baseUrl = baseUrl
+	}
+
+	setSupportSlug(slug: string | null) {
+		this.supportSlug = slug
 	}
 
 	private getHeaders(): HeadersInit {
@@ -21,6 +26,10 @@ class ApiClient {
 			if (token) {
 				headers['Authorization'] = `Bearer ${token}`
 			}
+		}
+
+		if (this.supportSlug) {
+			headers['X-Support-Slug'] = this.supportSlug
 		}
 
 		return headers
@@ -93,6 +102,10 @@ class ApiClient {
 			if (token) {
 				headers['Authorization'] = `Bearer ${token}`
 			}
+		}
+
+		if (this.supportSlug) {
+			headers['X-Support-Slug'] = this.supportSlug
 		}
 
 		const response = await fetch(url, {

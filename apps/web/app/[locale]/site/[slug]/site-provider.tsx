@@ -50,6 +50,7 @@ export interface PatissierProfile {
 	plan: string
 	ordersEnabled: boolean
 	workshopsEnabled: boolean
+	allowSupportAccess: boolean
 }
 
 const DEFAULT_SITE_CONFIG: Required<SiteConfig> = {

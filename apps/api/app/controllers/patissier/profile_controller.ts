@@ -1,6 +1,7 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import PatissierProfile from '#models/patissier_profile'
 import StorageService from '#services/storage_service'
+import { getActiveProfile } from '#helpers/get_active_profile'
 
 const storage = new StorageService()
 
@@ -15,9 +16,9 @@ export default class ProfileController {
 		})
 	}
 
-	async update({ auth, request, response }: HttpContext) {
-		const user = auth.user!
-		const profile = await PatissierProfile.findByOrFail('userId', user.id)
+	async update(ctx: HttpContext) {
+		const { request, response } = ctx
+		const profile = await getActiveProfile(ctx)
 
 		const data = request.only([
 			'businessName',
@@ -31,6 +32,7 @@ export default class ProfileController {
 			'operatingHours',
 			'acceptsCustomOrders',
 			'defaultDepositPercent',
+			'allowSupportAccess',
 		])
 
 		profile.merge(data)
@@ -126,9 +128,9 @@ export default class ProfileController {
 		})
 	}
 
-	async updateSite({ auth, request, response }: HttpContext) {
-		const user = auth.user!
-		const profile = await PatissierProfile.findByOrFail('userId', user.id)
+	async updateSite(ctx: HttpContext) {
+		const { request, response } = ctx
+		const profile = await getActiveProfile(ctx)
 
 		const data = request.only([
 			'primaryColor',
@@ -150,9 +152,9 @@ export default class ProfileController {
 		})
 	}
 
-	async uploadHeroImage({ auth, request, response }: HttpContext) {
-		const user = auth.user!
-		const profile = await PatissierProfile.findByOrFail('userId', user.id)
+	async uploadHeroImage(ctx: HttpContext) {
+		const { request, response } = ctx
+		const profile = await getActiveProfile(ctx)
 
 		const image = request.file('image', {
 			size: '20mb',
@@ -213,9 +215,9 @@ export default class ProfileController {
 		})
 	}
 
-	async uploadStoryImage({ auth, request, response }: HttpContext) {
-		const user = auth.user!
-		const profile = await PatissierProfile.findByOrFail('userId', user.id)
+	async uploadStoryImage(ctx: HttpContext) {
+		const { request, response } = ctx
+		const profile = await getActiveProfile(ctx)
 
 		const image = request.file('image', {
 			size: '2mb',
