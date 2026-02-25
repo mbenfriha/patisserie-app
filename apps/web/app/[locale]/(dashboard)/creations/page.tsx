@@ -110,7 +110,6 @@ export default function CreationsPage() {
 	}
 
 	const handleSave = async () => {
-		if (!form.title.trim() && !editingId && !form.description) return
 		setSaving(true)
 		try {
 			const body = {

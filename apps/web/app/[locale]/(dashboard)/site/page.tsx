@@ -23,6 +23,8 @@ interface SiteConfig {
 	showMarquee?: boolean
 	showCreationsOnHomepage?: boolean
 	showWorkshopsCta?: boolean
+	showCatalogueTab?: boolean
+	showCustomOrderTab?: boolean
 	fontPreset?: 'classic' | 'modern' | 'elegant' | 'playful'
 }
 
