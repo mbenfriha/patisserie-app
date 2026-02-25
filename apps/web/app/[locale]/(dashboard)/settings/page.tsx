@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { Pencil, Check, X } from 'lucide-react'
 import { useAuth } from '@/lib/providers/auth-provider'
 import { api } from '@/lib/api/client'
 
@@ -13,6 +14,27 @@ export default function SettingsPage() {
 	const [isConnecting, setIsConnecting] = useState(false)
 	const [stripeStatus, setStripeStatus] = useState<string | null>(null)
 	const callbackHandled = useRef(false)
+	const [isEditingName, setIsEditingName] = useState(false)
+	const [editedName, setEditedName] = useState('')
+	const [isSavingName, setIsSavingName] = useState(false)
+
+	const handleSaveName = async () => {
+		const trimmed = editedName.trim()
+		if (!trimmed || trimmed === profile?.businessName) {
+			setIsEditingName(false)
+			return
+		}
+		setIsSavingName(true)
+		try {
+			await api.patch('/patissier/profile', { businessName: trimmed })
+			setProfile((p: any) => ({ ...p, businessName: trimmed }))
+			setIsEditingName(false)
+		} catch (err) {
+			console.error(err)
+		} finally {
+			setIsSavingName(false)
+		}
+	}
 
 	const loadProfile = useCallback(() => {
 		api
@@ -113,7 +135,52 @@ export default function SettingsPage() {
 					<div className="mt-4 grid gap-4 md:grid-cols-2">
 						<div>
 							<label className="text-sm font-medium">Nom de la pâtisserie</label>
-							<p className="mt-1 text-sm">{profile?.businessName}</p>
+							{isEditingName ? (
+								<div className="mt-1 flex items-center gap-2">
+									<input
+										type="text"
+										value={editedName}
+										onChange={(e) => setEditedName(e.target.value)}
+										onKeyDown={(e) => {
+											if (e.key === 'Enter') handleSaveName()
+											if (e.key === 'Escape') setIsEditingName(false)
+										}}
+										autoFocus
+										disabled={isSavingName}
+										className="h-8 w-full rounded-md border border-input bg-background px-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50"
+									/>
+									<button
+										type="button"
+										onClick={handleSaveName}
+										disabled={isSavingName}
+										className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-green-600 hover:bg-green-50 disabled:opacity-50"
+									>
+										<Check className="h-4 w-4" />
+									</button>
+									<button
+										type="button"
+										onClick={() => setIsEditingName(false)}
+										disabled={isSavingName}
+										className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent"
+									>
+										<X className="h-4 w-4" />
+									</button>
+								</div>
+							) : (
+								<div className="mt-1 flex items-center gap-2">
+									<p className="text-sm">{profile?.businessName}</p>
+									<button
+										type="button"
+										onClick={() => {
+											setEditedName(profile?.businessName ?? '')
+											setIsEditingName(true)
+										}}
+										className="inline-flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
+									>
+										<Pencil className="h-3.5 w-3.5" />
+									</button>
+								</div>
+							)}
 						</div>
 						<div>
 							<label className="text-sm font-medium">Slug</label>
