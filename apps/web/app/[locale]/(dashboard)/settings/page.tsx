@@ -245,11 +245,12 @@ export default function SettingsPage() {
 								checked={profile?.allowSupportAccess ?? false}
 								onChange={async (e) => {
 									const checked = e.target.checked
+									setProfile((p: any) => ({ ...p, allowSupportAccess: checked }))
 									try {
 										await api.patch('/patissier/profile', { allowSupportAccess: checked })
-										setProfile((p: any) => ({ ...p, allowSupportAccess: checked }))
 									} catch (err) {
 										console.error(err)
+										setProfile((p: any) => ({ ...p, allowSupportAccess: !checked }))
 									}
 								}}
 								className="h-4 w-4 rounded border"
