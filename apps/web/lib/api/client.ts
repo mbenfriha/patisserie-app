@@ -16,6 +16,12 @@ class ApiClient {
 		this.supportSlug = slug
 	}
 
+	private async parseJson(response: Response): Promise<any> {
+		const text = await response.text()
+		if (!text) return {}
+		return JSON.parse(text)
+	}
+
 	private getHeaders(): HeadersInit {
 		const headers: HeadersInit = {
 			'Content-Type': 'application/json',
@@ -60,7 +66,7 @@ class ApiClient {
 			},
 		})
 
-		const data = await response.json()
+		const data = await this.parseJson(response)
 
 		if (!response.ok) {
 			let errorMessage = data.message || 'An error occurred'
@@ -114,7 +120,7 @@ class ApiClient {
 			body: formData,
 		})
 
-		const data = await response.json()
+		const data = await this.parseJson(response)
 
 		if (!response.ok) {
 			let errorMessage = data.message || 'An error occurred'

@@ -31,6 +31,12 @@ class ApiClient {
 		return url.toString()
 	}
 
+	private async parseJson(response: Response): Promise<any> {
+		const text = await response.text()
+		if (!text) return {}
+		return JSON.parse(text)
+	}
+
 	async request<T = any>(
 		path: string,
 		options: RequestInit & { params?: Record<string, string> } = {}
@@ -53,13 +59,13 @@ class ApiClient {
 			if (location) {
 				const retryResponse = await fetch(location, {
 					...fetchOptions,
-					redirect: 'manual',
+					redirect: 'follow',
 					headers: {
 						...this.getHeaders(),
 						...fetchOptions.headers,
 					},
 				})
-				const retryData = await retryResponse.json()
+				const retryData = await this.parseJson(retryResponse)
 				if (!retryResponse.ok) {
 					let errorMessage = retryData.message || 'An error occurred'
 					if (retryData.errors && Array.isArray(retryData.errors) && retryData.errors.length > 0) {
@@ -72,7 +78,7 @@ class ApiClient {
 			throw new ApiError('Redirect sans URL de destination', response.status, null)
 		}
 
-		const data = await response.json()
+		const data = await this.parseJson(response)
 
 		if (!response.ok) {
 			let errorMessage = data.message || 'An error occurred'
