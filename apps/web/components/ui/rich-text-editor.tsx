@@ -1,10 +1,12 @@
 'use client'
 
+import { useCallback, useState } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
 import TextAlign from '@tiptap/extension-text-align'
 import Placeholder from '@tiptap/extension-placeholder'
+import Link from '@tiptap/extension-link'
 import { useEffect } from 'react'
 
 interface RichTextEditorProps {
@@ -41,6 +43,11 @@ function ToolbarButton({
 }
 
 export function RichTextEditor({ content, onChange, placeholder }: RichTextEditorProps) {
+	const [linkInput, setLinkInput] = useState<{ show: boolean; url: string }>({
+		show: false,
+		url: '',
+	})
+
 	const editor = useEditor({
 		immediatelyRender: false,
 		extensions: [
@@ -50,6 +57,10 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
 			Underline,
 			TextAlign.configure({ types: ['heading', 'paragraph'] }),
 			Placeholder.configure({ placeholder: placeholder || 'Ecrivez votre texte...' }),
+			Link.configure({
+				openOnClick: false,
+				HTMLAttributes: { target: '_blank', rel: 'noopener noreferrer' },
+			}),
 		],
 		content,
 		onUpdate: ({ editor: e }) => {
@@ -62,6 +73,29 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
 			editor.commands.setContent(content || '')
 		}
 	}, [content, editor])
+
+	const openLinkInput = useCallback(() => {
+		if (!editor) return
+		const existing = editor.getAttributes('link').href ?? ''
+		setLinkInput({ show: true, url: existing })
+	}, [editor])
+
+	const applyLink = useCallback(() => {
+		if (!editor) return
+		const url = linkInput.url.trim()
+		if (url) {
+			editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
+		} else {
+			editor.chain().focus().extendMarkRange('link').unsetLink().run()
+		}
+		setLinkInput({ show: false, url: '' })
+	}, [editor, linkInput.url])
+
+	const removeLink = useCallback(() => {
+		if (!editor) return
+		editor.chain().focus().extendMarkRange('link').unsetLink().run()
+		setLinkInput({ show: false, url: '' })
+	}, [editor])
 
 	if (!editor) return null
 
@@ -176,6 +210,58 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
 						<line x1="6" y1="18" x2="18" y2="18" />
 					</svg>
 				</ToolbarButton>
+
+				<div className="mx-1 w-px bg-border" />
+
+				<div className="relative">
+					<ToolbarButton
+						onClick={openLinkInput}
+						active={editor.isActive('link')}
+						title="Lien"
+					>
+						<svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+							<path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m9.86-2.062a4.5 4.5 0 00-1.242-7.244l-4.5-4.5a4.5 4.5 0 00-6.364 6.364L4.25 8.81" />
+						</svg>
+					</ToolbarButton>
+					{linkInput.show && (
+						<div className="absolute left-0 top-full z-10 mt-1 flex items-center gap-1 rounded-md border bg-popover p-1.5 shadow-md">
+							<input
+								type="url"
+								value={linkInput.url}
+								onChange={(e) => setLinkInput((s) => ({ ...s, url: e.target.value }))}
+								onKeyDown={(e) => {
+									if (e.key === 'Enter') applyLink()
+									if (e.key === 'Escape') setLinkInput({ show: false, url: '' })
+								}}
+								placeholder="https://..."
+								autoFocus
+								className="h-7 w-48 rounded border bg-background px-2 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+							/>
+							<button
+								type="button"
+								onClick={applyLink}
+								className="rounded px-1.5 py-1 text-xs text-primary hover:bg-muted"
+								title="Appliquer"
+							>
+								<svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+									<path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+								</svg>
+							</button>
+							{editor.isActive('link') && (
+								<button
+									type="button"
+									onClick={removeLink}
+									className="rounded px-1.5 py-1 text-xs text-destructive hover:bg-muted"
+									title="Supprimer le lien"
+								>
+									<svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+										<path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+									</svg>
+								</button>
+							)}
+						</div>
+					)}
+				</div>
 			</div>
 
 			{/* Editor */}

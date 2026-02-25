@@ -1,4 +1,5 @@
 import type { HttpContext } from '@adonisjs/core/http'
+import logger from '@adonisjs/core/services/logger'
 import PatissierProfile from '#models/patissier_profile'
 import StorageService from '#services/storage_service'
 import { getActiveProfile } from '#helpers/get_active_profile'
@@ -162,6 +163,7 @@ export default class ProfileController {
 		})
 
 		if (!image) {
+			logger.warn({ profileId: profile.id }, 'Hero image upload: no file provided')
 			return response.badRequest({
 				success: false,
 				message: 'No image file provided',
@@ -169,6 +171,10 @@ export default class ProfileController {
 		}
 
 		if (!image.isValid) {
+			logger.warn(
+				{ profileId: profile.id, errors: image.errors, fileName: image.clientName, size: image.size },
+				'Hero image upload: invalid file'
+			)
 			return response.badRequest({
 				success: false,
 				message: 'Invalid file',
@@ -184,9 +190,17 @@ export default class ProfileController {
 			}
 		}
 
-		const key = await storage.uploadImage(image, `hero/${profile.id}`)
-		profile.heroImageUrl = key
-		await profile.save()
+		try {
+			const key = await storage.uploadImage(image, `hero/${profile.id}`)
+			profile.heroImageUrl = key
+			await profile.save()
+		} catch (err) {
+			logger.error({ err, profileId: profile.id, fileName: image.clientName }, 'Hero image upload: storage failed')
+			return response.internalServerError({
+				success: false,
+				message: 'Failed to upload image',
+			})
+		}
 
 		return response.ok({
 			success: true,
@@ -225,6 +239,7 @@ export default class ProfileController {
 		})
 
 		if (!image) {
+			logger.warn({ profileId: profile.id }, 'Story image upload: no file provided')
 			return response.badRequest({
 				success: false,
 				message: 'No image file provided',
@@ -232,6 +247,10 @@ export default class ProfileController {
 		}
 
 		if (!image.isValid) {
+			logger.warn(
+				{ profileId: profile.id, errors: image.errors, fileName: image.clientName, size: image.size },
+				'Story image upload: invalid file'
+			)
 			return response.badRequest({
 				success: false,
 				message: 'Invalid file',
@@ -248,9 +267,17 @@ export default class ProfileController {
 			}
 		}
 
-		const key = await storage.uploadImage(image, `story/${profile.id}`)
-		profile.storyImageUrl = key
-		await profile.save()
+		try {
+			const key = await storage.uploadImage(image, `story/${profile.id}`)
+			profile.storyImageUrl = key
+			await profile.save()
+		} catch (err) {
+			logger.error({ err, profileId: profile.id, fileName: image.clientName }, 'Story image upload: storage failed')
+			return response.internalServerError({
+				success: false,
+				message: 'Failed to upload image',
+			})
+		}
 
 		return response.ok({
 			success: true,

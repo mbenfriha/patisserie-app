@@ -79,6 +79,16 @@ export function InlineEditProvider({
 		!!heroFile ||
 		!!storyFile
 
+	// Warn before leaving with unsaved changes
+	useEffect(() => {
+		if (!isEditing || !hasChanges) return
+		const handler = (e: BeforeUnloadEvent) => {
+			e.preventDefault()
+		}
+		window.addEventListener('beforeunload', handler)
+		return () => window.removeEventListener('beforeunload', handler)
+	}, [isEditing, hasChanges])
+
 	const showToast = (msg: string) => {
 		setToast(msg)
 		setTimeout(() => setToast(''), 3000)
@@ -138,14 +148,34 @@ export function InlineEditProvider({
 		setIsSaving(true)
 		try {
 			if (heroFile) {
-				const fd = new FormData()
-				fd.append('image', heroFile)
-				await api.upload('/patissier/hero-image', fd)
+				try {
+					const fd = new FormData()
+					fd.append('image', heroFile)
+					await api.upload('/patissier/hero-image', fd)
+				} catch (err: any) {
+					const msg = err?.data?.message || err?.message || "Erreur lors de l'upload"
+					const details = err?.data?.errors
+						? `: ${err.data.errors.map((e: any) => e.message).join(', ')}`
+						: ''
+					console.error('Hero image upload failed:', err)
+					showToast(`Image hero - ${msg}${details}`)
+					return
+				}
 			}
 			if (storyFile) {
-				const fd = new FormData()
-				fd.append('image', storyFile)
-				await api.upload('/patissier/story-image', fd)
+				try {
+					const fd = new FormData()
+					fd.append('image', storyFile)
+					await api.upload('/patissier/story-image', fd)
+				} catch (err: any) {
+					const msg = err?.data?.message || err?.message || "Erreur lors de l'upload"
+					const details = err?.data?.errors
+						? `: ${err.data.errors.map((e: any) => e.message).join(', ')}`
+						: ''
+					console.error('Story image upload failed:', err)
+					showToast(`Image story - ${msg}${details}`)
+					return
+				}
 			}
 
 			if (Object.keys(editedConfig).length > 0) {
@@ -166,9 +196,10 @@ export function InlineEditProvider({
 
 			showToast('Modifications enregistrees !')
 			resetEditState()
-		} catch (err) {
+		} catch (err: any) {
 			console.error('Failed to save:', err)
-			showToast('Erreur lors de la sauvegarde')
+			const msg = err?.data?.message || err?.message || 'Erreur lors de la sauvegarde'
+			showToast(msg)
 		} finally {
 			setIsSaving(false)
 		}
