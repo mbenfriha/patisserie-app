@@ -47,6 +47,7 @@ export default class StripeService {
 			line_items: [{ price: priceId, quantity: 1 }],
 			success_url: successUrl,
 			cancel_url: cancelUrl,
+			allow_promotion_codes: true,
 			subscription_data: {
 				metadata: { userId },
 			},
@@ -161,6 +162,7 @@ export default class StripeService {
 		const session = await this.stripe.checkout.sessions.create({
 			mode: 'payment',
 			customer_email: clientEmail,
+			allow_promotion_codes: true,
 			line_items: [
 				{
 					price_data: {
