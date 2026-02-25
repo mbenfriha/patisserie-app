@@ -3,6 +3,7 @@
 import { Loader2, Shield } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { api } from '@/lib/api/client'
 
 export default function LoginPage() {
 	const router = useRouter()
@@ -17,18 +18,7 @@ export default function LoginPage() {
 		setError('')
 
 		try {
-			const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333'
-			const response = await fetch(`${apiUrl}/auth/login`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ email, password }),
-			})
-
-			const data = await response.json()
-
-			if (!response.ok) {
-				throw new Error(data.message || data.errors?.[0]?.message || 'Identifiants invalides')
-			}
+			const data = await api.post('/auth/login', { email, password })
 
 			const user = data.user || data.data?.user
 			const token = data.token || data.data?.token

@@ -6,6 +6,7 @@ import { api } from '@/lib/api/client'
 import { getImageUrl } from '@/lib/utils/image-url'
 import { CategoryCombobox } from '@/components/ui/category-combobox'
 import { RichEditor } from '@/components/ui/rich-editor'
+import { PlanGate } from '@/components/auth/plan-gate'
 
 interface Category {
 	id: string
@@ -299,6 +300,7 @@ export default function WorkshopsPage() {
 	}
 
 	return (
+		<PlanGate minPlan="pro">
 		<div className="space-y-6">
 			<div className="flex items-center justify-between">
 				<h1 className="text-3xl font-bold">Ateliers</h1>
@@ -714,5 +716,6 @@ export default function WorkshopsPage() {
 				</div>
 			)}
 		</div>
+		</PlanGate>
 	)
 }

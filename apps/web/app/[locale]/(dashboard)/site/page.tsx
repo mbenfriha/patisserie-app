@@ -52,6 +52,7 @@ interface Profile {
 	siteConfig: SiteConfig
 	ordersEnabled: boolean
 	workshopsEnabled: boolean
+	plan: 'starter' | 'pro' | 'premium'
 	operatingHours: Record<string, { open: string; close: string; closed?: boolean }> | null
 }
 
@@ -837,7 +838,11 @@ export default function SiteEditorPage() {
 
 						{/* Workshops CTA section */}
 						<Accordion
-							title="Section CTA Ateliers (homepage)"
+							title={
+								profile?.plan === 'starter'
+									? 'Section CTA Ateliers (homepage) — Pro'
+									: 'Section CTA Ateliers (homepage)'
+							}
 							isOpen={openSections.workshopsCta}
 							onToggle={() => toggleSection('workshopsCta')}
 						>
@@ -945,54 +950,65 @@ export default function SiteEditorPage() {
 						<p className="mt-1 text-sm text-muted-foreground">
 							Activez ou desactivez les sections de votre site
 						</p>
-						<div className="mt-6 space-y-4">
-							<ToggleRow
-								label='Section "Notre histoire"'
-								checked={siteConfig.showStorySection !== false}
-								onChange={(v) => updateSiteConfigField('showStorySection', v)}
-							/>
-							<ToggleRow
-								label="Bandeau marquee"
-								checked={siteConfig.showMarquee !== false}
-								onChange={(v) => updateSiteConfigField('showMarquee', v)}
-							/>
-							<ToggleRow
-								label="Creations sur homepage"
-								checked={siteConfig.showCreationsOnHomepage !== false}
-								onChange={(v) => updateSiteConfigField('showCreationsOnHomepage', v)}
-							/>
-							<ToggleRow
-								label="CTA Ateliers sur homepage"
-								checked={siteConfig.showWorkshopsCta !== false}
-								onChange={(v) => updateSiteConfigField('showWorkshopsCta', v)}
-							/>
-							<div className="border-t pt-4">
-								<ToggleRow
-									label="Page Ateliers"
-									checked={workshopsEnabled}
-									onChange={setWorkshopsEnabled}
-								/>
-							</div>
-							<ToggleRow
-								label="Page Commandes"
-								checked={ordersEnabled}
-								onChange={setOrdersEnabled}
-							/>
-							{ordersEnabled && (
-								<div className="ml-6 space-y-4 border-l pl-4">
+						{(() => {
+							const isPro = profile && profile.plan !== 'starter'
+							return (
+								<div className="mt-6 space-y-4">
 									<ToggleRow
-										label="Onglet Catalogue"
-										checked={siteConfig.showCatalogueTab !== false}
-										onChange={(v) => updateSiteConfigField('showCatalogueTab', v)}
+										label='Section "Notre histoire"'
+										checked={siteConfig.showStorySection !== false}
+										onChange={(v) => updateSiteConfigField('showStorySection', v)}
 									/>
 									<ToggleRow
-										label="Onglet Sur-mesure"
-										checked={siteConfig.showCustomOrderTab !== false}
-										onChange={(v) => updateSiteConfigField('showCustomOrderTab', v)}
+										label="Bandeau marquee"
+										checked={siteConfig.showMarquee !== false}
+										onChange={(v) => updateSiteConfigField('showMarquee', v)}
 									/>
+									<ToggleRow
+										label="Creations sur homepage"
+										checked={siteConfig.showCreationsOnHomepage !== false}
+										onChange={(v) => updateSiteConfigField('showCreationsOnHomepage', v)}
+									/>
+									<ToggleRow
+										label="CTA Ateliers sur homepage"
+										checked={isPro ? siteConfig.showWorkshopsCta !== false : false}
+										onChange={(v) => updateSiteConfigField('showWorkshopsCta', v)}
+										locked={!isPro}
+										badge={!isPro ? 'pro' : undefined}
+									/>
+									<div className="border-t pt-4">
+										<ToggleRow
+											label="Page Ateliers"
+											checked={isPro ? workshopsEnabled : false}
+											onChange={setWorkshopsEnabled}
+											locked={!isPro}
+											badge={!isPro ? 'pro' : undefined}
+										/>
+									</div>
+									<ToggleRow
+										label="Page Commandes"
+										checked={isPro ? ordersEnabled : false}
+										onChange={setOrdersEnabled}
+										locked={!isPro}
+										badge={!isPro ? 'pro' : undefined}
+									/>
+									{ordersEnabled && isPro && (
+										<div className="ml-6 space-y-4 border-l pl-4">
+											<ToggleRow
+												label="Onglet Catalogue"
+												checked={siteConfig.showCatalogueTab !== false}
+												onChange={(v) => updateSiteConfigField('showCatalogueTab', v)}
+											/>
+											<ToggleRow
+												label="Onglet Sur-mesure"
+												checked={siteConfig.showCustomOrderTab !== false}
+												onChange={(v) => updateSiteConfigField('showCustomOrderTab', v)}
+											/>
+										</div>
+									)}
 								</div>
-							)}
-						</div>
+							)
+						})()}
 					</section>
 				)}
 
@@ -1262,21 +1278,43 @@ function ToggleRow({
 	label,
 	checked,
 	onChange,
+	locked,
+	badge,
 }: {
 	label: string
 	checked: boolean
 	onChange: (value: boolean) => void
+	locked?: boolean
+	badge?: 'pro' | 'premium'
 }) {
 	return (
 		<div className="flex items-center justify-between">
-			<span className="text-sm font-medium">{label}</span>
+			<span className={`text-sm font-medium ${locked ? 'text-muted-foreground' : ''}`}>
+				{label}
+				{badge && (
+					<span
+						className={`ml-2 inline-block rounded-full px-1.5 py-0.5 text-[10px] font-semibold leading-none ${
+							badge === 'premium'
+								? 'bg-amber-100 text-amber-700'
+								: 'bg-blue-100 text-blue-700'
+						}`}
+					>
+						{badge === 'premium' ? 'Premium' : 'Pro'}
+					</span>
+				)}
+			</span>
 			<button
 				type="button"
 				role="switch"
 				aria-checked={checked}
+				disabled={locked}
 				onClick={() => onChange(!checked)}
 				className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-					checked ? 'bg-primary' : 'bg-muted-foreground/30'
+					locked
+						? 'cursor-not-allowed opacity-40 bg-muted-foreground/30'
+						: checked
+							? 'bg-primary'
+							: 'bg-muted-foreground/30'
 				}`}
 			>
 				<span

@@ -60,6 +60,23 @@ export default class CreationsController {
 		const user = auth.user!
 		const profile = await PatissierProfile.findByOrFail('userId', user.id)
 
+		// Starter plan: max 50 creations
+		if (profile.plan === 'starter') {
+			const count = await Creation.query()
+				.where('patissierId', profile.id)
+				.count('* as total')
+				.first()
+			const total = Number((count as any)?.$extras?.total ?? 0)
+			if (total >= 50) {
+				return response.forbidden({
+					success: false,
+					message: 'Le plan Starter est limité à 50 créations. Passez au plan Pro pour des créations illimitées.',
+					requiredPlan: 'pro',
+					currentPlan: profile.plan,
+				})
+			}
+		}
+
 		const data = request.only([
 			'title',
 			'description',

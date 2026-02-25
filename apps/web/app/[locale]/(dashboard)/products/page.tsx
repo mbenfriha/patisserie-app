@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { api } from '@/lib/api/client'
+import { PlanGate } from '@/components/auth/plan-gate'
 
 interface Product {
 	id: string
@@ -38,6 +39,7 @@ export default function ProductsPage() {
 	}, [])
 
 	return (
+		<PlanGate minPlan="pro">
 		<div className="space-y-6">
 			<div className="flex items-center justify-between">
 				<h1 className="text-3xl font-bold">{t('products')}</h1>
@@ -88,6 +90,7 @@ export default function ProductsPage() {
 				<CategoriesDialog onClose={() => setShowCategories(false)} />
 			)}
 		</div>
+		</PlanGate>
 	)
 }
 

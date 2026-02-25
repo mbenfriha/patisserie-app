@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation'
 import { PhoneInput } from 'react-international-phone'
 import 'react-international-phone/style.css'
 import { api } from '@/lib/api/client'
+import { PlanGate } from '@/components/auth/plan-gate'
 
 interface Booking {
 	id: string
@@ -289,6 +290,7 @@ export default function PatissierWorkshopDetailPage() {
 	const remainingCapacity = workshop.capacity - totalBooked
 
 	return (
+		<PlanGate minPlan="pro">
 		<div className="space-y-6">
 			{/* Header */}
 			<div className="flex items-center justify-between">
@@ -644,5 +646,6 @@ export default function PatissierWorkshopDetailPage() {
 				</div>
 			)}
 		</div>
+		</PlanGate>
 	)
 }

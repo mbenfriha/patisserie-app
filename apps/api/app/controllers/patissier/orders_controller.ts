@@ -3,6 +3,7 @@ import { DateTime } from 'luxon'
 import PatissierProfile from '#models/patissier_profile'
 import Order from '#models/order'
 import OrderMessage from '#models/order_message'
+import EmailService from '#services/email_service'
 
 export default class OrdersController {
 	async index({ auth, request, response }: HttpContext) {
@@ -177,7 +178,7 @@ export default class OrdersController {
 		const profile = await PatissierProfile.findByOrFail('userId', user.id)
 
 		// Ensure order belongs to this patissier
-		await Order.query()
+		const order = await Order.query()
 			.where('id', params.id)
 			.where('patissierId', profile.id)
 			.firstOrFail()
@@ -198,6 +199,20 @@ export default class OrdersController {
 			message,
 			attachments: attachments || [],
 		})
+
+		// Send email notification to client
+		try {
+			const emailService = new EmailService()
+			await emailService.sendOrderMessageNotification({
+				recipientEmail: order.clientEmail,
+				recipientName: order.clientName,
+				senderName: profile.businessName,
+				orderNumber: order.orderNumber,
+				messagePreview: message.length > 200 ? `${message.substring(0, 200)}…` : message,
+			})
+		} catch (error) {
+			console.error('Failed to send order message notification email:', error)
+		}
 
 		return response.created({
 			success: true,

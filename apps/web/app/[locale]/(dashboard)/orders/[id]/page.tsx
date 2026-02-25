@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { api } from '@/lib/api/client'
+import { PlanGate } from '@/components/auth/plan-gate'
 
 interface OrderItem {
 	id: string
@@ -192,6 +193,7 @@ export default function PatissierOrderDetailPage() {
 	}
 
 	return (
+		<PlanGate minPlan="pro">
 		<div className="space-y-6">
 			{/* Header */}
 			<div className="flex items-center justify-between">
@@ -290,13 +292,13 @@ export default function PatissierOrderDetailPage() {
 					{order.requestedDate && (
 						<div>
 							<p className="text-sm text-muted-foreground">Date souhaitee</p>
-							<p className="text-sm font-medium">{order.requestedDate}</p>
+							<p className="text-sm font-medium">{new Date(order.requestedDate).toLocaleDateString('fr-FR')}</p>
 						</div>
 					)}
 					{order.confirmedDate && (
 						<div>
 							<p className="text-sm text-muted-foreground">Date confirmee</p>
-							<p className="text-sm font-medium">{order.confirmedDate}</p>
+							<p className="text-sm font-medium">{new Date(order.confirmedDate).toLocaleDateString('fr-FR')}</p>
 						</div>
 					)}
 					{order.confirmedAt && (
@@ -394,7 +396,7 @@ export default function PatissierOrderDetailPage() {
 						{order.customDateSouhaitee && (
 							<div>
 								<p className="text-sm text-muted-foreground">Date souhaitee</p>
-								<p className="text-sm font-medium">{order.customDateSouhaitee}</p>
+								<p className="text-sm font-medium">{new Date(order.customDateSouhaitee).toLocaleDateString('fr-FR')}</p>
 							</div>
 						)}
 						{order.customTheme && (
@@ -550,5 +552,6 @@ export default function PatissierOrderDetailPage() {
 				</form>
 			</div>
 		</div>
+		</PlanGate>
 	)
 }

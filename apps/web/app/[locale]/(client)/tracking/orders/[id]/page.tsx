@@ -205,13 +205,13 @@ export default function ClientOrderTrackingPage() {
 							{order.requestedDate && (
 								<div>
 									<p className="text-sm text-muted-foreground">Date souhaitee</p>
-									<p className="text-sm font-medium">{order.requestedDate}</p>
+									<p className="text-sm font-medium">{new Date(order.requestedDate).toLocaleDateString('fr-FR')}</p>
 								</div>
 							)}
 							{order.confirmedDate && (
 								<div>
 									<p className="text-sm text-muted-foreground">Date confirmee</p>
-									<p className="text-sm font-medium">{order.confirmedDate}</p>
+									<p className="text-sm font-medium">{new Date(order.confirmedDate).toLocaleDateString('fr-FR')}</p>
 								</div>
 							)}
 							<div>
@@ -251,7 +251,7 @@ export default function ClientOrderTrackingPage() {
 								{order.customDateSouhaitee && (
 									<div>
 										<p className="text-sm text-muted-foreground">Date souhaitee</p>
-										<p className="text-sm font-medium">{order.customDateSouhaitee}</p>
+										<p className="text-sm font-medium">{new Date(order.customDateSouhaitee).toLocaleDateString('fr-FR')}</p>
 									</div>
 								)}
 								{order.customTheme && (

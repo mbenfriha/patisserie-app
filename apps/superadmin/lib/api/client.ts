@@ -40,11 +40,37 @@ class ApiClient {
 
 		const response = await fetch(url, {
 			...fetchOptions,
+			redirect: 'manual',
 			headers: {
 				...this.getHeaders(),
 				...fetchOptions.headers,
 			},
 		})
+
+		// Handle redirects (e.g. Cloudflare HTTP→HTTPS) by retrying at the new URL
+		if (response.status >= 300 && response.status < 400) {
+			const location = response.headers.get('location')
+			if (location) {
+				const retryResponse = await fetch(location, {
+					...fetchOptions,
+					redirect: 'manual',
+					headers: {
+						...this.getHeaders(),
+						...fetchOptions.headers,
+					},
+				})
+				const retryData = await retryResponse.json()
+				if (!retryResponse.ok) {
+					let errorMessage = retryData.message || 'An error occurred'
+					if (retryData.errors && Array.isArray(retryData.errors) && retryData.errors.length > 0) {
+						errorMessage = retryData.errors[0].message || errorMessage
+					}
+					throw new ApiError(errorMessage, retryResponse.status, retryData)
+				}
+				return retryData
+			}
+			throw new ApiError('Redirect sans URL de destination', response.status, null)
+		}
 
 		const data = await response.json()
 

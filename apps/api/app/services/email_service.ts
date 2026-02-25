@@ -3,6 +3,7 @@ import BookingCancellation from '#mails/booking_cancellation'
 import BookingConfirmation from '#mails/booking_confirmation'
 import NewBookingNotification from '#mails/new_booking_notification'
 import OrderConfirmation from '#mails/order_confirmation'
+import OrderMessageNotification from '#mails/order_message_notification'
 import PaymentConfirmation from '#mails/payment_confirmation'
 import VerifyEmail from '#mails/verify_email'
 import env from '#start/env'
@@ -69,6 +70,14 @@ interface PaymentConfirmationData {
 	amountPaid: number
 	totalPrice: number
 	remainingAmount: number
+}
+
+interface OrderMessageNotificationData {
+	recipientEmail: string
+	recipientName: string
+	senderName: string
+	orderNumber: string
+	messagePreview: string
 }
 
 interface StatusUpdateData {
@@ -157,6 +166,17 @@ export default class EmailService {
 				date: data.date,
 				nbParticipants: data.nbParticipants,
 				reason: data.reason,
+			})
+		)
+	}
+
+	async sendOrderMessageNotification(data: OrderMessageNotificationData): Promise<void> {
+		await mail.send(
+			new OrderMessageNotification(data.recipientEmail, {
+				recipientName: data.recipientName,
+				senderName: data.senderName,
+				orderNumber: data.orderNumber,
+				messagePreview: data.messagePreview,
 			})
 		)
 	}

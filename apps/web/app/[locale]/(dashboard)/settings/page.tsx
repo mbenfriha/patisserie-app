@@ -183,8 +183,20 @@ export default function SettingsPage() {
 							)}
 						</div>
 						<div>
-							<label className="text-sm font-medium">Slug</label>
+							<label className="text-sm font-medium">
+								URL personnalisée
+								{profile?.plan !== 'premium' && (
+									<span className="ml-2 inline-block rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-amber-700">
+										Premium
+									</span>
+								)}
+							</label>
 							<p className="mt-1 text-sm">{profile?.slug}.patissio.com</p>
+							{profile?.plan !== 'premium' && (
+								<p className="mt-1 text-xs text-muted-foreground">
+									Passez au plan Premium pour utiliser votre propre nom de domaine
+								</p>
+							)}
 						</div>
 						<div>
 							<label className="text-sm font-medium">Téléphone</label>

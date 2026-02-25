@@ -69,6 +69,15 @@ export const emailTranslations = {
 		depositLabel: 'Acompte',
 	},
 
+	orderMessageNotification: {
+		title: 'Nouveau message',
+		preview: (orderNumber: string) => `Nouveau message sur la commande ${orderNumber}`,
+		heading: 'Nouveau message !',
+		body: (senderName: string, orderNumber: string) =>
+			`${senderName} vous a envoyé un message concernant la commande ${orderNumber} :`,
+		footer: 'Connectez-vous pour consulter la conversation et répondre.',
+	},
+
 	bookingCancellation: {
 		title: 'Annulation de réservation',
 		preview: (workshopTitle: string) => `Annulation pour ${workshopTitle}`,

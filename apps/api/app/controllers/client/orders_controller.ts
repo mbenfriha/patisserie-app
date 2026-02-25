@@ -5,6 +5,8 @@ import OrderItem from '#models/order_item'
 import OrderMessage from '#models/order_message'
 import PatissierProfile from '#models/patissier_profile'
 import Product from '#models/product'
+import User from '#models/user'
+import EmailService from '#services/email_service'
 import StorageService from '#services/storage_service'
 
 export default class OrdersController {
@@ -156,7 +158,7 @@ export default class OrdersController {
 
 	async sendMessage({ params, request, response }: HttpContext) {
 		const { orderNumber } = params
-		const { message } = request.only(['message', 'senderName'])
+		const { message, senderName } = request.only(['message', 'senderName'])
 
 		const order = await Order.findBy('orderNumber', orderNumber)
 		if (!order) {
@@ -169,6 +171,23 @@ export default class OrdersController {
 			senderId: null,
 			message,
 		})
+
+		// Send email notification to patissier
+		try {
+			const profile = await PatissierProfile.findOrFail(order.patissierId)
+			const patissierUser = await User.findOrFail(profile.userId)
+
+			const emailService = new EmailService()
+			await emailService.sendOrderMessageNotification({
+				recipientEmail: patissierUser.email,
+				recipientName: profile.businessName,
+				senderName: senderName || order.clientName,
+				orderNumber: order.orderNumber,
+				messagePreview: message.length > 200 ? `${message.substring(0, 200)}…` : message,
+			})
+		} catch (error) {
+			console.error('Failed to send order message notification email:', error)
+		}
 
 		return response.created({
 			success: true,

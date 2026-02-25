@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { api } from '@/lib/api/client'
+import { PlanGate } from '@/components/auth/plan-gate'
 
 interface Order {
 	id: string
@@ -57,6 +58,7 @@ export default function OrdersPage() {
 	}, [])
 
 	return (
+		<PlanGate minPlan="pro">
 		<div className="space-y-6">
 			<h1 className="text-3xl font-bold">Commandes</h1>
 
@@ -140,5 +142,6 @@ export default function OrdersPage() {
 				</>
 			)}
 		</div>
+		</PlanGate>
 	)
 }

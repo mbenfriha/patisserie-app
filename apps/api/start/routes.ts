@@ -55,36 +55,51 @@ router
 		router.put('/creations/:id/cover/:idx', '#controllers/patissier/creations_controller.setCover')
 		router.delete('/creations/:id/images/:idx', '#controllers/patissier/creations_controller.removeImage')
 
-		// Products
-		router.get('/products', '#controllers/patissier/products_controller.index')
-		router.post('/products', '#controllers/patissier/products_controller.store')
-		router.get('/products/:id', '#controllers/patissier/products_controller.show')
-		router.put('/products/:id', '#controllers/patissier/products_controller.update')
-		router.delete('/products/:id', '#controllers/patissier/products_controller.destroy')
+		// Products (Pro+)
+		router
+			.group(() => {
+				router.get('/', '#controllers/patissier/products_controller.index')
+				router.post('/', '#controllers/patissier/products_controller.store')
+				router.get('/:id', '#controllers/patissier/products_controller.show')
+				router.put('/:id', '#controllers/patissier/products_controller.update')
+				router.delete('/:id', '#controllers/patissier/products_controller.destroy')
+			})
+			.prefix('/products')
+			.use(middleware.planGuard({ minPlan: 'pro' }))
 
-		// Workshops
-		router.get('/workshops', '#controllers/patissier/workshops_controller.index')
-		router.post('/workshops', '#controllers/patissier/workshops_controller.store')
-		router.get('/workshops/:id', '#controllers/patissier/workshops_controller.show')
-		router.put('/workshops/:id', '#controllers/patissier/workshops_controller.update')
-		router.delete('/workshops/:id', '#controllers/patissier/workshops_controller.destroy')
-		router.put('/workshops/:id/status', '#controllers/patissier/workshops_controller.updateStatus')
-		router.post('/workshops/:id/illustration', '#controllers/patissier/workshops_controller.uploadIllustration')
-		router.delete('/workshops/:id/illustration', '#controllers/patissier/workshops_controller.deleteIllustration')
-		router.get('/workshops/:id/bookings', '#controllers/patissier/workshops_controller.bookings')
-		router.post('/workshops/:id/bookings', '#controllers/patissier/workshops_controller.createBooking')
-		router.put(
-			'/workshops/:id/bookings/:bookingId/status',
-			'#controllers/patissier/workshops_controller.updateBookingStatus'
-		)
+		// Workshops (Pro+)
+		router
+			.group(() => {
+				router.get('/', '#controllers/patissier/workshops_controller.index')
+				router.post('/', '#controllers/patissier/workshops_controller.store')
+				router.get('/:id', '#controllers/patissier/workshops_controller.show')
+				router.put('/:id', '#controllers/patissier/workshops_controller.update')
+				router.delete('/:id', '#controllers/patissier/workshops_controller.destroy')
+				router.put('/:id/status', '#controllers/patissier/workshops_controller.updateStatus')
+				router.post('/:id/illustration', '#controllers/patissier/workshops_controller.uploadIllustration')
+				router.delete('/:id/illustration', '#controllers/patissier/workshops_controller.deleteIllustration')
+				router.get('/:id/bookings', '#controllers/patissier/workshops_controller.bookings')
+				router.post('/:id/bookings', '#controllers/patissier/workshops_controller.createBooking')
+				router.put(
+					'/:id/bookings/:bookingId/status',
+					'#controllers/patissier/workshops_controller.updateBookingStatus'
+				)
+			})
+			.prefix('/workshops')
+			.use(middleware.planGuard({ minPlan: 'pro' }))
 
-		// Orders
-		router.get('/orders', '#controllers/patissier/orders_controller.index')
-		router.get('/orders/:id', '#controllers/patissier/orders_controller.show')
-		router.put('/orders/:id/status', '#controllers/patissier/orders_controller.updateStatus')
-		router.put('/orders/:id/quote', '#controllers/patissier/orders_controller.quote')
-		router.get('/orders/:id/messages', '#controllers/patissier/orders_controller.messages')
-		router.post('/orders/:id/messages', '#controllers/patissier/orders_controller.sendMessage')
+		// Orders (Pro+)
+		router
+			.group(() => {
+				router.get('/', '#controllers/patissier/orders_controller.index')
+				router.get('/:id', '#controllers/patissier/orders_controller.show')
+				router.put('/:id/status', '#controllers/patissier/orders_controller.updateStatus')
+				router.put('/:id/quote', '#controllers/patissier/orders_controller.quote')
+				router.get('/:id/messages', '#controllers/patissier/orders_controller.messages')
+				router.post('/:id/messages', '#controllers/patissier/orders_controller.sendMessage')
+			})
+			.prefix('/orders')
+			.use(middleware.planGuard({ minPlan: 'pro' }))
 
 		// Stripe Connect
 		router.post('/integrations/stripe/connect', '#controllers/patissier/integrations_controller.stripeConnect')
@@ -93,7 +108,7 @@ router
 		router.get('/integrations/stripe/balance', '#controllers/patissier/integrations_controller.stripeBalance')
 
 		// Stats (Premium)
-		router.get('/stats', '#controllers/patissier/stats_controller.index')
+		router.get('/stats', '#controllers/patissier/stats_controller.index').use(middleware.planGuard({ minPlan: 'premium' }))
 	})
 	.prefix('/patissier')
 	.use([throttle('api'), middleware.auth(), middleware.patissier()])

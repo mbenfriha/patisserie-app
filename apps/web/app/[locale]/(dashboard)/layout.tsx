@@ -7,16 +7,40 @@ import { RoleGuard } from '@/components/auth/role-guard'
 import { StripeConnectBanner } from '@/components/dashboard/stripe-connect-banner'
 import { useAuth } from '@/lib/providers/auth-provider'
 
-const navItems = [
+const navItems: {
+	href: string
+	labelKey: string
+	minPlan?: 'pro' | 'premium'
+}[] = [
 	{ href: '/dashboard', labelKey: 'dashboard' },
 	{ href: '/site', labelKey: 'site' },
 	{ href: '/creations', labelKey: 'creations' },
-	{ href: '/products', labelKey: 'products' },
-	{ href: '/orders', labelKey: 'orders' },
-	{ href: '/workshops', labelKey: 'workshops' },
+	{ href: '/products', labelKey: 'products', minPlan: 'pro' },
+	{ href: '/orders', labelKey: 'orders', minPlan: 'pro' },
+	{ href: '/workshops', labelKey: 'workshops', minPlan: 'pro' },
 	{ href: '/settings', labelKey: 'settings' },
 	{ href: '/billing', labelKey: 'billing' },
 ]
+
+const PLAN_LEVELS: Record<string, number> = {
+	starter: 1,
+	pro: 2,
+	premium: 3,
+}
+
+function PlanBadge({ plan }: { plan: 'pro' | 'premium' }) {
+	return (
+		<span
+			className={`ml-auto rounded-full px-1.5 py-0.5 text-[10px] font-semibold leading-none ${
+				plan === 'premium'
+					? 'bg-amber-100 text-amber-700'
+					: 'bg-blue-100 text-blue-700'
+			}`}
+		>
+			{plan === 'premium' ? 'Premium' : 'Pro'}
+		</span>
+	)
+}
 
 function getSiteUrl(profile: { slug: string; plan: string; customDomain?: string | null }) {
 	const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
@@ -38,16 +62,37 @@ function getSiteUrl(profile: { slug: string; plan: string; customDomain?: string
 function NavLinks({
 	pathname,
 	t,
+	userPlan,
 	onNavigate,
 }: {
 	pathname: string
 	t: (key: string) => string
+	userPlan: string
 	onNavigate?: () => void
 }) {
+	const userLevel = PLAN_LEVELS[userPlan] || 1
+
 	return (
 		<>
 			{navItems.map((item) => {
 				const isActive = pathname === item.href
+				const requiredLevel = item.minPlan ? PLAN_LEVELS[item.minPlan] || 1 : 1
+				const locked = userLevel < requiredLevel
+
+				if (locked) {
+					return (
+						<Link
+							key={item.href}
+							href="/billing"
+							onClick={onNavigate}
+							className="flex items-center rounded-md px-3 py-2 text-sm font-medium text-sidebar-foreground/50 transition-colors hover:bg-sidebar-accent/30"
+						>
+							{t(item.labelKey)}
+							<PlanBadge plan={item.minPlan!} />
+						</Link>
+					)
+				}
+
 				return (
 					<Link
 						key={item.href}
@@ -117,7 +162,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 						)}
 					</div>
 					<nav className="space-y-1 px-3">
-						<NavLinks pathname={pathname} t={t} />
+						<NavLinks pathname={pathname} t={t} userPlan={user?.profile?.plan || 'starter'} />
 					</nav>
 					<div className="mt-auto border-t p-4">
 						<button
@@ -202,7 +247,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 					)}
 
 					<nav className="space-y-1 px-3 pt-4">
-						<NavLinks pathname={pathname} t={t} onNavigate={() => setMobileMenuOpen(false)} />
+						<NavLinks pathname={pathname} t={t} userPlan={user?.profile?.plan || 'starter'} onNavigate={() => setMobileMenuOpen(false)} />
 					</nav>
 
 					<div className="mt-auto border-t p-4">
