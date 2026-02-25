@@ -143,6 +143,23 @@ export default class OrdersController {
 
 		await order.save()
 
+		// Send quote email to client
+		try {
+			const emailService = new EmailService()
+			const formattedPrice = Number(quotedPrice).toFixed(2)
+			await emailService.sendStatusUpdate({
+				email: order.clientEmail,
+				recipientName: order.clientName,
+				subject: `Devis pour votre commande #${order.orderNumber}`,
+				title: `Devis reçu : ${formattedPrice} €`,
+				body: responseMessage
+					? `${profile.businessName} vous a envoyé un devis pour votre commande sur-mesure #${order.orderNumber}.<br><br><strong>Message du pâtissier :</strong><br>${responseMessage}`
+					: `${profile.businessName} vous a envoyé un devis de ${formattedPrice} € pour votre commande sur-mesure #${order.orderNumber}.`,
+			})
+		} catch (err) {
+			console.error('Failed to send quote email:', err)
+		}
+
 		return response.ok({
 			success: true,
 			data: order.serialize(),

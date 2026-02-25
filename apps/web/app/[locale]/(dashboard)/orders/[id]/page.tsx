@@ -98,6 +98,7 @@ export default function PatissierOrderDetailPage() {
 	const [quoteResponseMessage, setQuoteResponseMessage] = useState('')
 	const [isSubmittingQuote, setIsSubmittingQuote] = useState(false)
 	const [quoteError, setQuoteError] = useState('')
+	const [quoteSuccess, setQuoteSuccess] = useState('')
 
 	// Messages
 	const [newMessage, setNewMessage] = useState('')
@@ -144,12 +145,15 @@ export default function PatissierOrderDetailPage() {
 		if (!order) return
 		setIsSubmittingQuote(true)
 		setQuoteError('')
+		setQuoteSuccess('')
 		try {
 			const res = await api.put(`/patissier/orders/${orderId}/quote`, {
 				quotedPrice: Number(quotedPrice),
 				responseMessage: quoteResponseMessage || undefined,
 			})
 			setOrder({ ...order, ...res.data.data })
+			setQuoteSuccess('Devis envoyé avec succès ! Le client a été notifié par email.')
+			setTimeout(() => setQuoteSuccess(''), 5000)
 		} catch (err: any) {
 			setQuoteError(err.message || 'Erreur lors de l\'envoi du devis')
 		} finally {
@@ -473,6 +477,7 @@ export default function PatissierOrderDetailPage() {
 								{isSubmittingQuote ? 'Envoi...' : 'Envoyer le devis'}
 							</button>
 							{quoteError && <p className="text-sm text-red-600">{quoteError}</p>}
+							{quoteSuccess && <p className="text-sm text-green-600">{quoteSuccess}</p>}
 						</form>
 					</div>
 
