@@ -43,7 +43,7 @@ export function SiteNavbar() {
 		...(profile.ordersEnabled
 			? [{ href: `${basePath}/commandes`, label: 'Commander' }]
 			: []),
-		{ href: `${basePath}/#notre-histoire`, label: 'Notre histoire' },
+		{ href: `${basePath}/#story`, label: 'Notre histoire' },
 	]
 
 	return (
