@@ -258,6 +258,42 @@ export default class CreationsController {
 		})
 	}
 
+	async replaceImage({ auth, params, request, response }: HttpContext) {
+		const user = auth.user!
+		const profile = await PatissierProfile.findByOrFail('userId', user.id)
+
+		const creation = await Creation.query()
+			.where('id', params.id)
+			.where('patissierId', profile.id)
+			.firstOrFail()
+
+		const index = Number(params.idx)
+		const images = [...(creation.images || [])]
+
+		if (isNaN(index) || index < 0 || index >= images.length) {
+			return response.badRequest({ success: false, message: 'Invalid image index' })
+		}
+
+		const file = request.file('image', { size: '20mb', extnames: ['jpg', 'jpeg', 'png', 'webp'] })
+		if (!file || !file.isValid) {
+			return response.badRequest({ success: false, message: 'Invalid file' })
+		}
+
+		// Delete old image from storage
+		const oldUrl = images[index].url
+		if (oldUrl && !oldUrl.startsWith('http')) {
+			try { await storage.deleteImage(oldUrl) } catch { /* ignore */ }
+		}
+
+		// Upload new image
+		const newUrl = await storage.uploadImage(file, `creations/${creation.id}`)
+		images[index] = { ...images[index], url: newUrl }
+		creation.images = images
+		await creation.save()
+
+		return response.ok({ success: true, data: creation.serialize() })
+	}
+
 	async setCover({ auth, params, response }: HttpContext) {
 		const user = auth.user!
 		const profile = await PatissierProfile.findByOrFail('userId', user.id)

@@ -93,7 +93,7 @@ class ApiClient {
 		return this.request<T>(path, { method: 'DELETE' })
 	}
 
-	async upload<T = any>(path: string, formData: FormData) {
+	async upload<T = any>(path: string, formData: FormData, method: 'POST' | 'PUT' = 'POST') {
 		const url = this.buildUrl(path)
 		const headers: HeadersInit = {}
 
@@ -109,7 +109,7 @@ class ApiClient {
 		}
 
 		const response = await fetch(url, {
-			method: 'POST',
+			method,
 			headers,
 			body: formData,
 		})

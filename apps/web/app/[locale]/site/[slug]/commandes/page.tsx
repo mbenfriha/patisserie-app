@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useSiteProfile, useSiteBasePath, useSiteConfig } from '../site-provider'
 import { SectionTitle } from '../components/section-title'
+import { getImageUrl } from '@/lib/utils/image-url'
 import { CatalogueTab } from './catalogue-tab'
 import { DevisForm } from './devis-form'
 
@@ -195,8 +196,9 @@ export default function OrderPage() {
 			<section
 				className="relative flex h-[30vh] min-h-[240px] items-center justify-center overflow-hidden text-center"
 				style={{
-					background:
-						'linear-gradient(160deg, rgba(26,26,26,0.95) 0%, rgba(45,30,10,0.90) 50%, rgba(26,26,26,0.95) 100%)',
+					background: getImageUrl(profile.heroImageUrl)
+						? `linear-gradient(160deg, rgba(26,26,26,0.92) 0%, rgba(45,30,10,0.88) 50%, rgba(26,26,26,0.92) 100%), url('${getImageUrl(profile.heroImageUrl)}') center/cover`
+						: 'linear-gradient(160deg, rgba(26,26,26,0.95) 0%, rgba(45,30,10,0.90) 50%, rgba(26,26,26,0.95) 100%)',
 				}}
 			>
 				<div

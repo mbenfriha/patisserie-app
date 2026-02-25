@@ -51,6 +51,7 @@ router
 		router.put('/creations/:id', '#controllers/patissier/creations_controller.update')
 		router.delete('/creations/:id', '#controllers/patissier/creations_controller.destroy')
 		router.post('/creations/:id/images', '#controllers/patissier/creations_controller.addImage')
+		router.put('/creations/:id/images/:idx', '#controllers/patissier/creations_controller.replaceImage')
 		router.put('/creations/:id/cover/:idx', '#controllers/patissier/creations_controller.setCover')
 		router.delete('/creations/:id/images/:idx', '#controllers/patissier/creations_controller.removeImage')
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useTranslations } from 'next-intl'
 import { api } from '@/lib/api/client'
 import { getImageUrl } from '@/lib/utils/image-url'
@@ -61,7 +61,8 @@ export default function CreationsPage() {
 	const [saving, setSaving] = useState(false)
 	const [tagInput, setTagInput] = useState('')
 	const [toast, setToast] = useState('')
-	const [cropState, setCropState] = useState<{ creationId: string; src: string; file: File } | null>(null)
+	const [cropState, setCropState] = useState<{ creationId: string; src: string; file?: File; editIdx?: number } | null>(null)
+	const [imageMenuId, setImageMenuId] = useState<{ creationId: string; idx: number } | null>(null)
 
 	const showToast = (msg: string) => {
 		setToast(msg)
@@ -89,6 +90,13 @@ export default function CreationsPage() {
 	useEffect(() => {
 		loadData()
 	}, [loadData])
+
+	useEffect(() => {
+		if (!imageMenuId) return
+		const handleClick = () => setImageMenuId(null)
+		document.addEventListener('click', handleClick)
+		return () => document.removeEventListener('click', handleClick)
+	}, [imageMenuId])
 
 	const openCreate = () => {
 		setEditingId(null)
@@ -158,13 +166,19 @@ export default function CreationsPage() {
 
 	const handleCropConfirm = async (blob: Blob) => {
 		if (!cropState) return
+		const { creationId, src, file, editIdx } = cropState
 		const formData = new FormData()
-		formData.append('image', blob, cropState.file.name)
-		URL.revokeObjectURL(cropState.src)
+		formData.append('image', blob, file?.name || 'image.jpg')
+		URL.revokeObjectURL(src)
 		setCropState(null)
 		try {
-			await api.upload(`/patissier/creations/${cropState.creationId}/images`, formData)
-			showToast('Image ajoutée')
+			if (editIdx !== undefined) {
+				await api.upload(`/patissier/creations/${creationId}/images/${editIdx}`, formData, 'PUT')
+				showToast('Image modifiée')
+			} else {
+				await api.upload(`/patissier/creations/${creationId}/images`, formData)
+				showToast('Image ajoutée')
+			}
 			await loadData()
 		} catch {
 			showToast("Erreur lors de l'upload")
@@ -174,6 +188,12 @@ export default function CreationsPage() {
 	const handleCropCancel = () => {
 		if (cropState) URL.revokeObjectURL(cropState.src)
 		setCropState(null)
+	}
+
+	const handleEditImage = (creationId: string, idx: number, imageUrl: string) => {
+		setImageMenuId(null)
+		const src = getImageUrl(imageUrl) || ''
+		setCropState({ creationId, src, editIdx: idx })
 	}
 
 	const handleSetCover = async (creationId: string, idx: number) => {
@@ -331,37 +351,50 @@ export default function CreationsPage() {
 								{creation.images?.length > 0 && (
 									<div className="mt-3 flex gap-2 overflow-x-auto">
 										{creation.images.map((img, idx) => (
-											<div key={idx} className="group/img relative h-14 w-14 shrink-0 overflow-hidden rounded">
-												<img src={getImageUrl(img.url) || ''} alt="" className="h-full w-full object-cover" />
+											<div key={idx} className="relative h-16 w-16 shrink-0">
+												<button
+													type="button"
+													onClick={(e) => { e.stopPropagation(); setImageMenuId(imageMenuId?.creationId === creation.id && imageMenuId?.idx === idx ? null : { creationId: creation.id, idx }) }}
+													className={`h-full w-full overflow-hidden rounded border-2 transition-colors ${idx === 0 ? 'border-primary' : 'border-transparent hover:border-muted-foreground/30'}`}
+												>
+													<img src={getImageUrl(img.url) || ''} alt="" className="h-full w-full object-cover" />
+												</button>
 												{idx === 0 && (
-													<span className="absolute top-0 left-0 rounded-br bg-primary px-1 text-[9px] font-medium text-primary-foreground">
+													<span className="absolute -top-1 -left-1 rounded bg-primary px-1 text-[8px] font-semibold text-primary-foreground">
 														Cover
 													</span>
 												)}
-												<div className="absolute inset-0 flex items-center justify-center gap-1 bg-black/50 opacity-0 transition-opacity group-hover/img:opacity-100">
-													{idx !== 0 && (
+												{imageMenuId?.creationId === creation.id && imageMenuId?.idx === idx && (
+													<div className="absolute top-full left-0 z-20 mt-1 w-36 rounded-md border bg-card py-1 shadow-lg">
+														{idx !== 0 && (
+															<button
+																type="button"
+																onClick={() => { handleSetCover(creation.id, idx); setImageMenuId(null) }}
+																className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs hover:bg-muted"
+															>
+																<svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.562.562 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.562.562 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" /></svg>
+																Couverture
+															</button>
+														)}
 														<button
 															type="button"
-															onClick={() => handleSetCover(creation.id, idx)}
-															className="rounded bg-white/90 p-0.5 text-black hover:bg-white"
-															title="Définir comme couverture"
+															onClick={() => handleEditImage(creation.id, idx, img.url)}
+															className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs hover:bg-muted"
 														>
-															<svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-																<path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-															</svg>
+															<svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21z" /></svg>
+															Recadrer
 														</button>
-													)}
-													<button
-														type="button"
-														onClick={() => handleImageDelete(creation.id, idx)}
-														className="rounded bg-white/90 p-0.5 text-red-600 hover:bg-white"
-														title="Supprimer"
-													>
-														<svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-															<path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-														</svg>
-													</button>
-												</div>
+														<div className="my-1 border-t" />
+														<button
+															type="button"
+															onClick={() => { handleImageDelete(creation.id, idx); setImageMenuId(null) }}
+															className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-red-600 hover:bg-red-50"
+														>
+															<svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>
+															Supprimer
+														</button>
+													</div>
+												)}
 											</div>
 										))}
 									</div>
