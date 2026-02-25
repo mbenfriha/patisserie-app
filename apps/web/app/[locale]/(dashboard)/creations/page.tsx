@@ -274,7 +274,7 @@ export default function CreationsPage() {
 			) : (
 				<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
 					{creations.map((creation) => (
-						<div key={creation.id} className="group relative overflow-hidden rounded-lg border bg-card">
+						<div key={creation.id} className="group relative rounded-lg border bg-card">
 							{/* Image */}
 							<div className="relative aspect-[4/3] bg-muted">
 								{creation.images?.[0]?.url ? (
