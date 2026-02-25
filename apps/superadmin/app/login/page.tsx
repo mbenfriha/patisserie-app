@@ -27,14 +27,21 @@ export default function LoginPage() {
 			const data = await response.json()
 
 			if (!response.ok) {
-				throw new Error(data.message || 'Identifiants invalides')
+				throw new Error(data.message || data.errors?.[0]?.message || 'Identifiants invalides')
 			}
 
-			if (data.user.role !== 'superadmin') {
+			const user = data.user || data.data?.user
+			const token = data.token || data.data?.token
+
+			if (!user) {
+				throw new Error('Réponse inattendue du serveur')
+			}
+
+			if (user.role !== 'superadmin') {
 				throw new Error('Acces refuse - Super Admin requis')
 			}
 
-			document.cookie = `superadmin_token=${data.token}; path=/; max-age=${60 * 60 * 24 * 7}; samesite=lax`
+			document.cookie = `superadmin_token=${token}; path=/; max-age=${60 * 60 * 24 * 7}; samesite=lax`
 
 			router.push('/')
 		} catch (err) {
