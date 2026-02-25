@@ -196,8 +196,8 @@ export default function OrderPage() {
 			<section
 				className="relative flex h-[30vh] min-h-[240px] items-center justify-center overflow-hidden text-center"
 				style={{
-					background: getImageUrl(profile.heroImageUrl)
-						? `linear-gradient(160deg, rgba(26,26,26,0.92) 0%, rgba(45,30,10,0.88) 50%, rgba(26,26,26,0.92) 100%), url('${getImageUrl(profile.heroImageUrl)}') center/cover`
+					background: getImageUrl(profile.ordersHeroImageUrl || profile.heroImageUrl)
+						? `linear-gradient(160deg, rgba(26,26,26,0.92) 0%, rgba(45,30,10,0.88) 50%, rgba(26,26,26,0.92) 100%), url('${getImageUrl(profile.ordersHeroImageUrl || profile.heroImageUrl)}') center/cover`
 						: 'linear-gradient(160deg, rgba(26,26,26,0.95) 0%, rgba(45,30,10,0.90) 50%, rgba(26,26,26,0.95) 100%)',
 				}}
 			>
