@@ -165,9 +165,10 @@ export function WorkshopsGrid({ workshops }: WorkshopsGridProps) {
 										</h3>
 
 										{workshop.description && (
-											<p className="mt-2 line-clamp-2 text-sm leading-relaxed text-[var(--dark-soft)]/70">
-												{workshop.description}
-											</p>
+											<div
+												className="mt-2 line-clamp-2 text-sm leading-relaxed text-[var(--dark-soft)]/70"
+												dangerouslySetInnerHTML={{ __html: workshop.description }}
+											/>
 										)}
 
 										{/* Info row */}
