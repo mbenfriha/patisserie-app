@@ -71,7 +71,7 @@ export default async function CreationsGalleryPage({ params }: Props) {
 			'@type': 'ListItem',
 			position: index + 1,
 			url: `/${slug}/creations/${creation.slug}`,
-			name: creation.title,
+			name: creation.title || 'Création',
 		})),
 	}
 

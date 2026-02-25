@@ -75,12 +75,12 @@ export default class CreationsController {
 			.max('sort_order as maxOrder')
 			.first()
 
-		const slug = await uniqueSlug(data.title, profile.id)
+		const title = data.title?.trim() || null
 
 		const creation = await Creation.create({
 			patissierId: profile.id,
-			title: data.title,
-			slug,
+			title,
+			slug: 'temp',
 			description: data.description || null,
 			categoryId: data.categoryId || null,
 			price: data.price ?? null,
@@ -90,6 +90,9 @@ export default class CreationsController {
 			images: [],
 			sortOrder: ((maxSortOrder as any)?.$extras?.maxOrder ?? -1) + 1,
 		})
+
+		creation.slug = await uniqueSlug(title || `creation-${creation.id.slice(0, 8)}`, profile.id, creation.id)
+		await creation.save()
 
 		return response.created({
 			success: true,
@@ -132,8 +135,11 @@ export default class CreationsController {
 			'sortOrder',
 		])
 
-		if (data.title && data.title !== creation.title) {
-			data.slug = await uniqueSlug(data.title, profile.id, creation.id)
+		if ('title' in data) {
+			data.title = data.title?.trim() || null
+			if (data.title !== creation.title) {
+				data.slug = await uniqueSlug(data.title || `creation-${creation.id.slice(0, 8)}`, profile.id, creation.id)
+			}
 		}
 
 		creation.merge(data)

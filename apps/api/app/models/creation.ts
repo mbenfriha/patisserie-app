@@ -21,7 +21,7 @@ export default class Creation extends BaseModel {
 	declare categoryId: string | null
 
 	@column()
-	declare title: string
+	declare title: string | null
 
 	@column()
 	declare slug: string

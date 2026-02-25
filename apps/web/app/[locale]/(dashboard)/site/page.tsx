@@ -121,6 +121,32 @@ export default function SiteEditorPage() {
 
 	const siteUrl = profile ? `/${profile.slug}` : null
 
+	// Track unsaved changes
+	const hasChanges = profile
+		? primaryColor !== profile.primaryColor ||
+			secondaryColor !== profile.secondaryColor ||
+			fontPreset !== (profile.siteConfig?.fontPreset || 'classic') ||
+			JSON.stringify(siteConfig) !== JSON.stringify(profile.siteConfig || {}) ||
+			ordersEnabled !== profile.ordersEnabled ||
+			workshopsEnabled !== profile.workshopsEnabled ||
+			phone !== (profile.phone || '') ||
+			addressStreet !== (profile.addressStreet || '') ||
+			addressCity !== (profile.addressCity || '') ||
+			addressZip !== (profile.addressZip || '') ||
+			addressCountry !== (profile.addressCountry || 'France') ||
+			JSON.stringify(socialLinks) !== JSON.stringify(profile.socialLinks || {}) ||
+			JSON.stringify(operatingHours) !== JSON.stringify(profile.operatingHours)
+		: false
+
+	useEffect(() => {
+		if (!hasChanges) return
+		const handler = (e: BeforeUnloadEvent) => {
+			e.preventDefault()
+		}
+		window.addEventListener('beforeunload', handler)
+		return () => window.removeEventListener('beforeunload', handler)
+	}, [hasChanges])
+
 	const loadProfile = useCallback(async () => {
 		try {
 			const res = await api.get('/patissier/profile')

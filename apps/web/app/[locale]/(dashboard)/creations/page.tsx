@@ -110,7 +110,7 @@ export default function CreationsPage() {
 	}
 
 	const handleSave = async () => {
-		if (!form.title.trim()) return
+		if (!form.title.trim() && !editingId && !form.description) return
 		setSaving(true)
 		try {
 			const body = {
@@ -255,7 +255,7 @@ export default function CreationsPage() {
 
 							{/* Content */}
 							<div className="p-4">
-								<h3 className="font-medium">{creation.title}</h3>
+								<h3 className="font-medium">{creation.title || <span className="text-muted-foreground italic">Sans titre</span>}</h3>
 								{creation.description && (
 									<div
 										className="mt-1 line-clamp-2 text-sm text-muted-foreground"
@@ -338,7 +338,7 @@ export default function CreationsPage() {
 						<div className="mt-4 space-y-4">
 							{/* Title */}
 							<div>
-								<label className="mb-1 block text-sm font-medium">Titre *</label>
+								<label className="mb-1 block text-sm font-medium">Titre</label>
 								<input
 									type="text"
 									value={form.title}
@@ -439,7 +439,7 @@ export default function CreationsPage() {
 							<button
 								type="button"
 								onClick={handleSave}
-								disabled={saving || !form.title.trim()}
+								disabled={saving}
 								className="rounded bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
 							>
 								{saving ? 'Enregistrement...' : editingId ? 'Enregistrer' : 'Créer'}

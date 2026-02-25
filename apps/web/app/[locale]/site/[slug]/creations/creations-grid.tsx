@@ -129,14 +129,16 @@ export function CreationsGrid({ creations }: CreationsGridProps) {
 										{imageUrl ? (
 											<img
 												src={imageUrl}
-												alt={creation.title}
+												alt={creation.title || ''}
 												className="h-full w-full object-cover transition-transform duration-600 group-hover:scale-[1.08]"
 											/>
 										) : (
 											<div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[var(--cream)] to-[var(--cream-dark)]">
-												<span className="font-[family-name:'Cormorant_Garamond'] text-2xl text-[var(--gold)]/40">
-													{creation.title}
-												</span>
+												{creation.title && (
+													<span className="font-[family-name:'Cormorant_Garamond'] text-2xl text-[var(--gold)]/40">
+														{creation.title}
+													</span>
+												)}
 											</div>
 										)}
 										{/* Category badge */}
@@ -157,22 +159,26 @@ export function CreationsGrid({ creations }: CreationsGridProps) {
 									</div>
 
 									{/* Content */}
+									{(creation.title || creation.description || creation.price != null) && (
 									<div className="p-6">
-										<h3 className="font-[family-name:'Cormorant_Garamond'] text-[24px] font-medium text-[var(--dark)]">
-											{creation.title}
-										</h3>
+										{creation.title && (
+											<h3 className="font-[family-name:'Cormorant_Garamond'] text-[24px] font-medium text-[var(--dark)]">
+												{creation.title}
+											</h3>
+										)}
 										{creation.description && (
 											<div
-												className="mt-2 line-clamp-2 text-sm leading-relaxed text-[var(--dark-soft)]/70"
+												className={`line-clamp-2 text-sm leading-relaxed text-[var(--dark-soft)]/70${creation.title ? ' mt-2' : ''}`}
 												dangerouslySetInnerHTML={{ __html: creation.description }}
 											/>
 										)}
 										{creation.price != null && (
-											<p className="mt-3 font-[family-name:'Josefin_Sans'] text-sm font-semibold text-[var(--gold)]">
+											<p className={`font-[family-name:'Josefin_Sans'] text-sm font-semibold text-[var(--gold)]${creation.title || creation.description ? ' mt-3' : ''}`}>
 												{creation.price}&nbsp;&euro;
 											</p>
 										)}
 									</div>
+									)}
 								</Link>
 							)
 						})}

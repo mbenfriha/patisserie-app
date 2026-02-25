@@ -40,11 +40,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 	const coverImage = creation.images?.find((img: any) => img.isCover) || creation.images?.[0]
 	const coverUrl = coverImage ? getImageUrl(coverImage.url) : null
 
+	const displayTitle = creation.title || 'Création'
+
 	return {
-		title: creation.title,
+		title: displayTitle,
 		description: truncatedDescription,
 		openGraph: {
-			title: `${creation.title} | ${profile.businessName}`,
+			title: `${displayTitle} | ${profile.businessName}`,
 			description: truncatedDescription,
 			type: 'article',
 			...(coverUrl ? { images: [coverUrl] } : {}),
@@ -79,7 +81,7 @@ export default async function CreationDetailPage({ params }: Props) {
 	const jsonLd: any = {
 		'@context': 'https://schema.org',
 		'@type': 'Product',
-		name: creation.title,
+		name: creation.title || 'Création',
 		description: stripHtml(creation.description) || undefined,
 		image: images.map((img: any) => getImageUrl(img.url)).filter(Boolean),
 		category: creation.category?.name || undefined,
@@ -118,7 +120,7 @@ export default async function CreationDetailPage({ params }: Props) {
 				{/* ── Two-column layout ────────────────────────────────────── */}
 				<div className="grid gap-12 lg:grid-cols-2">
 					{/* ── Left: Image gallery (client component) ──────────── */}
-					<ImageGallery images={images} title={creation.title} />
+					<ImageGallery images={images} title={creation.title || ''} />
 
 					{/* ── Right: Details ───────────────────────────────────── */}
 					<div>
@@ -133,11 +135,13 @@ export default async function CreationDetailPage({ params }: Props) {
 						)}
 
 						{/* Title */}
-						<h1
-							className="font-[family-name:'Cormorant_Garamond'] text-[36px] font-medium leading-[1.2] text-[var(--dark)]"
-						>
-							{creation.title}
-						</h1>
+						{creation.title && (
+							<h1
+								className="font-[family-name:'Cormorant_Garamond'] text-[36px] font-medium leading-[1.2] text-[var(--dark)]"
+							>
+								{creation.title}
+							</h1>
+						)}
 
 						{/* Price */}
 						{creation.price != null && (
