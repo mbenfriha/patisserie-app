@@ -95,6 +95,7 @@ export default function PatissierOrderDetailPage() {
 
 	// Quote form (custom orders)
 	const [quotedPrice, setQuotedPrice] = useState('')
+	const [depositPercent, setDepositPercent] = useState('100')
 	const [quoteResponseMessage, setQuoteResponseMessage] = useState('')
 	const [isSubmittingQuote, setIsSubmittingQuote] = useState(false)
 	const [quoteError, setQuoteError] = useState('')
@@ -149,6 +150,7 @@ export default function PatissierOrderDetailPage() {
 		try {
 			const res = await api.put(`/patissier/orders/${orderId}/quote`, {
 				quotedPrice: Number(quotedPrice),
+				depositPercent: Number(depositPercent),
 				responseMessage: quoteResponseMessage || undefined,
 			})
 			setOrder({ ...order, ...res.data.data })
@@ -455,6 +457,28 @@ export default function PatissierOrderDetailPage() {
 									placeholder="0.00"
 									required
 								/>
+							</div>
+							<div>
+								<label htmlFor="depositPercent" className="block text-sm font-medium">
+									Acompte demande (%)
+								</label>
+								<select
+									id="depositPercent"
+									value={depositPercent}
+									onChange={(e) => setDepositPercent(e.target.value)}
+									className="mt-1 w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+								>
+									<option value="30">30%</option>
+									<option value="50">50%</option>
+									<option value="70">70%</option>
+									<option value="100">100% (paiement integral)</option>
+								</select>
+								{quotedPrice && (
+									<p className="mt-1 text-xs text-muted-foreground">
+										Le client recevra un lien de paiement de{' '}
+										<strong>{(Number(quotedPrice) * Number(depositPercent) / 100).toFixed(2)} €</strong>
+									</p>
+								)}
 							</div>
 							<div>
 								<label htmlFor="quoteResponse" className="block text-sm font-medium">
