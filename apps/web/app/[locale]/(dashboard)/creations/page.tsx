@@ -176,6 +176,16 @@ export default function CreationsPage() {
 		setCropState(null)
 	}
 
+	const handleSetCover = async (creationId: string, idx: number) => {
+		try {
+			await api.put(`/patissier/creations/${creationId}/cover/${idx}`)
+			showToast('Image de couverture mise à jour')
+			await loadData()
+		} catch {
+			showToast('Erreur lors du changement de couverture')
+		}
+	}
+
 	const handleImageDelete = async (creationId: string, idx: number) => {
 		try {
 			await api.delete(`/patissier/creations/${creationId}/images/${idx}`)
@@ -323,15 +333,35 @@ export default function CreationsPage() {
 										{creation.images.map((img, idx) => (
 											<div key={idx} className="group/img relative h-14 w-14 shrink-0 overflow-hidden rounded">
 												<img src={getImageUrl(img.url) || ''} alt="" className="h-full w-full object-cover" />
-												<button
-													type="button"
-													onClick={() => handleImageDelete(creation.id, idx)}
-													className="absolute inset-0 flex items-center justify-center bg-black/50 text-white opacity-0 transition-opacity group-hover/img:opacity-100"
-												>
-													<svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-														<path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-													</svg>
-												</button>
+												{idx === 0 && (
+													<span className="absolute top-0 left-0 rounded-br bg-primary px-1 text-[9px] font-medium text-primary-foreground">
+														Cover
+													</span>
+												)}
+												<div className="absolute inset-0 flex items-center justify-center gap-1 bg-black/50 opacity-0 transition-opacity group-hover/img:opacity-100">
+													{idx !== 0 && (
+														<button
+															type="button"
+															onClick={() => handleSetCover(creation.id, idx)}
+															className="rounded bg-white/90 p-0.5 text-black hover:bg-white"
+															title="Définir comme couverture"
+														>
+															<svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+																<path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+															</svg>
+														</button>
+													)}
+													<button
+														type="button"
+														onClick={() => handleImageDelete(creation.id, idx)}
+														className="rounded bg-white/90 p-0.5 text-red-600 hover:bg-white"
+														title="Supprimer"
+													>
+														<svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+															<path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+														</svg>
+													</button>
+												</div>
 											</div>
 										))}
 									</div>

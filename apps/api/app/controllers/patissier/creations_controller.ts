@@ -257,4 +257,38 @@ export default class CreationsController {
 			data: creation.serialize(),
 		})
 	}
+
+	async setCover({ auth, params, response }: HttpContext) {
+		const user = auth.user!
+		const profile = await PatissierProfile.findByOrFail('userId', user.id)
+
+		const creation = await Creation.query()
+			.where('id', params.id)
+			.where('patissierId', profile.id)
+			.firstOrFail()
+
+		const index = Number(params.idx)
+		const images = [...(creation.images || [])]
+
+		if (isNaN(index) || index < 0 || index >= images.length) {
+			return response.badRequest({
+				success: false,
+				message: 'Invalid image index',
+			})
+		}
+
+		// Move selected image to first position
+		const [selected] = images.splice(index, 1)
+		selected.is_cover = true
+		images.forEach((img) => (img.is_cover = false))
+		images.unshift(selected)
+
+		creation.images = images
+		await creation.save()
+
+		return response.ok({
+			success: true,
+			data: creation.serialize(),
+		})
+	}
 }

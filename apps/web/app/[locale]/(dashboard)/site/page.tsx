@@ -864,13 +864,13 @@ export default function SiteEditorPage() {
 								</div>
 								<div>
 									<label className="text-sm font-medium">Description</label>
-									<textarea
-										value={siteConfig.workshopsCtaDescription || ''}
-										onChange={(e) => updateSiteConfigField('workshopsCtaDescription', e.target.value)}
-										placeholder="La patisserie n'aura plus de secret pour vous..."
-										rows={3}
-										className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
-									/>
+									<div className="mt-1">
+										<RichTextEditor
+											content={siteConfig.workshopsCtaDescription || ''}
+											onChange={(html) => updateSiteConfigField('workshopsCtaDescription', html)}
+											placeholder="La patisserie n'aura plus de secret pour vous..."
+										/>
+									</div>
 								</div>
 								<div>
 									<label className="text-sm font-medium">Label du bouton</label>

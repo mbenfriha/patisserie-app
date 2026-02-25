@@ -399,9 +399,10 @@ export default async function WorkshopDetailPage({ params, searchParams }: Props
 									Description
 								</h2>
 								<div className="mt-1 h-px w-12 bg-[var(--gold)]" />
-								<p className="mt-4 whitespace-pre-line text-[15px] leading-relaxed text-[var(--dark-soft)]/80">
-									{workshop.description}
-								</p>
+								<div
+									className="prose prose-sm mt-4 max-w-none text-[15px] leading-relaxed text-[var(--dark-soft)]/80"
+									dangerouslySetInnerHTML={{ __html: workshop.description }}
+								/>
 							</div>
 						)}
 
@@ -412,9 +413,10 @@ export default async function WorkshopDetailPage({ params, searchParams }: Props
 									Ce qui est inclus
 								</h2>
 								<div className="mt-1 h-px w-12 bg-[var(--gold)]" />
-								<p className="mt-4 whitespace-pre-line text-[15px] leading-relaxed text-[var(--dark-soft)]/80">
-									{workshop.whatIncluded}
-								</p>
+								<div
+									className="prose prose-sm mt-4 max-w-none text-[15px] leading-relaxed text-[var(--dark-soft)]/80"
+									dangerouslySetInnerHTML={{ __html: workshop.whatIncluded }}
+								/>
 							</div>
 						)}
 					</div>

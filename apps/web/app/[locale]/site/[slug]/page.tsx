@@ -439,10 +439,9 @@ export default function PatissierSitePage() {
 								light
 							/>
 						)}
-						<EditableText
+						<EditableRichText
 							value={getConfigValue('workshopsCtaDescription') as string}
 							onChange={(v) => updateConfig('workshopsCtaDescription', v)}
-							as="p"
 							className="mb-10 text-xl leading-[1.8] text-white/70"
 							style={{ fontFamily: 'var(--font-heading)' }}
 						/>
