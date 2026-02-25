@@ -19,6 +19,8 @@ interface InlineEditContextValue {
 	storyImagePreview: string | null
 	setHeroImageFile: (file: File) => void
 	setStoryImageFile: (file: File) => void
+	deleteHeroImage: () => void
+	deleteStoryImage: () => void
 	save: () => Promise<void>
 	cancel: () => void
 	isSaving: boolean
@@ -72,12 +74,16 @@ export function InlineEditProvider({
 	const [storyFile, setStoryFile] = useState<File | null>(null)
 	const [heroPreview, setHeroPreview] = useState<string | null>(null)
 	const [storyPreview, setStoryPreview] = useState<string | null>(null)
+	const [heroDeleted, setHeroDeleted] = useState(false)
+	const [storyDeleted, setStoryDeleted] = useState(false)
 
 	const hasChanges =
 		Object.keys(editedConfig).length > 0 ||
 		editedDescription !== null ||
 		!!heroFile ||
-		!!storyFile
+		!!storyFile ||
+		heroDeleted ||
+		storyDeleted
 
 	// Warn before leaving with unsaved changes
 	useEffect(() => {
@@ -104,6 +110,8 @@ export function InlineEditProvider({
 		if (storyPreview) URL.revokeObjectURL(storyPreview)
 		setHeroPreview(null)
 		setStoryPreview(null)
+		setHeroDeleted(false)
+		setStoryDeleted(false)
 	}, [heroPreview, storyPreview])
 
 	const toggleEdit = useCallback(() => {
@@ -135,18 +143,48 @@ export function InlineEditProvider({
 	const setHeroImageFile = useCallback((file: File) => {
 		setHeroFile(file)
 		setHeroPreview(URL.createObjectURL(file))
+		setHeroDeleted(false)
 	}, [])
 
 	const setStoryImageFile = useCallback((file: File) => {
 		setStoryFile(file)
 		setStoryPreview(URL.createObjectURL(file))
+		setStoryDeleted(false)
 	}, [])
+
+	const deleteHeroImage = useCallback(() => {
+		setHeroDeleted(true)
+		setHeroFile(null)
+		if (heroPreview) URL.revokeObjectURL(heroPreview)
+		setHeroPreview(null)
+	}, [heroPreview])
+
+	const deleteStoryImage = useCallback(() => {
+		setStoryDeleted(true)
+		setStoryFile(null)
+		if (storyPreview) URL.revokeObjectURL(storyPreview)
+		setStoryPreview(null)
+	}, [storyPreview])
 
 	const cancel = resetEditState
 
 	const save = useCallback(async () => {
 		setIsSaving(true)
 		try {
+			if (heroDeleted && !heroFile) {
+				try {
+					await api.delete('/patissier/hero-image')
+				} catch (err: any) {
+					console.error('Hero image delete failed:', err)
+				}
+			}
+			if (storyDeleted && !storyFile) {
+				try {
+					await api.delete('/patissier/story-image')
+				} catch (err: any) {
+					console.error('Story image delete failed:', err)
+				}
+			}
 			if (heroFile) {
 				try {
 					const fd = new FormData()
@@ -203,7 +241,7 @@ export function InlineEditProvider({
 		} finally {
 			setIsSaving(false)
 		}
-	}, [editedConfig, editedDescription, heroFile, storyFile, profile, onProfileUpdate, resetEditState])
+	}, [editedConfig, editedDescription, heroFile, storyFile, heroDeleted, storyDeleted, profile, onProfileUpdate, resetEditState])
 
 	return (
 		<InlineEditContext.Provider
@@ -215,10 +253,12 @@ export function InlineEditProvider({
 				updateConfig,
 				description,
 				updateDescription,
-				heroImagePreview: heroPreview,
-				storyImagePreview: storyPreview,
+				heroImagePreview: heroDeleted ? 'deleted' : heroPreview,
+				storyImagePreview: storyDeleted ? 'deleted' : storyPreview,
 				setHeroImageFile,
 				setStoryImageFile,
+				deleteHeroImage,
+				deleteStoryImage,
 				save,
 				cancel,
 				isSaving,

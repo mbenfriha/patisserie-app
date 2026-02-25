@@ -49,6 +49,8 @@ export default function PatissierSitePage() {
 		storyImagePreview,
 		setHeroImageFile,
 		setStoryImageFile,
+		deleteHeroImage,
+		deleteStoryImage,
 	} = useInlineEdit()
 	const [creations, setCreations] = useState<Creation[]>([])
 
@@ -79,8 +81,8 @@ export default function PatissierSitePage() {
 		: (profile.ordersEnabled ? `${basePath}/commandes` : `${basePath}/creations`)
 
 	const storyText = getConfigValue('storyText') || (editedDescription !== null ? editedDescription : profile.description)
-	const storyImage = storyImagePreview || getImageUrl(profile.storyImageUrl) || getImageUrl(profile.heroImageUrl)
-	const heroImage = heroImagePreview || getImageUrl(profile.heroImageUrl)
+	const heroImage = heroImagePreview === 'deleted' ? null : (heroImagePreview || getImageUrl(profile.heroImageUrl))
+	const storyImage = storyImagePreview === 'deleted' ? null : (storyImagePreview || getImageUrl(profile.storyImageUrl) || heroImage)
 
 	return (
 		<>
@@ -126,6 +128,8 @@ export default function PatissierSitePage() {
 						src={heroImage}
 						previewSrc={null}
 						onFileSelect={setHeroImageFile}
+						onDelete={deleteHeroImage}
+						cropAspect={16 / 9}
 						className="absolute inset-0 h-full w-full object-cover"
 						fallback={null}
 					/>
@@ -223,9 +227,11 @@ export default function PatissierSitePage() {
 					{/* Image */}
 					<div className="relative overflow-hidden rounded-xl" style={{ aspectRatio: '3/4' }}>
 						<EditableImage
-							src={storyImagePreview || getImageUrl(profile.storyImageUrl) || getImageUrl(profile.heroImageUrl)}
-							previewSrc={storyImagePreview}
+							src={storyImage}
+							previewSrc={storyImagePreview === 'deleted' ? null : storyImagePreview}
 							onFileSelect={setStoryImageFile}
+							onDelete={deleteStoryImage}
+							cropAspect={3 / 4}
 							alt={profile.businessName}
 							className="h-full w-full object-cover"
 							fallback={

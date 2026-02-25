@@ -190,6 +190,50 @@ export default class StripeService {
 		return session.url!
 	}
 
+	// Order quote Checkout (Stripe Connect with platform fee)
+
+	async createOrderQuoteCheckout(
+		amount: number,
+		orderNumber: string,
+		orderId: string,
+		clientEmail: string,
+		connectedAccountId: string,
+		successUrl: string,
+		cancelUrl: string
+	): Promise<string> {
+		const amountInCents = Math.round(amount * 100)
+		const platformFeeInCents = Math.round(amountInCents * (PLATFORM_FEE_PERCENT / 100))
+
+		const session = await this.stripe.checkout.sessions.create({
+			mode: 'payment',
+			customer_email: clientEmail,
+			line_items: [
+				{
+					price_data: {
+						currency: 'eur',
+						product_data: {
+							name: `Acompte commande #${orderNumber}`,
+						},
+						unit_amount: amountInCents,
+					},
+					quantity: 1,
+				},
+			],
+			payment_intent_data: {
+				application_fee_amount: platformFeeInCents,
+				transfer_data: {
+					destination: connectedAccountId,
+				},
+				metadata: { order_id: orderId },
+			},
+			success_url: successUrl,
+			cancel_url: cancelUrl,
+			metadata: { order_id: orderId },
+		})
+
+		return session.url!
+	}
+
 	// Invoices
 
 	async listInvoices(customerId: string, limit: number = 10) {

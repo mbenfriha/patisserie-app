@@ -4,6 +4,7 @@ import PatissierProfile from '#models/patissier_profile'
 import Subscription from '#models/subscription'
 import WorkshopBooking from '#models/workshop_booking'
 import Workshop from '#models/workshop'
+import Order from '#models/order'
 import EmailService from '#services/email_service'
 import StripeService from '#services/stripe_service'
 import env from '#start/env'
@@ -143,11 +144,18 @@ export default class StripeController {
 
 	private async handlePaymentCheckout(session: any) {
 		const bookingId = session.metadata?.booking_id
-		if (!bookingId) {
-			console.error('[Stripe Webhook] No booking_id in payment session metadata')
-			return
-		}
+		const orderId = session.metadata?.order_id
 
+		if (bookingId) {
+			await this.handleBookingPayment(session, bookingId)
+		} else if (orderId) {
+			await this.handleOrderPayment(session, orderId)
+		} else {
+			console.error('[Stripe Webhook] No booking_id or order_id in payment session metadata')
+		}
+	}
+
+	private async handleBookingPayment(session: any, bookingId: string) {
 		const booking = await WorkshopBooking.find(bookingId)
 		if (!booking) {
 			console.error('[Stripe Webhook] Booking not found:', bookingId)
@@ -194,6 +202,68 @@ export default class StripeController {
 			})
 		} catch (err: any) {
 			console.error(`[Stripe Webhook] Failed to send payment confirmation email for booking ${bookingId}:`, err.message)
+		}
+	}
+
+	private async handleOrderPayment(session: any, orderId: string) {
+		const order = await Order.query()
+			.where('id', orderId)
+			.preload('patissier')
+			.first()
+
+		if (!order) {
+			console.error('[Stripe Webhook] Order not found:', orderId)
+			return
+		}
+
+		// Idempotency
+		if (order.paymentStatus === 'paid') {
+			console.log(`[Stripe Webhook] Order ${orderId} already paid, skipping`)
+			return
+		}
+
+		order.merge({
+			paymentStatus: 'paid',
+			paidAt: DateTime.now(),
+			stripePaymentIntentId: session.payment_intent,
+			status: order.status === 'pending' ? 'confirmed' : order.status,
+			confirmedAt: order.status === 'pending' ? DateTime.now() : order.confirmedAt,
+		})
+		await order.save()
+
+		console.log(`[Stripe Webhook] Order ${orderId} payment received`)
+
+		const amountPaid = session.amount_total ? (session.amount_total / 100) : Number(order.quotedPrice)
+
+		// Send payment confirmation email to client
+		try {
+			await this.emailService.sendStatusUpdate({
+				email: order.clientEmail,
+				recipientName: order.clientName,
+				subject: `Paiement confirmé - Commande #${order.orderNumber}`,
+				title: 'Paiement confirmé',
+				body: `Votre paiement de <strong>${amountPaid.toFixed(2)} €</strong> pour la commande #${order.orderNumber} a bien été reçu. ${order.patissier.businessName} va prendre en charge votre commande.`,
+			})
+		} catch (err: any) {
+			console.error(`[Stripe Webhook] Failed to send payment confirmation to client for order ${orderId}:`, err.message)
+		}
+
+		// Send notification email to patissier
+		try {
+			const patissierUser = await import('#models/user').then((m) => m.default.find(order.patissier.userId))
+			if (patissierUser) {
+				await this.emailService.sendStatusUpdate({
+					email: patissierUser.email,
+					recipientName: order.patissier.businessName,
+					subject: `Acompte reçu - Commande #${order.orderNumber}`,
+					title: 'Acompte reçu',
+					body: `${order.clientName} a payé l'acompte de <strong>${amountPaid.toFixed(2)} €</strong> pour la commande #${order.orderNumber}. La commande est maintenant confirmée.`,
+					actionUrl: `${env.get('FRONTEND_URL', 'https://patissio.com')}/orders/${order.id}`,
+					actionLabel: 'Voir la commande',
+				})
+			}
+		} catch (err: any) {
+			console.error(`[Stripe Webhook] Failed to send payment notification to patissier for order ${orderId}:`, err.message)
 		}
 	}
 
