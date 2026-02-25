@@ -6,6 +6,7 @@ import { api } from '@/lib/api/client'
 import { getImageUrl } from '@/lib/utils/image-url'
 import { CategoryCombobox } from '@/components/ui/category-combobox'
 import { RichEditor } from '@/components/ui/rich-editor'
+import { ImageCropper } from '@/components/ui/image-cropper'
 
 interface CreationImage {
 	url: string
@@ -60,6 +61,7 @@ export default function CreationsPage() {
 	const [saving, setSaving] = useState(false)
 	const [tagInput, setTagInput] = useState('')
 	const [toast, setToast] = useState('')
+	const [cropState, setCropState] = useState<{ creationId: string; src: string; file: File } | null>(null)
 
 	const showToast = (msg: string) => {
 		setToast(msg)
@@ -146,18 +148,32 @@ export default function CreationsPage() {
 		}
 	}
 
-	const handleImageUpload = async (creationId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+	const handleImageSelect = (creationId: string, e: React.ChangeEvent<HTMLInputElement>) => {
 		const file = e.target.files?.[0]
 		if (!file) return
+		e.target.value = ''
+		const src = URL.createObjectURL(file)
+		setCropState({ creationId, src, file })
+	}
+
+	const handleCropConfirm = async (blob: Blob) => {
+		if (!cropState) return
 		const formData = new FormData()
-		formData.append('image', file)
+		formData.append('image', blob, cropState.file.name)
+		URL.revokeObjectURL(cropState.src)
+		setCropState(null)
 		try {
-			await api.upload(`/patissier/creations/${creationId}/images`, formData)
+			await api.upload(`/patissier/creations/${cropState.creationId}/images`, formData)
 			showToast('Image ajoutée')
 			await loadData()
 		} catch {
 			showToast("Erreur lors de l'upload")
 		}
+	}
+
+	const handleCropCancel = () => {
+		if (cropState) URL.revokeObjectURL(cropState.src)
+		setCropState(null)
 	}
 
 	const handleImageDelete = async (creationId: string, idx: number) => {
@@ -283,7 +299,7 @@ export default function CreationsPage() {
 								<div className="mt-3 flex items-center gap-2 border-t pt-3">
 									<label className="cursor-pointer rounded border px-3 py-1.5 text-xs hover:bg-muted">
 										+ Photo
-										<input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(creation.id, e)} />
+										<input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageSelect(creation.id, e)} />
 									</label>
 									<button
 										type="button"
@@ -446,6 +462,15 @@ export default function CreationsPage() {
 						</div>
 					</div>
 				</div>
+			)}
+
+			{/* ── Image Cropper ── */}
+			{cropState && (
+				<ImageCropper
+					imageSrc={cropState.src}
+					onCrop={handleCropConfirm}
+					onCancel={handleCropCancel}
+				/>
 			)}
 
 			{/* ── Toast ── */}

@@ -669,7 +669,7 @@ export default function SiteEditorPage() {
 										<optgroup label="Pages">
 											<option value="/creations">Créations</option>
 											<option value="/commandes">Commandes</option>
-											<option value="/ateliers">Ateliers</option>
+											<option value="/workshops">Ateliers</option>
 										</optgroup>
 										<optgroup label="Sections de la page d'accueil">
 											<option value="#story">Notre histoire</option>

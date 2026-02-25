@@ -182,7 +182,7 @@ export default function PatissierSitePage() {
 								<optgroup label="Pages">
 									<option value="/creations">Créations</option>
 									<option value="/commandes">Commandes</option>
-									<option value="/ateliers">Ateliers</option>
+									<option value="/workshops">Ateliers</option>
 								</optgroup>
 								<optgroup label="Sections de la page">
 									<option value="#story">Notre histoire</option>
@@ -276,13 +276,13 @@ export default function PatissierSitePage() {
 				<div className="overflow-hidden bg-[var(--dark)] py-5">
 					<div
 						className="flex whitespace-nowrap"
-						style={{ animation: isEditing ? 'none' : 'marquee-scroll 20s linear infinite' }}
+						style={{ animation: isEditing ? 'none' : 'marquee-scroll 14s linear infinite' }}
 					>
 						{[...config.marqueeItems, ...config.marqueeItems, ...config.marqueeItems].map(
 							(item, i) => (
 								<span
 									key={i}
-									className={`px-10 text-2xl font-light italic ${
+									className={`px-8 text-2xl font-light italic ${
 										i % 2 === 0 ? 'text-[var(--gold)]' : 'text-white/50'
 									}`}
 									style={{ fontFamily: 'var(--font-heading)' }}
@@ -360,22 +360,26 @@ export default function PatissierSitePage() {
 									</div>
 
 									{/* Content */}
-									<div className="p-6">
-										<h3 className="text-[26px] font-medium text-[var(--dark)]" style={{ fontFamily: 'var(--font-heading)' }}>
-											{creation.title}
-										</h3>
-										{creation.description && (
-											<div
-												className="mt-2 line-clamp-2 text-sm leading-relaxed text-[var(--text-light)]"
-												dangerouslySetInnerHTML={{ __html: creation.description }}
-											/>
-										)}
-										{creation.price != null && (
-											<p className="mt-3 text-sm font-semibold text-[var(--gold)]" style={{ fontFamily: 'var(--font-body)' }}>
-												{creation.price}&nbsp;&euro;
-											</p>
-										)}
-									</div>
+									{(creation.title || creation.description || creation.price != null) && (
+										<div className="p-6">
+											{creation.title && (
+												<h3 className="text-[26px] font-medium text-[var(--dark)]" style={{ fontFamily: 'var(--font-heading)' }}>
+													{creation.title}
+												</h3>
+											)}
+											{creation.description && (
+												<div
+													className="mt-2 line-clamp-2 text-sm leading-relaxed text-[var(--text-light)]"
+													dangerouslySetInnerHTML={{ __html: creation.description }}
+												/>
+											)}
+											{creation.price != null && (
+												<p className="mt-3 text-sm font-semibold text-[var(--gold)]" style={{ fontFamily: 'var(--font-body)' }}>
+													{creation.price}&nbsp;&euro;
+												</p>
+											)}
+										</div>
+									)}
 								</Link>
 							)
 						})}

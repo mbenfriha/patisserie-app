@@ -238,6 +238,30 @@ export default function WorkshopsPage() {
 		}
 	}
 
+	const handleDuplicate = (w: Workshop) => {
+		const [h, m] = (w.startTime || '14:00').split(':')
+		setEditingId(null)
+		setForm({
+			title: w.title,
+			description: w.description || '',
+			price: String(w.price),
+			paymentMode: w.depositPercent >= 100 ? 'full' : 'deposit',
+			depositPercent: w.depositPercent >= 100 ? '30' : String(w.depositPercent),
+			capacity: String(w.capacity),
+			durationMinutes: String(w.durationMinutes),
+			location: w.location || '',
+			date: '',
+			startHour: h || '14',
+			startMinute: m || '00',
+			whatIncluded: w.whatIncluded || '',
+			level: w.level,
+			categoryId: w.categoryId || '',
+			isVisible: w.isVisible,
+		})
+		setShowModal(true)
+		setOpenMenuId(null)
+	}
+
 	const handleIllustrationUpload = async (workshopId: string, e: React.ChangeEvent<HTMLInputElement>) => {
 		const file = e.target.files?.[0]
 		if (!file) return
@@ -406,6 +430,13 @@ export default function WorkshopsPage() {
 														Supprimer illustration
 													</button>
 												)}
+												<button
+													type="button"
+													onClick={() => handleDuplicate(workshop)}
+													className="flex w-full items-center px-3 py-2 text-left text-xs hover:bg-muted"
+												>
+													Dupliquer
+												</button>
 												<div className="my-1 border-t" />
 												<button
 													type="button"
