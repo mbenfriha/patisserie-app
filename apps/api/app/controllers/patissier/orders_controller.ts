@@ -4,6 +4,8 @@ import PatissierProfile from '#models/patissier_profile'
 import Order from '#models/order'
 import OrderMessage from '#models/order_message'
 import EmailService from '#services/email_service'
+import StripeService from '#services/stripe_service'
+import env from '#start/env'
 
 export default class OrdersController {
 	async index({ auth, request, response }: HttpContext) {
@@ -125,7 +127,11 @@ export default class OrdersController {
 			})
 		}
 
-		const { quotedPrice, responseMessage } = request.only(['quotedPrice', 'responseMessage'])
+		const { quotedPrice, responseMessage, depositPercent } = request.only([
+			'quotedPrice',
+			'responseMessage',
+			'depositPercent',
+		])
 
 		if (quotedPrice === undefined || quotedPrice === null) {
 			return response.badRequest({
@@ -143,18 +149,54 @@ export default class OrdersController {
 
 		await order.save()
 
+		// Generate Stripe payment link if patissier has Stripe Connect
+		let checkoutUrl: string | null = null
+		const effectiveDepositPercent = depositPercent ?? 100
+		const depositAmount = Math.round(quotedPrice * (effectiveDepositPercent / 100) * 100) / 100
+
+		if (depositAmount > 0 && profile.stripeAccountId && profile.stripeOnboardingComplete) {
+			try {
+				const stripeService = new StripeService()
+				const frontendUrl = env.get('FRONTEND_URL', 'https://patissio.com')
+				checkoutUrl = await stripeService.createOrderQuoteCheckout(
+					depositAmount,
+					order.orderNumber,
+					order.id,
+					order.clientEmail,
+					profile.stripeAccountId,
+					`${frontendUrl}/site/${profile.slug}/commandes?payment=success&order=${order.orderNumber}`,
+					`${frontendUrl}/site/${profile.slug}/commandes?payment=cancelled&order=${order.orderNumber}`
+				)
+			} catch (err) {
+				console.error('Failed to create Stripe checkout for order quote:', err)
+			}
+		}
+
 		// Send quote email to client
 		try {
 			const emailService = new EmailService()
 			const formattedPrice = Number(quotedPrice).toFixed(2)
+			const formattedDeposit = depositAmount.toFixed(2)
+
+			let body = responseMessage
+				? `${profile.businessName} vous a envoyé un devis pour votre commande sur-mesure #${order.orderNumber}.<br><br><strong>Message du pâtissier :</strong><br>${responseMessage}<br><br>`
+				: `${profile.businessName} vous a envoyé un devis de <strong>${formattedPrice} €</strong> pour votre commande sur-mesure #${order.orderNumber}.<br><br>`
+
+			if (effectiveDepositPercent < 100) {
+				body += `<strong>Acompte demandé :</strong> ${formattedDeposit} € (${effectiveDepositPercent}% du total de ${formattedPrice} €)`
+			} else {
+				body += `<strong>Montant à régler :</strong> ${formattedPrice} €`
+			}
+
 			await emailService.sendStatusUpdate({
 				email: order.clientEmail,
 				recipientName: order.clientName,
 				subject: `Devis pour votre commande #${order.orderNumber}`,
 				title: `Devis reçu : ${formattedPrice} €`,
-				body: responseMessage
-					? `${profile.businessName} vous a envoyé un devis pour votre commande sur-mesure #${order.orderNumber}.<br><br><strong>Message du pâtissier :</strong><br>${responseMessage}`
-					: `${profile.businessName} vous a envoyé un devis de ${formattedPrice} € pour votre commande sur-mesure #${order.orderNumber}.`,
+				body,
+				...(checkoutUrl
+					? { actionUrl: checkoutUrl, actionLabel: `Payer ${effectiveDepositPercent < 100 ? "l'acompte" : ''} ${formattedDeposit} €` }
+					: {}),
 			})
 		} catch (err) {
 			console.error('Failed to send quote email:', err)

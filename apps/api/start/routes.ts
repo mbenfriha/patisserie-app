@@ -107,8 +107,8 @@ router
 		router.get('/integrations/stripe/dashboard', '#controllers/patissier/integrations_controller.stripeDashboard')
 		router.get('/integrations/stripe/balance', '#controllers/patissier/integrations_controller.stripeBalance')
 
-		// Stats (Premium)
-		router.get('/stats', '#controllers/patissier/stats_controller.index').use(middleware.planGuard({ minPlan: 'premium' }))
+		// Stats
+		router.get('/stats', '#controllers/patissier/stats_controller.index')
 	})
 	.prefix('/patissier')
 	.use([throttle('api'), middleware.auth(), middleware.patissier()])

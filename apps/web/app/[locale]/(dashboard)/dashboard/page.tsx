@@ -1,11 +1,45 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { useAuth } from '@/lib/providers/auth-provider'
+import { api } from '@/lib/api/client'
+
+interface Stats {
+	orders: {
+		total: number
+		pending: number
+		confirmed: number
+		inProgress: number
+	}
+	revenue: {
+		total: number
+	}
+	workshops: {
+		total: number
+		published: number
+	}
+	bookings: {
+		total: number
+		confirmed: number
+	}
+}
 
 export default function DashboardPage() {
 	const t = useTranslations('dashboard')
 	const { user } = useAuth()
+	const [stats, setStats] = useState<Stats | null>(null)
+	const [isLoading, setIsLoading] = useState(true)
+
+	useEffect(() => {
+		api
+			.get('/patissier/stats')
+			.then((res) => {
+				setStats(res.data)
+			})
+			.catch(console.error)
+			.finally(() => setIsLoading(false))
+	}, [])
 
 	return (
 		<div className="space-y-8">
@@ -19,19 +53,27 @@ export default function DashboardPage() {
 			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
 				<div className="rounded-lg border bg-card p-6">
 					<h3 className="text-sm font-medium text-muted-foreground">{t('totalOrders')}</h3>
-					<p className="mt-2 text-3xl font-bold">0</p>
+					<p className="mt-2 text-3xl font-bold">
+						{isLoading ? '–' : stats?.orders.total ?? 0}
+					</p>
 				</div>
 				<div className="rounded-lg border bg-card p-6">
 					<h3 className="text-sm font-medium text-muted-foreground">{t('totalRevenue')}</h3>
-					<p className="mt-2 text-3xl font-bold">0 &euro;</p>
+					<p className="mt-2 text-3xl font-bold">
+						{isLoading ? '–' : `${stats?.revenue.total ?? 0} €`}
+					</p>
 				</div>
 				<div className="rounded-lg border bg-card p-6">
 					<h3 className="text-sm font-medium text-muted-foreground">{t('activeWorkshops')}</h3>
-					<p className="mt-2 text-3xl font-bold">0</p>
+					<p className="mt-2 text-3xl font-bold">
+						{isLoading ? '–' : stats?.workshops.published ?? 0}
+					</p>
 				</div>
 				<div className="rounded-lg border bg-card p-6">
 					<h3 className="text-sm font-medium text-muted-foreground">{t('pendingOrders')}</h3>
-					<p className="mt-2 text-3xl font-bold">0</p>
+					<p className="mt-2 text-3xl font-bold">
+						{isLoading ? '–' : stats?.orders.pending ?? 0}
+					</p>
 				</div>
 			</div>
 		</div>
