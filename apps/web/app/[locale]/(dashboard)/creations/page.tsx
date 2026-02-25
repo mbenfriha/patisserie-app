@@ -349,7 +349,7 @@ export default function CreationsPage() {
 
 								{/* Image thumbnails */}
 								{creation.images?.length > 0 && (
-									<div className="mt-3 flex gap-2 overflow-x-auto">
+									<div className="mt-3 flex flex-wrap gap-2">
 										{creation.images.map((img, idx) => (
 											<div key={idx} className="relative h-16 w-16 shrink-0">
 												<button
