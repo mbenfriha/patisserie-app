@@ -71,10 +71,12 @@ export default function PatissierSitePage() {
 
 	const ctaLabel =
 		getConfigValue('heroCtaLabel') ||
-		(profile.ordersEnabled ? 'Commander' : 'Voir nos cr\u00e9ations')
-	const ctaHref = profile.ordersEnabled
-		? `${basePath}/commandes`
-		: `${basePath}/creations`
+		(profile.ordersEnabled ? 'Commander' : 'Voir nos créations')
+
+	const configuredHref = getConfigValue('heroCtaHref') as string
+	const ctaHref = configuredHref
+		? (configuredHref.startsWith('#') ? configuredHref : `${basePath}${configuredHref.startsWith('/') ? configuredHref : `/${configuredHref}`}`)
+		: (profile.ordersEnabled ? `${basePath}/commandes` : `${basePath}/creations`)
 
 	const storyText = getConfigValue('storyText') || (editedDescription !== null ? editedDescription : profile.description)
 	const storyImage = storyImagePreview || getImageUrl(profile.storyImageUrl) || getImageUrl(profile.heroImageUrl)
@@ -159,21 +161,45 @@ export default function PatissierSitePage() {
 						/>
 					)}
 
-					<Link
-						href={ctaHref}
-						className="group inline-block border-2 border-[var(--gold)] bg-transparent px-12 py-4 text-xs font-normal uppercase tracking-[4px] text-[var(--gold)] transition-all duration-400 hover:bg-[var(--gold)] hover:text-[var(--dark)]"
-						style={{ fontFamily: 'var(--font-body)' }}
-					>
-						{isEditing ? (
-							<EditableText
-								value={getConfigValue('heroCtaLabel') as string || (profile.ordersEnabled ? 'Commander' : 'Voir nos cr\u00e9ations')}
-								onChange={(v) => updateConfig('heroCtaLabel', v)}
-								as="span"
-							/>
-						) : (
-							ctaLabel
-						)}
-					</Link>
+					{isEditing ? (
+						<div className="inline-flex flex-col items-center gap-3">
+							<span
+								className="group inline-block border-2 border-[var(--gold)] bg-transparent px-12 py-4 text-xs font-normal uppercase tracking-[4px] text-[var(--gold)]"
+								style={{ fontFamily: 'var(--font-body)' }}
+							>
+								<EditableText
+									value={getConfigValue('heroCtaLabel') as string || (profile.ordersEnabled ? 'Commander' : 'Voir nos créations')}
+									onChange={(v) => updateConfig('heroCtaLabel', v)}
+									as="span"
+								/>
+							</span>
+							<select
+								value={getConfigValue('heroCtaHref') as string || ''}
+								onChange={(e) => updateConfig('heroCtaHref', e.target.value)}
+								className="rounded-lg border border-white/20 bg-[#1A1A1A]/90 px-3 py-1.5 text-[11px] text-white/80 backdrop-blur-sm focus:border-[var(--gold)] focus:outline-none"
+							>
+								<option value="">Automatique ({profile.ordersEnabled ? 'Commandes' : 'Créations'})</option>
+								<optgroup label="Pages">
+									<option value="/creations">Créations</option>
+									<option value="/commandes">Commandes</option>
+									<option value="/ateliers">Ateliers</option>
+								</optgroup>
+								<optgroup label="Sections de la page">
+									<option value="#story">Notre histoire</option>
+									<option value="#creations">Créations</option>
+									<option value="#workshops-cta">Ateliers</option>
+								</optgroup>
+							</select>
+						</div>
+					) : (
+						<Link
+							href={ctaHref}
+							className="group inline-block border-2 border-[var(--gold)] bg-transparent px-12 py-4 text-xs font-normal uppercase tracking-[4px] text-[var(--gold)] transition-all duration-400 hover:bg-[var(--gold)] hover:text-[var(--dark)]"
+							style={{ fontFamily: 'var(--font-body)' }}
+						>
+							{ctaLabel}
+						</Link>
+					)}
 				</div>
 
 				{/* Scroll indicator */}
@@ -193,7 +219,7 @@ export default function PatissierSitePage() {
 			     STORY SECTION - "Notre histoire"
 			     ══════════════════════════════════════════════════════════ */}
 			{(config.showStorySection && storyText) && (
-				<section id="notre-histoire" className="mx-auto grid max-w-[1100px] items-center gap-16 px-6 py-24 md:grid-cols-2">
+				<section id="story" className="mx-auto grid max-w-[1100px] items-center gap-16 px-6 py-24 md:grid-cols-2">
 					{/* Image */}
 					<div className="relative overflow-hidden rounded-xl" style={{ aspectRatio: '3/4' }}>
 						<EditableImage
@@ -273,7 +299,7 @@ export default function PatissierSitePage() {
 			     CREATIONS SECTION
 			     ══════════════════════════════════════════════════════════ */}
 			{config.showCreationsOnHomepage && creations.length > 0 && (
-				<section className="mx-auto max-w-[1200px] px-6 py-24">
+				<section id="creations" className="mx-auto max-w-[1200px] px-6 py-24">
 					{isEditing ? (
 						<div className="mb-12">
 							<EditableText
@@ -373,6 +399,7 @@ export default function PatissierSitePage() {
 			     ══════════════════════════════════════════════════════════ */}
 			{config.showWorkshopsCta && profile.workshopsEnabled && (
 				<section
+					id="workshops-cta"
 					className="relative px-6 py-24 text-center"
 					style={{
 						background: `linear-gradient(rgba(26,26,26,0.88), rgba(26,26,26,0.92)), url('${

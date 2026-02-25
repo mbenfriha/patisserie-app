@@ -9,7 +9,7 @@ import User from '#models/user'
 import Workshop from '#models/workshop'
 
 export type SocialLinks = Partial<
-	Record<'instagram' | 'facebook' | 'tiktok' | 'website', string>
+	Record<'instagram' | 'facebook' | 'tiktok' | 'snapchat' | 'linkedin' | 'youtube' | 'customUrl' | 'customLabel', string>
 >
 
 export type OperatingHours = Partial<
@@ -19,6 +19,7 @@ export type OperatingHours = Partial<
 export interface SiteConfig {
 	heroSubtitle?: string
 	heroCtaLabel?: string
+	heroCtaHref?: string
 	storyTitle?: string
 	storySubtitle?: string
 	storyText?: string

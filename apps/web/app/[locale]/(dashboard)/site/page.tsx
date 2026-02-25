@@ -8,6 +8,7 @@ import { RichTextEditor } from '@/components/ui/rich-text-editor'
 interface SiteConfig {
 	heroSubtitle?: string
 	heroCtaLabel?: string
+	heroCtaHref?: string
 	storyTitle?: string
 	storySubtitle?: string
 	storyText?: string
@@ -36,7 +37,7 @@ interface Profile {
 	addressCity: string | null
 	addressZip: string | null
 	addressCountry: string | null
-	socialLinks: { instagram?: string; facebook?: string; tiktok?: string; website?: string }
+	socialLinks: { instagram?: string; facebook?: string; tiktok?: string; snapchat?: string; linkedin?: string; youtube?: string; customUrl?: string; customLabel?: string }
 	primaryColor: string
 	secondaryColor: string
 	fontFamily: string
@@ -655,6 +656,26 @@ export default function SiteEditorPage() {
 										className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
 									/>
 								</div>
+								<div>
+									<label className="text-sm font-medium">Destination du bouton CTA</label>
+									<select
+										value={siteConfig.heroCtaHref || ''}
+										onChange={(e) => updateSiteConfigField('heroCtaHref', e.target.value)}
+										className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
+									>
+										<option value="">Automatique ({ordersEnabled ? 'Commandes' : 'Créations'})</option>
+										<optgroup label="Pages">
+											<option value="/creations">Créations</option>
+											<option value="/commandes">Commandes</option>
+											<option value="/ateliers">Ateliers</option>
+										</optgroup>
+										<optgroup label="Sections de la page d'accueil">
+											<option value="#story">Notre histoire</option>
+											<option value="#creations">Créations</option>
+											<option value="#workshops-cta">Ateliers</option>
+										</optgroup>
+									</select>
+								</div>
 							</div>
 						</Accordion>
 
@@ -1072,14 +1093,59 @@ export default function SiteEditorPage() {
 									/>
 								</div>
 								<div>
-									<label className="text-sm font-medium">Site web</label>
+									<label className="text-sm font-medium">Snapchat</label>
 									<input
 										type="url"
-										value={socialLinks.website || ''}
-										onChange={(e) => setSocialLinks((prev) => ({ ...prev, website: e.target.value }))}
-										placeholder="https://votre-site.com"
+										value={socialLinks.snapchat || ''}
+										onChange={(e) => setSocialLinks((prev) => ({ ...prev, snapchat: e.target.value }))}
+										placeholder="https://snapchat.com/add/votre-pseudo"
 										className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
 									/>
+								</div>
+								<div>
+									<label className="text-sm font-medium">LinkedIn</label>
+									<input
+										type="url"
+										value={socialLinks.linkedin || ''}
+										onChange={(e) => setSocialLinks((prev) => ({ ...prev, linkedin: e.target.value }))}
+										placeholder="https://linkedin.com/in/votre-profil"
+										className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
+									/>
+								</div>
+								<div>
+									<label className="text-sm font-medium">YouTube</label>
+									<input
+										type="url"
+										value={socialLinks.youtube || ''}
+										onChange={(e) => setSocialLinks((prev) => ({ ...prev, youtube: e.target.value }))}
+										placeholder="https://youtube.com/@votre-chaine"
+										className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
+									/>
+								</div>
+							</div>
+							<div className="mt-4 border-t pt-4">
+								<h3 className="text-sm font-medium">Lien personnalise</h3>
+								<div className="mt-2 grid gap-4 md:grid-cols-2">
+									<div>
+										<label className="text-sm text-muted-foreground">Nom du lien</label>
+										<input
+											type="text"
+											value={socialLinks.customLabel || ''}
+											onChange={(e) => setSocialLinks((prev) => ({ ...prev, customLabel: e.target.value }))}
+											placeholder="Mon autre site"
+											className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
+										/>
+									</div>
+									<div>
+										<label className="text-sm text-muted-foreground">URL</label>
+										<input
+											type="url"
+											value={socialLinks.customUrl || ''}
+											onChange={(e) => setSocialLinks((prev) => ({ ...prev, customUrl: e.target.value }))}
+											placeholder="https://..."
+											className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
+										/>
+									</div>
 								</div>
 							</div>
 						</section>

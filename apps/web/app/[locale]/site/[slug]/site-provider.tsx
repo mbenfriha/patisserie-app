@@ -8,6 +8,7 @@ import { InlineEditProvider } from './components/inline-edit-provider'
 export interface SiteConfig {
 	heroSubtitle?: string
 	heroCtaLabel?: string
+	heroCtaHref?: string
 	storyTitle?: string
 	storySubtitle?: string
 	storyText?: string
@@ -41,7 +42,11 @@ export interface PatissierProfile {
 		instagram?: string
 		facebook?: string
 		tiktok?: string
-		website?: string
+		snapchat?: string
+		linkedin?: string
+		youtube?: string
+		customUrl?: string
+		customLabel?: string
 	}
 	primaryColor: string
 	secondaryColor: string
@@ -58,6 +63,7 @@ export interface PatissierProfile {
 const DEFAULT_SITE_CONFIG: Required<SiteConfig> = {
 	heroSubtitle: 'p\u00e2tisserie & ateliers',
 	heroCtaLabel: '',
+	heroCtaHref: '',
 	storyTitle: 'Notre histoire',
 	storySubtitle: 'qui sommes-nous',
 	storyText: '',
