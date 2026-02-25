@@ -278,19 +278,21 @@ export default function PatissierSitePage() {
 						className="flex whitespace-nowrap"
 						style={{ animation: isEditing ? 'none' : 'marquee-scroll 14s linear infinite' }}
 					>
-						{[...config.marqueeItems, ...config.marqueeItems, ...config.marqueeItems].map(
-							(item, i) => (
-								<span
-									key={i}
-									className={`px-8 text-2xl font-light italic ${
-										i % 2 === 0 ? 'text-[var(--gold)]' : 'text-white/50'
-									}`}
-									style={{ fontFamily: 'var(--font-heading)' }}
-								>
-									{item}
-								</span>
-							)
-						)}
+						{[0, 1].map((copy) => (
+							<div key={copy} className="flex shrink-0">
+								{config.marqueeItems.map((item, i) => (
+									<span
+										key={i}
+										className={`px-8 text-2xl font-light italic ${
+											i % 2 === 0 ? 'text-[var(--gold)]' : 'text-white/50'
+										}`}
+										style={{ fontFamily: 'var(--font-heading)' }}
+									>
+										{item}
+									</span>
+								))}
+							</div>
+						))}
 					</div>
 				</div>
 			)}

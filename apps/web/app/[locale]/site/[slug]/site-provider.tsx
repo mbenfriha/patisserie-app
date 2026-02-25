@@ -206,6 +206,19 @@ export function SiteProvider({
 					<main>{children}</main>
 					<SiteFooter />
 				</InlineEditProvider>
+				{profile.plan !== 'premium' && (
+					<a
+						href="https://patissio.com"
+						target="_blank"
+						rel="noreferrer"
+						className="fixed bottom-4 left-4 z-40 flex items-center gap-1.5 rounded-full bg-[#1A1A1A]/80 px-3 py-1.5 text-[11px] text-white/70 shadow-lg backdrop-blur-sm transition-all duration-300 hover:bg-[#1A1A1A] hover:text-white"
+					>
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+							<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+						</svg>
+						Propulsé par <span className="font-semibold">Patissio</span>
+					</a>
+				)}
 			</div>
 		</SiteContext.Provider>
 	)
