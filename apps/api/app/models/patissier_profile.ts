@@ -164,6 +164,9 @@ export default class PatissierProfile extends BaseModel {
 	@column()
 	declare allowSupportAccess: boolean
 
+	@column({ serializeAs: null })
+	declare instagramAccessToken: string | null
+
 	@column.dateTime({ autoCreate: true })
 	declare createdAt: DateTime
 

@@ -53,6 +53,7 @@ export default function PatissierSitePage() {
 		deleteStoryImage,
 	} = useInlineEdit()
 	const [creations, setCreations] = useState<Creation[]>([])
+	const [instagramPosts, setInstagramPosts] = useState<{ id: string; mediaUrl: string; permalink: string; caption: string }[]>([])
 
 	useEffect(() => {
 		async function fetchCreations() {
@@ -70,6 +71,22 @@ export default function PatissierSitePage() {
 		}
 		fetchCreations()
 	}, [profile.slug])
+
+	useEffect(() => {
+		if (!config.showInstagramSection && !isEditing) return
+		async function fetchInstagramFeed() {
+			try {
+				const res = await fetch(`${API_URL}/public/${profile.slug}/instagram-feed`)
+				if (res.ok) {
+					const data = await res.json()
+					setInstagramPosts(data.data || [])
+				}
+			} catch {
+				// silently fail
+			}
+		}
+		fetchInstagramFeed()
+	}, [profile.slug, config.showInstagramSection, isEditing])
 
 	const ctaLabel =
 		getConfigValue('heroCtaLabel') ||
@@ -411,7 +428,6 @@ export default function PatissierSitePage() {
 				const cleanPath = instagramUrl.split('?')[0].replace(/\/$/, '')
 				const handle = cleanPath.split('/').pop() || ''
 				const showSection = config.showInstagramSection
-				const gridImages = creations.slice(0, 6)
 
 				return (
 					<section
@@ -499,49 +515,38 @@ export default function PatissierSitePage() {
 								</svg>
 							</a>
 
-							{/* Image grid - uses creation images */}
-							{gridImages.length > 0 ? (
-								<div className="mx-auto grid max-w-[600px] grid-cols-3 gap-3">
-									{gridImages.map((creation) => {
-										const imageUrl = getCreationImage(creation)
-										return (
-											<a
-												key={creation.id}
-												href={cleanPath}
-												target="_blank"
-												rel="noopener noreferrer"
-												className="group/item relative overflow-hidden rounded-lg"
-												style={{ aspectRatio: '1' }}
-											>
-												{imageUrl ? (
-													<img
-														src={imageUrl}
-														alt={creation.title}
-														className="h-full w-full object-cover transition-all duration-500 group-hover/item:scale-105"
-													/>
-												) : (
-													<div className="flex h-full w-full items-center justify-center bg-[var(--cream-dark)]">
-														<span className="text-xs text-[var(--dark-soft)]" style={{ fontFamily: 'var(--font-heading)' }}>
-															{creation.title}
-														</span>
-													</div>
-												)}
-												<div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-all duration-300 group-hover/item:bg-black/30">
-													<svg
-														width="24"
-														height="24"
-														viewBox="0 0 24 24"
-														fill="none"
-														className="text-white opacity-0 transition-all duration-300 group-hover/item:opacity-100"
-													>
-														<rect x="2" y="2" width="20" height="20" rx="5" stroke="currentColor" strokeWidth="1.5" />
-														<circle cx="12" cy="12" r="5" stroke="currentColor" strokeWidth="1.5" />
-														<circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" />
-													</svg>
-												</div>
-											</a>
-										)
-									})}
+							{/* Instagram feed grid */}
+							{instagramPosts.length > 0 ? (
+								<div className="mx-auto grid max-w-[700px] grid-cols-3 gap-3">
+									{instagramPosts.slice(0, 9).map((post) => (
+										<a
+											key={post.id}
+											href={post.permalink}
+											target="_blank"
+											rel="noopener noreferrer"
+											className="group/item relative overflow-hidden rounded-lg"
+											style={{ aspectRatio: '1' }}
+										>
+											<img
+												src={post.mediaUrl}
+												alt={post.caption}
+												className="h-full w-full object-cover transition-all duration-500 group-hover/item:scale-105"
+											/>
+											<div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-all duration-300 group-hover/item:bg-black/30">
+												<svg
+													width="24"
+													height="24"
+													viewBox="0 0 24 24"
+													fill="none"
+													className="text-white opacity-0 transition-all duration-300 group-hover/item:opacity-100"
+												>
+													<rect x="2" y="2" width="20" height="20" rx="5" stroke="currentColor" strokeWidth="1.5" />
+													<circle cx="12" cy="12" r="5" stroke="currentColor" strokeWidth="1.5" />
+													<circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" />
+												</svg>
+											</div>
+										</a>
+									))}
 								</div>
 							) : (
 								<a
@@ -556,7 +561,7 @@ export default function PatissierSitePage() {
 										<circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" />
 									</svg>
 									<p className="text-sm font-medium text-[var(--dark-soft)]" style={{ fontFamily: 'var(--font-body)' }}>
-										Voir notre Instagram
+										{isEditing ? 'Ajoutez votre token Instagram dans les parametres' : 'Voir notre Instagram'}
 									</p>
 								</a>
 							)}

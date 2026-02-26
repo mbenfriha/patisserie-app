@@ -24,6 +24,8 @@ const RESERVED_PATHS = new Set([
 	'workshops',
 	'tracking',
 	'site',
+	'instagram',
+	'privacy',
 	'api',
 	'_next',
 	'favicon.ico',

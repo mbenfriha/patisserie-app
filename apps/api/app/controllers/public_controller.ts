@@ -151,6 +151,49 @@ export default class PublicController {
 		})
 	}
 
+	async instagramFeed({ params, response }: HttpContext) {
+		const profile = await PatissierProfile.findBy('slug', params.slug)
+		if (!profile) {
+			return response.notFound({ success: false, message: 'Patissier not found' })
+		}
+
+		if (!profile.instagramAccessToken) {
+			return response.ok({ success: true, data: [] })
+		}
+
+		try {
+			const igResponse = await fetch(
+				`https://graph.instagram.com/me/media?fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp&limit=12&access_token=${profile.instagramAccessToken}`
+			)
+
+			if (!igResponse.ok) {
+				const error = await igResponse.json()
+				// Token expired or invalid
+				if (error?.error?.code === 190) {
+					return response.ok({ success: true, data: [], error: 'token_expired' })
+				}
+				return response.ok({ success: true, data: [] })
+			}
+
+			const igData = await igResponse.json()
+			const posts = (igData.data || [])
+				.filter((post: any) => post.media_type === 'IMAGE' || post.media_type === 'CAROUSEL_ALBUM')
+				.slice(0, 9)
+				.map((post: any) => ({
+					id: post.id,
+					mediaUrl: post.media_url,
+					thumbnailUrl: post.thumbnail_url || post.media_url,
+					permalink: post.permalink,
+					caption: post.caption?.slice(0, 100) || '',
+					mediaType: post.media_type,
+				}))
+
+			return response.ok({ success: true, data: posts })
+		} catch {
+			return response.ok({ success: true, data: [] })
+		}
+	}
+
 	async workshopDetail({ params, response }: HttpContext) {
 		const profile = await PatissierProfile.findBy('slug', params.slug)
 		if (!profile) {

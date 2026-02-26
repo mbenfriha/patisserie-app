@@ -101,6 +101,13 @@ router
 			.prefix('/orders')
 			.use(middleware.planGuard({ minPlan: 'pro' }))
 
+		// Instagram OAuth
+		router.get('/instagram/auth-url', '#controllers/patissier/instagram_controller.authUrl')
+		router.post('/instagram/exchange', '#controllers/patissier/instagram_controller.exchangeCode')
+		router.delete('/instagram/disconnect', '#controllers/patissier/instagram_controller.disconnect')
+		router.get('/instagram/status', '#controllers/patissier/instagram_controller.status')
+		router.post('/instagram/refresh', '#controllers/patissier/instagram_controller.refreshToken')
+
 		// Stripe Connect
 		router.post('/integrations/stripe/connect', '#controllers/patissier/integrations_controller.stripeConnect')
 		router.get('/integrations/stripe/callback', '#controllers/patissier/integrations_controller.stripeCallback')
@@ -152,6 +159,7 @@ router
 		router.get('/:slug/products', '#controllers/public_controller.products')
 		router.get('/:slug/workshops', '#controllers/public_controller.workshops')
 		router.get('/:slug/workshops/:workshopSlug', '#controllers/public_controller.workshopDetail')
+		router.get('/:slug/instagram-feed', '#controllers/public_controller.instagramFeed')
 	})
 	.prefix('/public')
 	.use([throttle('global')])

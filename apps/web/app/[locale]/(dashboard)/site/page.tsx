@@ -118,6 +118,8 @@ export default function SiteEditorPage() {
 	const [addressCountry, setAddressCountry] = useState('France')
 	const [socialLinks, setSocialLinks] = useState<Profile['socialLinks']>({})
 	const [operatingHours, setOperatingHours] = useState<Profile['operatingHours']>(null)
+	const [instagramStatus, setInstagramStatus] = useState<{ connected: boolean; valid?: boolean; username?: string } | null>(null)
+	const [instagramLoading, setInstagramLoading] = useState(false)
 
 	// Image cropper state
 	const [cropState, setCropState] = useState<{ src: string; file?: File; target: 'hero' | string } | null>(null)
@@ -187,6 +189,66 @@ export default function SiteEditorPage() {
 	useEffect(() => {
 		loadProfile()
 	}, [loadProfile])
+
+	// Fetch Instagram connection status
+	const loadInstagramStatus = useCallback(async () => {
+		try {
+			const res = await api.get('/patissier/instagram/status')
+			setInstagramStatus(res.data.data)
+		} catch {
+			setInstagramStatus(null)
+		}
+	}, [])
+
+	useEffect(() => {
+		loadInstagramStatus()
+	}, [loadInstagramStatus])
+
+	// Handle Instagram OAuth redirect result
+	useEffect(() => {
+		const params = new URLSearchParams(window.location.search)
+		const igResult = params.get('instagram')
+		if (igResult) {
+			setActiveTab('contact')
+			if (igResult === 'success') {
+				loadInstagramStatus()
+				setToast('Instagram connecte avec succes !')
+				setTimeout(() => setToast(null), 3000)
+			} else {
+				setToast('Erreur lors de la connexion Instagram')
+				setTimeout(() => setToast(null), 3000)
+			}
+			const url = new URL(window.location.href)
+			url.searchParams.delete('instagram')
+			url.searchParams.delete('tab')
+			window.history.replaceState({}, '', url.pathname)
+		}
+	}, [loadInstagramStatus])
+
+	const handleInstagramConnect = async () => {
+		setInstagramLoading(true)
+		try {
+			const res = await api.get('/patissier/instagram/auth-url')
+			const url = res.data.data.url
+			window.location.href = url
+		} catch {
+			showToast('Erreur: integration Instagram non configuree')
+			setInstagramLoading(false)
+		}
+	}
+
+	const handleInstagramDisconnect = async () => {
+		setInstagramLoading(true)
+		try {
+			await api.delete('/patissier/instagram/disconnect')
+			setInstagramStatus({ connected: false })
+			showToast('Instagram deconnecte')
+		} catch {
+			showToast('Erreur lors de la deconnexion')
+		} finally {
+			setInstagramLoading(false)
+		}
+	}
 
 	const showToast = (msg: string) => {
 		setToast(msg)
@@ -1114,6 +1176,49 @@ export default function SiteEditorPage() {
 										placeholder="https://instagram.com/votre-page"
 										className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
 									/>
+								</div>
+								<div>
+									<label className="text-sm font-medium">Feed Instagram</label>
+									<div className="mt-1">
+										{instagramStatus?.connected ? (
+											<div className="flex items-center gap-3">
+												<div className="flex items-center gap-2 rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm">
+													<span className="h-2 w-2 rounded-full bg-green-500" />
+													<span className="text-green-700">
+														{instagramStatus.username ? `@${instagramStatus.username}` : 'Connecte'}
+													</span>
+													{instagramStatus.valid === false && (
+														<span className="text-xs text-amber-600">(token expire)</span>
+													)}
+												</div>
+												<button
+													type="button"
+													onClick={handleInstagramDisconnect}
+													disabled={instagramLoading}
+													className="rounded-md border px-3 py-2 text-xs text-red-600 hover:bg-red-50 disabled:opacity-50"
+												>
+													Deconnecter
+												</button>
+											</div>
+										) : (
+											<button
+												type="button"
+												onClick={handleInstagramConnect}
+												disabled={instagramLoading}
+												className="flex items-center gap-2 rounded-md border bg-gradient-to-r from-purple-500 to-pink-500 px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+											>
+												<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+													<rect x="2" y="2" width="20" height="20" rx="5" />
+													<circle cx="12" cy="12" r="5" />
+													<circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" stroke="none" />
+												</svg>
+												{instagramLoading ? 'Connexion...' : 'Connecter Instagram'}
+											</button>
+										)}
+										<p className="mt-1.5 text-xs text-muted-foreground">
+											Connectez votre compte pour afficher votre feed sur votre site.
+										</p>
+									</div>
 								</div>
 								<div>
 									<label className="text-sm font-medium">Facebook</label>
