@@ -184,7 +184,7 @@ export default class PublicController {
 
 		try {
 			const igResponse = await fetch(
-				`https://graph.instagram.com/me/media?fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp&limit=12&access_token=${profile.instagramAccessToken}`
+				`https://graph.instagram.com/v21.0/me/media?fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp&limit=12&access_token=${profile.instagramAccessToken}`
 			)
 
 			if (!igResponse.ok) {
