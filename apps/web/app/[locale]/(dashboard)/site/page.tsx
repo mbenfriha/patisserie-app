@@ -205,22 +205,43 @@ export default function SiteEditorPage() {
 	}, [loadInstagramStatus])
 
 	// Handle Instagram OAuth redirect result
+	const igExchanged = useRef(false)
 	useEffect(() => {
 		const params = new URLSearchParams(window.location.search)
 		const igResult = params.get('instagram')
+		const igCode = params.get('instagram_code')
+
+		// Exchange code received from Instagram redirect
+		if (igCode && !igExchanged.current) {
+			igExchanged.current = true
+			setActiveTab('pages')
+			api
+				.post('/patissier/instagram/exchange', { code: igCode })
+				.then(() => {
+					loadInstagramStatus()
+					showToast('Instagram connecté avec succès !')
+				})
+				.catch(() => {
+					showToast('Erreur lors de la connexion Instagram')
+				})
+				.finally(() => {
+					const url = new URL(window.location.href)
+					url.searchParams.delete('instagram_code')
+					window.history.replaceState({}, '', url.pathname)
+				})
+			return
+		}
+
 		if (igResult) {
-			setActiveTab('contact')
+			setActiveTab('pages')
 			if (igResult === 'success') {
 				loadInstagramStatus()
-				setToast('Instagram connecte avec succes !')
-				setTimeout(() => setToast(null), 3000)
+				showToast('Instagram connecté avec succès !')
 			} else {
-				setToast('Erreur lors de la connexion Instagram')
-				setTimeout(() => setToast(null), 3000)
+				showToast('Erreur lors de la connexion Instagram')
 			}
 			const url = new URL(window.location.href)
 			url.searchParams.delete('instagram')
-			url.searchParams.delete('tab')
 			window.history.replaceState({}, '', url.pathname)
 		}
 	}, [loadInstagramStatus])

@@ -16,7 +16,7 @@ export default class InstagramController {
 		}
 
 		const frontendUrl = (env.get('FRONTEND_URL') || '').replace(/\/+$/, '')
-		const redirectUri = `${frontendUrl}/instagram/callback`
+		const redirectUri = `${frontendUrl}/api/instagram/callback`
 
 		const authUrl =
 			`https://www.instagram.com/oauth/authorize` +
@@ -48,7 +48,7 @@ export default class InstagramController {
 		const appId = env.get('INSTAGRAM_APP_ID')
 		const appSecret = env.get('INSTAGRAM_APP_SECRET')
 		const frontendUrl = (env.get('FRONTEND_URL') || '').replace(/\/+$/, '')
-		const redirectUri = `${frontendUrl}/instagram/callback`
+		const redirectUri = `${frontendUrl}/api/instagram/callback`
 
 		logger.info({ redirectUri, frontendUrl, codeLength: code.length, profileId: profile.id }, 'Instagram exchange attempt')
 
