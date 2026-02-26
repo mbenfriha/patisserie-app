@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState, useEffect, type CSSProperties, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { ImageCropper } from '@/components/ui/image-cropper'
 import { useInlineEdit } from './inline-edit-provider'
 
@@ -32,17 +33,17 @@ export function EditableImage({
 }: EditableImageProps) {
 	const { isEditing } = useInlineEdit()
 	const inputRef = useRef<HTMLInputElement>(null)
-	const menuRef = useRef<HTMLDivElement>(null)
+	const containerRef = useRef<HTMLDivElement>(null)
 	const [showMenu, setShowMenu] = useState(false)
 	const [cropSrc, setCropSrc] = useState<string | null>(null)
 
 	const displaySrc = previewSrc || src
 
-	// Close menu on click outside
+	// Close menu on click outside the entire container (button + dropdown)
 	useEffect(() => {
 		if (!showMenu) return
 		const handler = (e: MouseEvent) => {
-			if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+			if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
 				setShowMenu(false)
 			}
 		}
@@ -85,9 +86,8 @@ export function EditableImage({
 
 	const dropdownMenu = showMenu && (
 		<div
-			ref={menuRef}
-			className="absolute z-30 overflow-hidden rounded-lg border border-white/20 bg-[#1A1A1A]/95 shadow-2xl backdrop-blur-xl"
-			style={overlay ? { top: '100%', right: 0, marginTop: 8 } : { left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}
+			className="absolute overflow-hidden rounded-lg border border-white/20 bg-[#1A1A1A]/95 shadow-2xl backdrop-blur-xl"
+			style={overlay ? { top: '100%', left: 0, marginTop: 8, zIndex: 60 } : { left: '50%', top: '50%', transform: 'translate(-50%, -50%)', zIndex: 60 }}
 			onClick={(e) => e.stopPropagation()}
 		>
 			<button
@@ -147,22 +147,30 @@ export function EditableImage({
 		/>
 	)
 
-	const cropperModal = cropSrc && (
-		<ImageCropper
-			imageSrc={cropSrc}
-			aspect={cropAspect}
-			onCrop={handleCrop}
-			onCancel={handleCancelCrop}
-		/>
-	)
+	// Render cropper via portal so overflow-hidden parents can't clip it
+	const cropperModal = cropSrc && typeof document !== 'undefined'
+		? createPortal(
+				<ImageCropper
+					imageSrc={cropSrc}
+					aspect={cropAspect}
+					onCrop={handleCrop}
+					onCancel={handleCancelCrop}
+				/>,
+				document.body
+			)
+		: null
 
-	// ── Overlay mode: floating button in corner ──
+	// ── Overlay mode: floating button ──
 	if (overlay) {
 		if (!isEditing) return null
 
 		return (
 			<>
-				<div className="absolute right-4 top-4 z-20" style={{ position: 'absolute' }}>
+				<div
+					ref={containerRef}
+					className="absolute right-4 z-[60]"
+					style={{ top: '5rem' }}
+				>
 					<button
 						type="button"
 						onClick={(e) => {
@@ -203,6 +211,7 @@ export function EditableImage({
 	return (
 		<>
 			<div
+				ref={containerRef}
 				className="group/edit relative cursor-pointer"
 				onClick={() => setShowMenu(!showMenu)}
 			>
