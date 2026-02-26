@@ -36,6 +36,9 @@ export interface SiteConfig {
 	showWorkshopsCta?: boolean
 	showCatalogueTab?: boolean
 	showCustomOrderTab?: boolean
+	showInstagramSection?: boolean
+	instagramSectionTitle?: string
+	instagramSectionSubtitle?: string
 	fontPreset?: 'classic' | 'modern' | 'elegant' | 'playful'
 	logoSize?: number
 }

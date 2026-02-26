@@ -26,6 +26,9 @@ interface SiteConfig {
 	showWorkshopsCta?: boolean
 	showCatalogueTab?: boolean
 	showCustomOrderTab?: boolean
+	showInstagramSection?: boolean
+	instagramSectionTitle?: string
+	instagramSectionSubtitle?: string
 	fontPreset?: 'classic' | 'modern' | 'elegant' | 'playful'
 }
 
@@ -992,6 +995,11 @@ export default function SiteEditorPage() {
 										onChange={(v) => updateSiteConfigField('showWorkshopsCta', v)}
 										locked={!isPro}
 										badge={!isPro ? 'pro' : undefined}
+									/>
+									<ToggleRow
+										label="Section Instagram"
+										checked={siteConfig.showInstagramSection === true}
+										onChange={(v) => updateSiteConfigField('showInstagramSection', v)}
 									/>
 									<div className="border-t pt-4">
 										<ToggleRow

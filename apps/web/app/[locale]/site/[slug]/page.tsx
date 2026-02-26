@@ -404,6 +404,145 @@ export default function PatissierSitePage() {
 			)}
 
 			{/* ══════════════════════════════════════════════════════════
+			     INSTAGRAM SECTION
+			     ══════════════════════════════════════════════════════════ */}
+			{(config.showInstagramSection || isEditing) && profile.socialLinks?.instagram && (() => {
+				const instagramUrl = profile.socialLinks.instagram!
+				const handle = instagramUrl.replace(/\/$/, '').split('/').pop() || ''
+				const showSection = config.showInstagramSection
+
+				return (
+					<section
+						id="instagram"
+						className="relative overflow-hidden px-6 py-24 text-center"
+						style={{
+							background: 'linear-gradient(160deg, #faf8f5 0%, #f0ebe4 50%, #faf8f5 100%)',
+							opacity: !showSection && isEditing ? 0.5 : 1,
+						}}
+					>
+						{/* Decorative gold radial accents */}
+						<div
+							className="pointer-events-none absolute inset-0 opacity-[0.03]"
+							style={{
+								background:
+									'radial-gradient(circle at 30% 50%, var(--gold) 0%, transparent 50%), radial-gradient(circle at 70% 50%, var(--gold) 0%, transparent 50%)',
+							}}
+						/>
+
+						{isEditing && !showSection && (
+							<div className="absolute inset-x-0 top-4 z-10 text-center">
+								<span className="rounded-full bg-[#1A1A1A]/80 px-3 py-1 text-xs text-white/80">
+									Section masquée (visible uniquement en mode édition)
+								</span>
+							</div>
+						)}
+
+						<div className="relative z-10 mx-auto max-w-[800px]">
+							{isEditing ? (
+								<div className="mb-10">
+									<EditableText
+										value={getConfigValue('instagramSectionSubtitle') as string}
+										onChange={(v) => updateConfig('instagramSectionSubtitle', v)}
+										as="p"
+										className="mb-3 text-center text-[12px] uppercase tracking-[5px] text-[var(--gold)]"
+										style={{ fontFamily: 'var(--font-body)' }}
+									/>
+									<EditableText
+										value={getConfigValue('instagramSectionTitle') as string}
+										onChange={(v) => updateConfig('instagramSectionTitle', v)}
+										as="h2"
+										className="text-center text-[clamp(32px,5vw,48px)] font-light leading-[1.15] text-[var(--dark)]"
+										style={{ fontFamily: 'var(--font-heading)' }}
+									/>
+									<div className="mx-auto mt-4 h-[3px] w-16 bg-[var(--gold)]" />
+								</div>
+							) : (
+								<SectionTitle
+									subtitle={getConfigValue('instagramSectionSubtitle') as string}
+									title={getConfigValue('instagramSectionTitle') as string}
+								/>
+							)}
+
+							{/* Instagram handle display */}
+							<a
+								href={instagramUrl}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="group mx-auto mb-10 flex w-fit items-center gap-3 rounded-full border border-[var(--gold)]/30 bg-white/80 px-6 py-3 shadow-sm transition-all duration-300 hover:border-[var(--gold)] hover:shadow-md"
+							>
+								<svg width="22" height="22" viewBox="0 0 24 24" fill="none" className="text-[var(--gold)]">
+									<rect x="2" y="2" width="20" height="20" rx="5" stroke="currentColor" strokeWidth="1.5" />
+									<circle cx="12" cy="12" r="5" stroke="currentColor" strokeWidth="1.5" />
+									<circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" />
+								</svg>
+								<span
+									className="text-sm font-medium tracking-wide text-[var(--dark)]"
+									style={{ fontFamily: 'var(--font-body)' }}
+								>
+									@{handle}
+								</span>
+								<svg
+									width="16"
+									height="16"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									strokeWidth="1.5"
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									className="text-[var(--gold)] transition-transform duration-300 group-hover:translate-x-1"
+								>
+									<line x1="5" y1="12" x2="19" y2="12" />
+									<polyline points="12 5 19 12 12 19" />
+								</svg>
+							</a>
+
+							{/* Decorative grid pattern */}
+							<div className="mx-auto grid max-w-[600px] grid-cols-3 gap-3">
+								{Array.from({ length: 6 }).map((_, i) => (
+									<a
+										key={i}
+										href={instagramUrl}
+										target="_blank"
+										rel="noopener noreferrer"
+										className="group/item relative overflow-hidden rounded-lg"
+										style={{ aspectRatio: '1' }}
+									>
+										<div
+											className="h-full w-full transition-all duration-500 group-hover/item:scale-105"
+											style={{
+												background: `linear-gradient(${135 + i * 25}deg, var(--gold)/${12 + i * 3}%, var(--cream-dark)/${30 + i * 8}%, var(--gold)/${8 + i * 2}%)`,
+											}}
+										/>
+										<div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-all duration-300 group-hover/item:bg-black/30">
+											<svg
+												width="24"
+												height="24"
+												viewBox="0 0 24 24"
+												fill="none"
+												className="text-white opacity-0 transition-all duration-300 group-hover/item:opacity-100"
+											>
+												<rect x="2" y="2" width="20" height="20" rx="5" stroke="currentColor" strokeWidth="1.5" />
+												<circle cx="12" cy="12" r="5" stroke="currentColor" strokeWidth="1.5" />
+												<circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" />
+											</svg>
+										</div>
+									</a>
+								))}
+							</div>
+
+							<p
+								className="mt-8 text-sm text-[var(--dark-soft)]/60"
+								style={{ fontFamily: 'var(--font-body)' }}
+							>
+								Retrouvez nos dernières créations sur Instagram
+							</p>
+						</div>
+					</section>
+				)
+			})()}
+
+			{/* ══════════════════════════════════════════════════════════
 			     MASTERCLASS / ATELIERS CTA
 			     ══════════════════════════════════════════════════════════ */}
 			{config.showWorkshopsCta && profile.workshopsEnabled && (
