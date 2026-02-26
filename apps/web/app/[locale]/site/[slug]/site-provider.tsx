@@ -26,6 +26,7 @@ export interface SiteConfig {
 	showCatalogueTab?: boolean
 	showCustomOrderTab?: boolean
 	fontPreset?: 'classic' | 'modern' | 'elegant' | 'playful'
+	logoSize?: number
 }
 
 export interface PatissierProfile {
@@ -95,6 +96,7 @@ const DEFAULT_SITE_CONFIG: Required<SiteConfig> = {
 	showCatalogueTab: true,
 	showCustomOrderTab: true,
 	fontPreset: 'classic',
+	logoSize: 40,
 }
 
 const FONT_PRESETS: Record<string, { heading: string; body: string; cssImport: string }> = {

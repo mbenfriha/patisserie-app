@@ -37,6 +37,7 @@ export interface SiteConfig {
 	showCatalogueTab?: boolean
 	showCustomOrderTab?: boolean
 	fontPreset?: 'classic' | 'modern' | 'elegant' | 'playful'
+	logoSize?: number
 }
 
 export default class PatissierProfile extends BaseModel {

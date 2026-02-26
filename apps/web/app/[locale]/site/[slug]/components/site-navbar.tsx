@@ -2,18 +2,23 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { useSiteProfile, useSiteBasePath } from '../site-provider'
+import { useSiteProfile, useSiteBasePath, useSiteConfig } from '../site-provider'
 import { useAuth } from '@/lib/providers/auth-provider'
 import { getImageUrl } from '@/lib/utils/image-url'
+import { useInlineEdit } from './inline-edit-provider'
 
 export function SiteNavbar() {
 	const profile = useSiteProfile()
 	const basePath = useSiteBasePath()
+	const config = useSiteConfig()
 	const { user } = useAuth()
+	const { isEditing, getConfigValue, updateConfig } = useInlineEdit()
 	const [scrolled, setScrolled] = useState(false)
 	const [mobileOpen, setMobileOpen] = useState(false)
 
 	const isOwner = user?.role === 'patissier' && user?.profile?.slug === profile.slug
+
+	const logoSize = isEditing ? (getConfigValue('logoSize') as number) : config.logoSize
 
 	const handleScroll = useCallback(() => {
 		setScrolled(window.scrollY > 20)
@@ -56,22 +61,44 @@ export function SiteNavbar() {
 		>
 			<div className="mx-auto flex max-w-[1200px] items-center justify-between px-6">
 				{/* Logo / Business Name */}
-				<Link href={basePath || '/'} className="block">
-					{profile.logoUrl ? (
-						<img
-							src={getImageUrl(profile.logoUrl)!}
-							alt={profile.businessName}
-							className="h-10 w-auto object-contain"
-						/>
-					) : (
-						<span
-							className="font-[family-name:'Great_Vibes'] text-[32px] text-[var(--gold)]"
-							style={{ letterSpacing: 1 }}
+				<div className="relative">
+					<Link href={basePath || '/'} className="block">
+						{profile.logoUrl ? (
+							<img
+								src={getImageUrl(profile.logoUrl)!}
+								alt={profile.businessName}
+								className="w-auto object-contain"
+								style={{ height: `${logoSize}px` }}
+							/>
+						) : (
+							<span
+								className="font-[family-name:'Great_Vibes'] text-[var(--gold)]"
+								style={{ fontSize: `${logoSize * 0.8}px`, letterSpacing: 1 }}
+							>
+								{profile.businessName}
+							</span>
+						)}
+					</Link>
+
+					{/* Logo size slider in edit mode */}
+					{isEditing && (
+						<div
+							className="absolute top-full left-0 mt-2 flex items-center gap-2 rounded-lg border border-white/20 bg-[#1A1A1A]/95 px-3 py-2 shadow-xl backdrop-blur-xl"
+							onClick={(e) => e.preventDefault()}
 						>
-							{profile.businessName}
-						</span>
+							<span className="text-[10px] font-medium tracking-wide text-white/50 uppercase">Taille</span>
+							<input
+								type="range"
+								min="24"
+								max="80"
+								value={logoSize}
+								onChange={(e) => updateConfig('logoSize', Number(e.target.value))}
+								className="h-1 w-24 cursor-pointer accent-[var(--gold)]"
+							/>
+							<span className="min-w-[28px] text-center text-[11px] tabular-nums text-white/70">{logoSize}</span>
+						</div>
 					)}
-				</Link>
+				</div>
 
 				{/* Desktop nav links */}
 				<div className="flex items-center gap-8">
@@ -88,7 +115,7 @@ export function SiteNavbar() {
 						))}
 					</div>
 
-	
+
 					{/* Backoffice link for owner */}
 					{isOwner && (
 						<Link

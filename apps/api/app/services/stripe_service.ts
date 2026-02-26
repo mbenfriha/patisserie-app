@@ -136,6 +136,14 @@ export default class StripeService {
 		return this.stripe.accounts.retrieve(accountId)
 	}
 
+	async requestTransfersCapability(accountId: string) {
+		await this.stripe.accounts.update(accountId, {
+			capabilities: {
+				transfers: { requested: true },
+			},
+		})
+	}
+
 	async getConnectBalance(accountId: string) {
 		return this.stripe.balance.retrieve({ stripeAccount: accountId })
 	}

@@ -12,7 +12,7 @@ interface InlineEditContextValue {
 	isEditing: boolean
 	toggleEdit: () => void
 	getConfigValue: <K extends keyof SiteConfig>(key: K) => Required<SiteConfig>[K]
-	updateConfig: (key: keyof SiteConfig, value: string | boolean | string[]) => void
+	updateConfig: (key: keyof SiteConfig, value: string | boolean | string[] | number) => void
 	description: string | null
 	updateDescription: (value: string) => void
 	heroImagePreview: string | null
@@ -130,7 +130,7 @@ export function InlineEditProvider({
 		[editedConfig, config]
 	)
 
-	const updateConfig = useCallback((key: keyof SiteConfig, value: string | boolean | string[]) => {
+	const updateConfig = useCallback((key: keyof SiteConfig, value: string | boolean | string[] | number) => {
 		setEditedConfig((prev) => ({ ...prev, [key]: value }))
 	}, [])
 

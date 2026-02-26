@@ -12,9 +12,12 @@ export default class IntegrationsController {
 
 		if (profile.stripeAccountId) {
 			// Account already exists, check if onboarding is complete
-			const account = await this.stripeService.getConnectAccount(profile.stripeAccountId)
+			const account = await this.stripeService.getConnectAccount(profile.stripeAccountId) as any
 
-			if (account.details_submitted) {
+			const transfersActive = account.capabilities?.transfers === 'active'
+			const isReady = account.details_submitted && account.charges_enabled && transfersActive
+
+			if (isReady) {
 				profile.stripeOnboardingComplete = true
 				await profile.save()
 
@@ -25,6 +28,15 @@ export default class IntegrationsController {
 						onboardingComplete: true,
 					},
 				})
+			}
+
+			// Request transfers capability if not yet requested
+			if (!transfersActive) {
+				try {
+					await this.stripeService.requestTransfersCapability(profile.stripeAccountId)
+				} catch {
+					// May already be requested, continue
+				}
 			}
 
 			// Onboarding not complete, generate new link
@@ -77,9 +89,12 @@ export default class IntegrationsController {
 			})
 		}
 
-		const account = await this.stripeService.getConnectAccount(profile.stripeAccountId)
+		const account = await this.stripeService.getConnectAccount(profile.stripeAccountId) as any
 
-		if (account.details_submitted) {
+		const transfersActive = account.capabilities?.transfers === 'active'
+		const isReady = account.details_submitted && account.charges_enabled && transfersActive
+
+		if (isReady) {
 			profile.stripeOnboardingComplete = true
 			await profile.save()
 		}
@@ -88,9 +103,10 @@ export default class IntegrationsController {
 			success: true,
 			data: {
 				accountId: profile.stripeAccountId,
-				onboardingComplete: account.details_submitted ?? false,
+				onboardingComplete: isReady,
 				chargesEnabled: account.charges_enabled ?? false,
 				payoutsEnabled: account.payouts_enabled ?? false,
+				transfersEnabled: transfersActive,
 			},
 		})
 	}

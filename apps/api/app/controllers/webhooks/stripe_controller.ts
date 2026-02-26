@@ -356,10 +356,11 @@ export default class StripeController {
 		const profile = await PatissierProfile.findBy('stripeAccountId', account.id)
 		if (!profile) return
 
-		if (account.charges_enabled && account.details_submitted) {
+		const transfersActive = account.capabilities?.transfers === 'active'
+		if (account.charges_enabled && account.details_submitted && transfersActive) {
 			profile.stripeOnboardingComplete = true
 			await profile.save()
-			console.log(`[Stripe Webhook] Connect account ${account.id} onboarding complete`)
+			console.log(`[Stripe Webhook] Connect account ${account.id} onboarding complete (transfers active)`)
 		}
 	}
 }
