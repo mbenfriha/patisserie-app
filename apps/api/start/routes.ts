@@ -108,6 +108,11 @@ router
 		router.get('/instagram/status', '#controllers/patissier/instagram_controller.status')
 		router.post('/instagram/refresh', '#controllers/patissier/instagram_controller.refreshToken')
 
+		// Custom domain (Premium)
+		router.put('/domain', '#controllers/patissier/domain_controller.setDomain')
+		router.delete('/domain', '#controllers/patissier/domain_controller.removeDomain')
+		router.get('/domain/verify', '#controllers/patissier/domain_controller.verifyDomain')
+
 		// Stripe Connect
 		router.post('/integrations/stripe/connect', '#controllers/patissier/integrations_controller.stripeConnect')
 		router.get('/integrations/stripe/callback', '#controllers/patissier/integrations_controller.stripeCallback')
@@ -152,6 +157,7 @@ router
 router
 	.group(() => {
 		router.get('/check-slug/:slug', '#controllers/public_controller.checkSlug')
+		router.get('/domain/:domain', '#controllers/public_controller.profileByDomain')
 		router.get('/:slug', '#controllers/public_controller.profile')
 		router.get('/:slug/categories', '#controllers/public_controller.categories')
 		router.get('/:slug/creations', '#controllers/public_controller.creations')

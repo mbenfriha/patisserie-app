@@ -52,6 +52,11 @@ export default await Env.create(new URL('../', import.meta.url), {
 	INSTAGRAM_APP_ID: Env.schema.string.optional(),
 	INSTAGRAM_APP_SECRET: Env.schema.string.optional(),
 
+	// Vercel (for custom domains)
+	VERCEL_TOKEN: Env.schema.string.optional(),
+	VERCEL_PROJECT_ID: Env.schema.string.optional(),
+	VERCEL_TEAM_ID: Env.schema.string.optional(),
+
 	// Frontend URLs
 	FRONTEND_URL: Env.schema.string(),
 	SUPERADMIN_URL: Env.schema.string.optional(),

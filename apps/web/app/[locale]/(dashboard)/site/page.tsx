@@ -228,8 +228,7 @@ export default function SiteEditorPage() {
 	const handleInstagramConnect = async () => {
 		setInstagramLoading(true)
 		try {
-			const redirectUri = `${window.location.origin}${window.location.pathname.replace(/\/site$/, '')}/instagram/callback`
-			const res = await api.get('/patissier/instagram/auth-url', { redirect_uri: redirectUri })
+			const res = await api.get('/patissier/instagram/auth-url')
 			const url = res.data.data.url
 			window.location.href = url
 		} catch {
@@ -1064,6 +1063,57 @@ export default function SiteEditorPage() {
 										checked={siteConfig.showInstagramSection === true}
 										onChange={(v) => updateSiteConfigField('showInstagramSection', v)}
 									/>
+									{siteConfig.showInstagramSection && (
+										<div className="ml-6 rounded-md border bg-muted/30 p-4">
+											{instagramStatus?.connected ? (
+												<div className="flex items-center justify-between">
+													<div className="flex items-center gap-2">
+														<span className="h-2 w-2 rounded-full bg-green-500" />
+														<span className="text-sm font-medium">
+															{instagramStatus.username ? `@${instagramStatus.username}` : 'Connecté'}
+														</span>
+														{instagramStatus.valid === false && (
+															<span className="rounded bg-yellow-100 px-1.5 py-0.5 text-xs text-yellow-700">Token expiré</span>
+														)}
+													</div>
+													<div className="flex gap-2">
+														{instagramStatus.valid === false && (
+															<button
+																type="button"
+																onClick={handleInstagramConnect}
+																disabled={instagramLoading}
+																className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+															>
+																Reconnecter
+															</button>
+														)}
+														<button
+															type="button"
+															onClick={handleInstagramDisconnect}
+															disabled={instagramLoading}
+															className="rounded-md border px-3 py-1.5 text-xs text-destructive hover:bg-destructive/10 disabled:opacity-50"
+														>
+															Déconnecter
+														</button>
+													</div>
+												</div>
+											) : (
+												<div className="space-y-2">
+													<p className="text-sm text-muted-foreground">
+														Connectez votre compte Instagram pour afficher votre feed sur votre site.
+													</p>
+													<button
+														type="button"
+														onClick={handleInstagramConnect}
+														disabled={instagramLoading}
+														className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+													>
+														{instagramLoading ? 'Connexion...' : 'Connecter Instagram'}
+													</button>
+												</div>
+											)}
+										</div>
+									)}
 									<div className="border-t pt-4">
 										<ToggleRow
 											label="Page Ateliers"

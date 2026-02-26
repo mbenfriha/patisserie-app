@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Pencil, Check, X } from 'lucide-react'
+import { Pencil, Check, X, Globe, Loader2, CheckCircle2, AlertCircle, ExternalLink } from 'lucide-react'
 import { useAuth } from '@/lib/providers/auth-provider'
 import { api } from '@/lib/api/client'
 
@@ -17,6 +17,11 @@ export default function SettingsPage() {
 	const [isEditingName, setIsEditingName] = useState(false)
 	const [editedName, setEditedName] = useState('')
 	const [isSavingName, setIsSavingName] = useState(false)
+	const [domainInput, setDomainInput] = useState('')
+	const [domainLoading, setDomainLoading] = useState(false)
+	const [domainError, setDomainError] = useState<string | null>(null)
+	const [domainStatus, setDomainStatus] = useState<{ status: string; domain: string } | null>(null)
+	const [domainVerifying, setDomainVerifying] = useState(false)
 
 	const handleSaveName = async () => {
 		const trimmed = editedName.trim()
@@ -108,6 +113,52 @@ export default function SettingsPage() {
 		}
 	}
 
+	const handleSetDomain = async () => {
+		const domain = domainInput.trim().toLowerCase().replace(/^(https?:\/\/)?(www\.)?/, '').replace(/\/.*$/, '')
+		if (!domain) return
+		setDomainLoading(true)
+		setDomainError(null)
+		try {
+			const res = await api.put('/patissier/domain', { domain })
+			setProfile((p: any) => ({ ...p, customDomain: domain, customDomainVerified: false }))
+			setDomainStatus({ status: 'pending', domain })
+			setDomainInput('')
+		} catch (err: any) {
+			setDomainError(err?.response?.data?.message || 'Erreur lors de la configuration du domaine')
+		} finally {
+			setDomainLoading(false)
+		}
+	}
+
+	const handleRemoveDomain = async () => {
+		setDomainLoading(true)
+		try {
+			await api.delete('/patissier/domain')
+			setProfile((p: any) => ({ ...p, customDomain: null, customDomainVerified: false }))
+			setDomainStatus(null)
+		} catch (err) {
+			console.error(err)
+		} finally {
+			setDomainLoading(false)
+		}
+	}
+
+	const handleVerifyDomain = async () => {
+		setDomainVerifying(true)
+		try {
+			const res = await api.get('/patissier/domain/verify')
+			const data = res.data.data
+			setDomainStatus({ status: data.status, domain: data.domain })
+			if (data.status === 'verified') {
+				setProfile((p: any) => ({ ...p, customDomainVerified: true }))
+			}
+		} catch (err) {
+			console.error(err)
+		} finally {
+			setDomainVerifying(false)
+		}
+	}
+
 	if (isLoading) {
 		return <p className="text-muted-foreground">Chargement...</p>
 	}
@@ -192,19 +243,11 @@ export default function SettingsPage() {
 							)}
 						</div>
 						<div>
-							<label className="text-sm font-medium">
-								URL personnalisée
-								{profile?.plan !== 'premium' && (
-									<span className="ml-2 inline-block rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-amber-700">
-										Premium
-									</span>
-								)}
-							</label>
-							<p className="mt-1 text-sm">{profile?.slug}.patissio.com</p>
-							{profile?.plan !== 'premium' && (
-								<p className="mt-1 text-xs text-muted-foreground">
-									Passez au plan Premium pour utiliser votre propre nom de domaine
-								</p>
+							<label className="text-sm font-medium">URL du site</label>
+							{profile?.plan === 'pro' || profile?.plan === 'premium' ? (
+								<p className="mt-1 text-sm text-blue-600">{profile?.slug}.patissio.com</p>
+							) : (
+								<p className="mt-1 text-sm text-blue-600">patissio.com/{profile?.slug}</p>
 							)}
 						</div>
 						<div>
@@ -325,6 +368,129 @@ export default function SettingsPage() {
 						)}
 					</div>
 				</section>
+				{profile?.plan === 'premium' && (
+					<section className="rounded-lg border p-6">
+						<div className="flex items-start justify-between">
+							<div>
+								<h2 className="text-xl font-semibold">Domaine personnalisé</h2>
+								<p className="mt-2 text-sm text-muted-foreground">
+									Connectez votre propre nom de domaine pour que vos clients accèdent à votre site via votre URL.
+								</p>
+							</div>
+							{profile?.customDomainVerified && (
+								<span className="shrink-0 rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-800">
+									Actif
+								</span>
+							)}
+						</div>
+
+						{profile?.customDomain ? (
+							<div className="mt-4 space-y-4">
+								<div className="flex items-center gap-3">
+									<Globe className="h-5 w-5 text-muted-foreground" />
+									<span className="text-sm font-medium">{profile.customDomain}</span>
+									{profile.customDomainVerified ? (
+										<span className="flex items-center gap-1 text-xs text-green-600">
+											<CheckCircle2 className="h-3.5 w-3.5" />
+											Vérifié
+										</span>
+									) : (
+										<span className="flex items-center gap-1 text-xs text-amber-600">
+											<AlertCircle className="h-3.5 w-3.5" />
+											En attente de vérification
+										</span>
+									)}
+								</div>
+
+								{!profile.customDomainVerified && (
+									<div className="rounded-md border border-amber-200 bg-amber-50 p-4 text-sm">
+										<p className="font-medium text-amber-800">Configuration DNS requise</p>
+										<p className="mt-1 text-amber-700">
+											Ajoutez un enregistrement CNAME chez votre registraire de domaine :
+										</p>
+										<div className="mt-3 overflow-x-auto rounded-md bg-white p-3 font-mono text-xs">
+											<table className="w-full">
+												<thead>
+													<tr className="text-left text-amber-600">
+														<th className="pr-6">Type</th>
+														<th className="pr-6">Nom</th>
+														<th>Valeur</th>
+													</tr>
+												</thead>
+												<tbody className="text-amber-900">
+													<tr>
+														<td className="pr-6 pt-1">CNAME</td>
+														<td className="pr-6 pt-1">@</td>
+														<td className="pt-1">cname.vercel-dns.com</td>
+													</tr>
+												</tbody>
+											</table>
+										</div>
+										<div className="mt-3 flex gap-2">
+											<button
+												type="button"
+												onClick={handleVerifyDomain}
+												disabled={domainVerifying}
+												className="rounded-md bg-amber-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-700 disabled:opacity-50"
+											>
+												{domainVerifying ? (
+													<span className="flex items-center gap-1.5">
+														<Loader2 className="h-3 w-3 animate-spin" />
+														Vérification...
+													</span>
+												) : (
+													'Vérifier le domaine'
+												)}
+											</button>
+										</div>
+									</div>
+								)}
+
+								<button
+									type="button"
+									onClick={handleRemoveDomain}
+									disabled={domainLoading}
+									className="text-xs text-red-500 hover:text-red-700 hover:underline disabled:opacity-50"
+								>
+									Supprimer le domaine
+								</button>
+							</div>
+						) : (
+							<div className="mt-4 space-y-3">
+								<div className="flex gap-2">
+									<input
+										type="text"
+										value={domainInput}
+										onChange={(e) => {
+											setDomainInput(e.target.value)
+											setDomainError(null)
+										}}
+										placeholder="mon-site.com"
+										className="h-9 flex-1 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+										onKeyDown={(e) => {
+											if (e.key === 'Enter') handleSetDomain()
+										}}
+									/>
+									<button
+										type="button"
+										onClick={handleSetDomain}
+										disabled={domainLoading || !domainInput.trim()}
+										className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+									>
+										{domainLoading ? (
+											<Loader2 className="h-4 w-4 animate-spin" />
+										) : (
+											'Ajouter'
+										)}
+									</button>
+								</div>
+								{domainError && (
+									<p className="text-xs text-red-500">{domainError}</p>
+								)}
+							</div>
+						)}
+					</section>
+				)}
 			</div>
 		</div>
 	)

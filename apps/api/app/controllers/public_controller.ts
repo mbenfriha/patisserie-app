@@ -20,6 +20,27 @@ export default class PublicController {
 		})
 	}
 
+	async profileByDomain({ params, response }: HttpContext) {
+		const domain = params.domain
+
+		const profile = await PatissierProfile.query()
+			.where('customDomain', domain)
+			.where('customDomainVerified', true)
+			.preload('categories', (query) => {
+				query.where('isVisible', true).orderBy('sortOrder', 'asc')
+			})
+			.first()
+
+		if (!profile) {
+			return response.notFound({ success: false, message: 'No patissier found for this domain' })
+		}
+
+		return response.ok({
+			success: true,
+			data: profile.serialize(),
+		})
+	}
+
 	async profile({ params, response }: HttpContext) {
 		const profile = await PatissierProfile.query()
 			.where('slug', params.slug)

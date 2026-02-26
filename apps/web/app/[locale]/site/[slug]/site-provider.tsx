@@ -182,12 +182,14 @@ export function SiteProvider({
 
 	useEffect(() => {
 		const hostname = window.location.hostname
-		// If subdomain (e.g., slug.localhost or slug.patissio.com)
-		if (
-			hostname.endsWith('.localhost') ||
-			(hostname.split('.').length > 2 &&
-				hostname !== 'www.' + hostname.split('.').slice(1).join('.'))
-		) {
+		const isLocalSubdomain = hostname.endsWith('.localhost')
+		const isProdSubdomain =
+			hostname.split('.').length > 2 &&
+			hostname !== 'www.' + hostname.split('.').slice(1).join('.')
+		const isCustomDomain =
+			!hostname.includes('localhost') &&
+			!hostname.endsWith('patissio.com')
+		if (isLocalSubdomain || isProdSubdomain || isCustomDomain) {
 			setBasePath('')
 		}
 	}, [slug])

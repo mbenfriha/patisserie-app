@@ -67,6 +67,13 @@ export default function middleware(request: NextRequest) {
 		return NextResponse.next()
 	}
 
+	// Instagram OAuth callback — bypass i18n to keep a fixed redirect_uri
+	if (pathname === '/instagram/callback') {
+		const url = request.nextUrl.clone()
+		url.pathname = `/${DEFAULT_LOCALE}/instagram/callback`
+		return NextResponse.rewrite(url)
+	}
+
 	// ──────────────────────────────────────────────────
 	// 1. Subdomain on localhost (dev) → rewrite to /[locale]/site/[slug]
 	//    e.g., latelier-de-zina.localhost:3000
