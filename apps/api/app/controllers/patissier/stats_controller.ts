@@ -13,7 +13,7 @@ export default class StatsController {
 			.from('orders')
 			.where('patissier_id', profile.id)
 			.select(
-				db.raw('count(*)::int as total'),
+				db.raw("count(*) filter (where status != 'cancelled')::int as total"),
 				db.raw("count(*) filter (where status = 'pending')::int as pending"),
 				db.raw("count(*) filter (where status = 'confirmed')::int as confirmed"),
 				db.raw("count(*) filter (where status = 'in_progress')::int as in_progress")
