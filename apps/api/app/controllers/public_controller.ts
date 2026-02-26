@@ -167,7 +167,7 @@ export default class PublicController {
 			)
 
 			if (!igResponse.ok) {
-				const error = await igResponse.json()
+				const error: any = await igResponse.json()
 				// Token expired or invalid
 				if (error?.error?.code === 190) {
 					return response.ok({ success: true, data: [], error: 'token_expired' })
@@ -175,7 +175,7 @@ export default class PublicController {
 				return response.ok({ success: true, data: [] })
 			}
 
-			const igData = await igResponse.json()
+			const igData: any = await igResponse.json()
 			const posts = (igData.data || [])
 				.filter((post: any) => post.media_type === 'IMAGE' || post.media_type === 'CAROUSEL_ALBUM')
 				.slice(0, 9)

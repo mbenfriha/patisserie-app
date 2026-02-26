@@ -67,7 +67,7 @@ export default class InstagramController {
 				return response.badRequest({ success: false, message: 'Failed to exchange code' })
 			}
 
-			const tokenData = await tokenResponse.json()
+			const tokenData: any = await tokenResponse.json()
 			const shortLivedToken = tokenData.access_token
 
 			// Step 2: Exchange for long-lived token (60 days)
@@ -83,7 +83,7 @@ export default class InstagramController {
 				logger.error({ err, profileId: profile.id }, 'Instagram long-lived token exchange failed')
 				profile.instagramAccessToken = shortLivedToken
 			} else {
-				const longLivedData = await longLivedResponse.json()
+				const longLivedData: any = await longLivedResponse.json()
 				profile.instagramAccessToken = longLivedData.access_token
 			}
 
@@ -136,7 +136,7 @@ export default class InstagramController {
 				})
 			}
 
-			const userData = await res.json()
+			const userData: any = await res.json()
 			return response.ok({
 				success: true,
 				data: {
@@ -178,7 +178,7 @@ export default class InstagramController {
 				})
 			}
 
-			const data = await res.json()
+			const data: any = await res.json()
 			profile.instagramAccessToken = data.access_token
 			await profile.save()
 
