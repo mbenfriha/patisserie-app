@@ -202,9 +202,17 @@ export default class OrdersController {
 			console.error('Failed to send quote email:', err)
 		}
 
+		const warnings: string[] = []
+		if (!profile.stripeAccountId || !profile.stripeOnboardingComplete) {
+			warnings.push('Stripe Connect non configuré : le lien de paiement n\'a pas été inclus dans l\'email. Configurez Stripe dans Intégrations pour activer le paiement en ligne.')
+		} else if (!checkoutUrl) {
+			warnings.push('La génération du lien de paiement Stripe a échoué. Le devis a été envoyé sans lien de paiement.')
+		}
+
 		return response.ok({
 			success: true,
 			data: order.serialize(),
+			...(warnings.length > 0 ? { warnings } : {}),
 		})
 	}
 
