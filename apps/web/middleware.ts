@@ -26,6 +26,7 @@ const RESERVED_PATHS = new Set([
 	'site',
 	'instagram',
 	'privacy',
+	'data-deletion',
 	'api',
 	'_next',
 	'favicon.ico',
