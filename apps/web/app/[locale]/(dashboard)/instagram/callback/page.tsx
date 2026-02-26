@@ -25,7 +25,8 @@ export default function InstagramCallbackPage() {
 
 		async function exchangeCode() {
 			try {
-				await api.post('/patissier/instagram/exchange', { code })
+				const redirectUri = `${window.location.origin}${window.location.pathname}`
+				await api.post('/patissier/instagram/exchange', { code, redirectUri })
 				router.replace('/site?instagram=success')
 			} catch {
 				router.replace('/site?instagram=error')

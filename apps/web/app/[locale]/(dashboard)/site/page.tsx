@@ -228,7 +228,8 @@ export default function SiteEditorPage() {
 	const handleInstagramConnect = async () => {
 		setInstagramLoading(true)
 		try {
-			const res = await api.get('/patissier/instagram/auth-url')
+			const redirectUri = `${window.location.origin}${window.location.pathname.replace(/\/site$/, '')}/instagram/callback`
+			const res = await api.get('/patissier/instagram/auth-url', { redirect_uri: redirectUri })
 			const url = res.data.data.url
 			window.location.href = url
 		} catch {

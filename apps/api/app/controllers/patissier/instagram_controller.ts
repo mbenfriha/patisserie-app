@@ -5,7 +5,7 @@ import { getActiveProfile } from '#helpers/get_active_profile'
 
 export default class InstagramController {
 	async authUrl(ctx: HttpContext) {
-		const { response } = ctx
+		const { request, response } = ctx
 
 		const appId = env.get('INSTAGRAM_APP_ID')
 		if (!appId) {
@@ -16,7 +16,7 @@ export default class InstagramController {
 		}
 
 		const frontendUrl = env.get('FRONTEND_URL')
-		const redirectUri = `${frontendUrl}/instagram/callback`
+		const redirectUri = request.input('redirect_uri') || `${frontendUrl}/instagram/callback`
 
 		const authUrl =
 			`https://www.instagram.com/oauth/authorize` +
@@ -37,15 +37,18 @@ export default class InstagramController {
 		const { request, response } = ctx
 		const profile = await getActiveProfile(ctx)
 
-		const code = request.input('code')
+		let code = request.input('code')
 		if (!code) {
 			return response.badRequest({ success: false, message: 'Code is required' })
 		}
 
+		// Instagram appends #_ to the code, strip it
+		code = code.replace(/#_$/, '').trim()
+
 		const appId = env.get('INSTAGRAM_APP_ID')
 		const appSecret = env.get('INSTAGRAM_APP_SECRET')
 		const frontendUrl = env.get('FRONTEND_URL')
-		const redirectUri = `${frontendUrl}/instagram/callback`
+		const redirectUri = request.input('redirectUri') || `${frontendUrl}/instagram/callback`
 
 		try {
 			// Step 1: Exchange code for short-lived token
@@ -62,9 +65,9 @@ export default class InstagramController {
 			})
 
 			if (!tokenResponse.ok) {
-				const err = await tokenResponse.text()
-				logger.error({ err, profileId: profile.id }, 'Instagram token exchange failed')
-				return response.badRequest({ success: false, message: 'Failed to exchange code' })
+				const errText = await tokenResponse.text()
+				logger.error({ err: errText, redirectUri, profileId: profile.id }, 'Instagram token exchange failed')
+				return response.badRequest({ success: false, message: 'Failed to exchange code', detail: errText })
 			}
 
 			const tokenData: any = await tokenResponse.json()
