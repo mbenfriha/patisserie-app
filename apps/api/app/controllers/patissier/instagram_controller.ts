@@ -5,7 +5,7 @@ import { getActiveProfile } from '#helpers/get_active_profile'
 
 export default class InstagramController {
 	async authUrl(ctx: HttpContext) {
-		const { request, response } = ctx
+		const { response } = ctx
 
 		const appId = env.get('INSTAGRAM_APP_ID')
 		if (!appId) {
