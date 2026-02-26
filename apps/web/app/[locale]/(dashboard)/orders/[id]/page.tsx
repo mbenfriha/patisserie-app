@@ -154,8 +154,13 @@ export default function PatissierOrderDetailPage() {
 				responseMessage: quoteResponseMessage || undefined,
 			})
 			setOrder({ ...order, ...res.data.data })
-			setQuoteSuccess('Devis envoyé avec succès ! Le client a été notifié par email.')
-			setTimeout(() => setQuoteSuccess(''), 5000)
+			const warnings = res.data.warnings as string[] | undefined
+			if (warnings && warnings.length > 0) {
+				setQuoteSuccess(warnings[0])
+			} else {
+				setQuoteSuccess('Devis envoyé avec succès ! Le client a reçu un email avec le lien de paiement.')
+			}
+			setTimeout(() => setQuoteSuccess(''), 8000)
 		} catch (err: any) {
 			setQuoteError(err.message || 'Erreur lors de l\'envoi du devis')
 		} finally {
@@ -501,7 +506,11 @@ export default function PatissierOrderDetailPage() {
 								{isSubmittingQuote ? 'Envoi...' : 'Envoyer le devis'}
 							</button>
 							{quoteError && <p className="text-sm text-red-600">{quoteError}</p>}
-							{quoteSuccess && <p className="text-sm text-green-600">{quoteSuccess}</p>}
+							{quoteSuccess && (
+								<p className={`text-sm ${quoteSuccess.includes('Stripe') || quoteSuccess.includes('échoué') ? 'text-orange-600' : 'text-green-600'}`}>
+									{quoteSuccess}
+								</p>
+							)}
 						</form>
 					</div>
 

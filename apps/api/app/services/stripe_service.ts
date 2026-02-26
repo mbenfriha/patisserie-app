@@ -207,6 +207,7 @@ export default class StripeService {
 		const session = await this.stripe.checkout.sessions.create({
 			mode: 'payment',
 			customer_email: clientEmail,
+			allow_promotion_codes: true,
 			line_items: [
 				{
 					price_data: {

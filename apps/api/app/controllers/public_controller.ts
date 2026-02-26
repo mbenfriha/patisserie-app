@@ -62,6 +62,8 @@ export default class PublicController {
 		}
 
 		const categoryId = request.input('category_id')
+		const featured = request.input('featured')
+		const limit = request.input('limit')
 
 		const query = Creation.query()
 			.where('patissierId', profile.id)
@@ -71,6 +73,14 @@ export default class PublicController {
 
 		if (categoryId) {
 			query.where('categoryId', categoryId)
+		}
+
+		if (featured === 'true') {
+			query.where('isFeatured', true)
+		}
+
+		if (limit) {
+			query.limit(Number(limit))
 		}
 
 		const creations = await query

@@ -154,6 +154,7 @@ export default class OrdersController {
 		const effectiveDepositPercent = depositPercent ?? 100
 		const depositAmount = Math.round(quotedPrice * (effectiveDepositPercent / 100) * 100) / 100
 
+		let stripeError: string | null = null
 		if (depositAmount > 0 && profile.stripeAccountId && profile.stripeOnboardingComplete) {
 			try {
 				const stripeService = new StripeService()
@@ -164,10 +165,11 @@ export default class OrdersController {
 					order.id,
 					order.clientEmail,
 					profile.stripeAccountId,
-					`${frontendUrl}/site/${profile.slug}/commandes?payment=success&order=${order.orderNumber}`,
-					`${frontendUrl}/site/${profile.slug}/commandes?payment=cancelled&order=${order.orderNumber}`
+					`${frontendUrl}/${profile.slug}/commandes?payment=success&order=${order.orderNumber}`,
+					`${frontendUrl}/${profile.slug}/commandes?payment=cancelled&order=${order.orderNumber}`
 				)
-			} catch (err) {
+			} catch (err: any) {
+				stripeError = err?.message || String(err)
 				console.error('Failed to create Stripe checkout for order quote:', err)
 			}
 		}
@@ -206,7 +208,7 @@ export default class OrdersController {
 		if (!profile.stripeAccountId || !profile.stripeOnboardingComplete) {
 			warnings.push('Stripe Connect non configuré : le lien de paiement n\'a pas été inclus dans l\'email. Configurez Stripe dans Intégrations pour activer le paiement en ligne.')
 		} else if (!checkoutUrl) {
-			warnings.push('La génération du lien de paiement Stripe a échoué. Le devis a été envoyé sans lien de paiement.')
+			warnings.push(`La génération du lien de paiement Stripe a échoué${stripeError ? ` : ${stripeError}` : ''}. Le devis a été envoyé sans lien de paiement.`)
 		}
 
 		return response.ok({
