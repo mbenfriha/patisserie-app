@@ -76,12 +76,15 @@ export default class InstagramController {
 			const shortLivedToken = tokenData.access_token
 
 			// Step 2: Exchange for long-lived token (60 days)
-			const longLivedResponse = await fetch(
-				`https://graph.instagram.com/access_token` +
-					`?grant_type=ig_exchange_token` +
-					`&client_secret=${appSecret}` +
-					`&access_token=${shortLivedToken}`
-			)
+			const longLivedResponse = await fetch('https://graph.instagram.com/access_token', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+				body: new URLSearchParams({
+					grant_type: 'ig_exchange_token',
+					client_secret: appSecret!,
+					access_token: shortLivedToken,
+				}),
+			})
 
 			if (!longLivedResponse.ok) {
 				const err = await longLivedResponse.text()
@@ -170,11 +173,14 @@ export default class InstagramController {
 		}
 
 		try {
-			const res = await fetch(
-				`https://graph.instagram.com/refresh_access_token` +
-					`?grant_type=ig_refresh_token` +
-					`&access_token=${profile.instagramAccessToken}`
-			)
+			const res = await fetch('https://graph.instagram.com/refresh_access_token', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+				body: new URLSearchParams({
+					grant_type: 'ig_refresh_token',
+					access_token: profile.instagramAccessToken!,
+				}),
+			})
 
 			if (!res.ok) {
 				return response.badRequest({
