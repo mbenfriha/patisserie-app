@@ -15,7 +15,7 @@ export default class InstagramController {
 			})
 		}
 
-		const frontendUrl = env.get('FRONTEND_URL')
+		const frontendUrl = (env.get('FRONTEND_URL') || '').replace(/\/+$/, '')
 		const redirectUri = `${frontendUrl}/instagram/callback`
 
 		const authUrl =
@@ -47,8 +47,10 @@ export default class InstagramController {
 
 		const appId = env.get('INSTAGRAM_APP_ID')
 		const appSecret = env.get('INSTAGRAM_APP_SECRET')
-		const frontendUrl = env.get('FRONTEND_URL')
+		const frontendUrl = (env.get('FRONTEND_URL') || '').replace(/\/+$/, '')
 		const redirectUri = `${frontendUrl}/instagram/callback`
+
+		logger.info({ redirectUri, frontendUrl, codeLength: code.length, profileId: profile.id }, 'Instagram exchange attempt')
 
 		try {
 			// Step 1: Exchange code for short-lived token
