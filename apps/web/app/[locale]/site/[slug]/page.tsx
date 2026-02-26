@@ -408,8 +408,10 @@ export default function PatissierSitePage() {
 			     ══════════════════════════════════════════════════════════ */}
 			{(config.showInstagramSection || isEditing) && profile.socialLinks?.instagram && (() => {
 				const instagramUrl = profile.socialLinks.instagram!
-				const handle = instagramUrl.replace(/\/$/, '').split('/').pop() || ''
+				const cleanPath = instagramUrl.split('?')[0].replace(/\/$/, '')
+				const handle = cleanPath.split('/').pop() || ''
 				const showSection = config.showInstagramSection
+				const gridImages = creations.slice(0, 6)
 
 				return (
 					<section
@@ -465,7 +467,7 @@ export default function PatissierSitePage() {
 
 							{/* Instagram handle display */}
 							<a
-								href={instagramUrl}
+								href={cleanPath}
 								target="_blank"
 								rel="noopener noreferrer"
 								className="group mx-auto mb-10 flex w-fit items-center gap-3 rounded-full border border-[var(--gold)]/30 bg-white/80 px-6 py-3 shadow-sm transition-all duration-300 hover:border-[var(--gold)] hover:shadow-md"
@@ -497,39 +499,67 @@ export default function PatissierSitePage() {
 								</svg>
 							</a>
 
-							{/* Decorative grid pattern */}
-							<div className="mx-auto grid max-w-[600px] grid-cols-3 gap-3">
-								{Array.from({ length: 6 }).map((_, i) => (
-									<a
-										key={i}
-										href={instagramUrl}
-										target="_blank"
-										rel="noopener noreferrer"
-										className="group/item relative overflow-hidden rounded-lg"
-										style={{ aspectRatio: '1' }}
-									>
-										<div
-											className="h-full w-full transition-all duration-500 group-hover/item:scale-105"
-											style={{
-												background: `linear-gradient(${135 + i * 25}deg, var(--gold)/${12 + i * 3}%, var(--cream-dark)/${30 + i * 8}%, var(--gold)/${8 + i * 2}%)`,
-											}}
-										/>
-										<div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-all duration-300 group-hover/item:bg-black/30">
-											<svg
-												width="24"
-												height="24"
-												viewBox="0 0 24 24"
-												fill="none"
-												className="text-white opacity-0 transition-all duration-300 group-hover/item:opacity-100"
+							{/* Image grid - uses creation images */}
+							{gridImages.length > 0 ? (
+								<div className="mx-auto grid max-w-[600px] grid-cols-3 gap-3">
+									{gridImages.map((creation) => {
+										const imageUrl = getCreationImage(creation)
+										return (
+											<a
+												key={creation.id}
+												href={cleanPath}
+												target="_blank"
+												rel="noopener noreferrer"
+												className="group/item relative overflow-hidden rounded-lg"
+												style={{ aspectRatio: '1' }}
 											>
-												<rect x="2" y="2" width="20" height="20" rx="5" stroke="currentColor" strokeWidth="1.5" />
-												<circle cx="12" cy="12" r="5" stroke="currentColor" strokeWidth="1.5" />
-												<circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" />
-											</svg>
-										</div>
-									</a>
-								))}
-							</div>
+												{imageUrl ? (
+													<img
+														src={imageUrl}
+														alt={creation.title}
+														className="h-full w-full object-cover transition-all duration-500 group-hover/item:scale-105"
+													/>
+												) : (
+													<div className="flex h-full w-full items-center justify-center bg-[var(--cream-dark)]">
+														<span className="text-xs text-[var(--dark-soft)]" style={{ fontFamily: 'var(--font-heading)' }}>
+															{creation.title}
+														</span>
+													</div>
+												)}
+												<div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-all duration-300 group-hover/item:bg-black/30">
+													<svg
+														width="24"
+														height="24"
+														viewBox="0 0 24 24"
+														fill="none"
+														className="text-white opacity-0 transition-all duration-300 group-hover/item:opacity-100"
+													>
+														<rect x="2" y="2" width="20" height="20" rx="5" stroke="currentColor" strokeWidth="1.5" />
+														<circle cx="12" cy="12" r="5" stroke="currentColor" strokeWidth="1.5" />
+														<circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" />
+													</svg>
+												</div>
+											</a>
+										)
+									})}
+								</div>
+							) : (
+								<a
+									href={cleanPath}
+									target="_blank"
+									rel="noopener noreferrer"
+									className="group mx-auto block max-w-[600px] overflow-hidden rounded-2xl border border-[var(--gold)]/20 bg-white/60 p-12 transition-all duration-300 hover:border-[var(--gold)]/40 hover:shadow-lg"
+								>
+									<svg width="48" height="48" viewBox="0 0 24 24" fill="none" className="mx-auto mb-4 text-[var(--gold)] transition-transform duration-300 group-hover:scale-110">
+										<rect x="2" y="2" width="20" height="20" rx="5" stroke="currentColor" strokeWidth="1.5" />
+										<circle cx="12" cy="12" r="5" stroke="currentColor" strokeWidth="1.5" />
+										<circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" />
+									</svg>
+									<p className="text-sm font-medium text-[var(--dark-soft)]" style={{ fontFamily: 'var(--font-body)' }}>
+										Voir notre Instagram
+									</p>
+								</a>
+							)}
 
 							<p
 								className="mt-8 text-sm text-[var(--dark-soft)]/60"
