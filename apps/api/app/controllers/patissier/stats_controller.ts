@@ -1,8 +1,6 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import PatissierProfile from '#models/patissier_profile'
-import Order from '#models/order'
 import Workshop from '#models/workshop'
-import WorkshopBooking from '#models/workshop_booking'
 import db from '@adonisjs/lucid/services/db'
 
 export default class StatsController {
