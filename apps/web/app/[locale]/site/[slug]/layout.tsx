@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
 import type React from 'react'
 import { SiteProvider } from './site-provider'
@@ -35,15 +36,28 @@ async function resolveProfile(slug: string, domain?: string) {
 	return getProfile(slug)
 }
 
+async function getDomain(): Promise<string | undefined> {
+	const headersList = await headers()
+	const host = headersList.get('host') || ''
+	const hostWithoutPort = host.split(':')[0]
+	const mainDomain = 'patissio.com'
+
+	// Custom domain: not localhost, not main domain, not subdomain of main domain
+	const isLocalhost = hostWithoutPort === 'localhost' || hostWithoutPort === '127.0.0.1'
+	if (!isLocalhost && !hostWithoutPort.endsWith(mainDomain) && hostWithoutPort !== mainDomain) {
+		return hostWithoutPort
+	}
+	return undefined
+}
+
 type Props = {
 	children: React.ReactNode
 	params: Promise<{ slug: string }>
-	searchParams: Promise<{ domain?: string }>
 }
 
-export async function generateMetadata({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ domain?: string }> }): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
 	const { slug } = await params
-	const { domain } = await searchParams
+	const domain = await getDomain()
 	const profile = await resolveProfile(slug, domain)
 	if (!profile) return {}
 
@@ -62,9 +76,9 @@ export async function generateMetadata({ params, searchParams }: { params: Promi
 	}
 }
 
-export default async function SiteLayout({ children, params, searchParams }: Props) {
+export default async function SiteLayout({ children, params }: Props) {
 	const { slug } = await params
-	const { domain } = await searchParams
+	const domain = await getDomain()
 	const profile = await resolveProfile(slug, domain)
 
 	if (!profile) {
