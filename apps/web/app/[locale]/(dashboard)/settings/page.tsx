@@ -93,7 +93,7 @@ export default function SettingsPage() {
 		try {
 			const res = await api.get('/patissier/integrations/stripe/dashboard')
 			const url = res.data.data?.url
-			if (url) window.open(url, '_blank')
+			if (url) window.location.href = url
 		} catch (err) {
 			console.error(err)
 		}

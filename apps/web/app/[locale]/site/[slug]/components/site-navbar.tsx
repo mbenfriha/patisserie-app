@@ -84,18 +84,22 @@ export function SiteNavbar() {
 					{isEditing && (
 						<div
 							className="absolute top-full left-0 mt-2 flex items-center gap-2 rounded-lg border border-white/20 bg-[#1A1A1A]/95 px-3 py-2 shadow-xl backdrop-blur-xl"
-							onClick={(e) => e.preventDefault()}
+							onClick={(e) => e.stopPropagation()}
 						>
-							<span className="text-[10px] font-medium tracking-wide text-white/50 uppercase">Taille</span>
+							<span className="text-[10px] font-medium tracking-wide text-white/50 uppercase whitespace-nowrap">Taille</span>
 							<input
 								type="range"
 								min="24"
 								max="80"
 								value={logoSize}
-								onChange={(e) => updateConfig('logoSize', Number(e.target.value))}
+								onChange={(e) => {
+									e.stopPropagation()
+									updateConfig('logoSize', Number(e.target.value))
+								}}
+								onMouseDown={(e) => e.stopPropagation()}
 								className="h-1 w-24 cursor-pointer accent-[var(--gold)]"
 							/>
-							<span className="min-w-[28px] text-center text-[11px] tabular-nums text-white/70">{logoSize}</span>
+							<span className="min-w-[28px] text-center text-[11px] tabular-nums text-white/70">{logoSize}px</span>
 						</div>
 					)}
 				</div>
