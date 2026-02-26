@@ -94,8 +94,17 @@ export default function SettingsPage() {
 			const res = await api.get('/patissier/integrations/stripe/dashboard')
 			const url = res.data.data?.url
 			if (url) window.location.href = url
-		} catch (err) {
-			console.error(err)
+		} catch {
+			// Dashboard failed — capabilities may be missing, re-trigger onboarding
+			try {
+				const res = await api.post('/patissier/integrations/stripe/connect')
+				const data = res.data.data
+				if (data.onboardingUrl) {
+					window.location.href = data.onboardingUrl
+				}
+			} catch (err) {
+				console.error(err)
+			}
 		}
 	}
 

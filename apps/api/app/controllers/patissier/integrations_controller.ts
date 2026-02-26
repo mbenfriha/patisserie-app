@@ -115,10 +115,26 @@ export default class IntegrationsController {
 		const user = auth.user!
 		const profile = await PatissierProfile.findByOrFail('userId', user.id)
 
-		if (!profile.stripeAccountId || !profile.stripeOnboardingComplete) {
+		if (!profile.stripeAccountId) {
 			return response.badRequest({
 				success: false,
-				message: 'Stripe onboarding is not complete',
+				message: 'No Stripe account connected',
+			})
+		}
+
+		// Verify capabilities are active before allowing dashboard access
+		const account = await this.stripeService.getConnectAccount(profile.stripeAccountId) as any
+		const transfersActive = account.capabilities?.transfers === 'active'
+
+		if (!account.charges_enabled || !account.details_submitted || !transfersActive) {
+			// Reset onboarding flag — capabilities are missing
+			if (profile.stripeOnboardingComplete) {
+				profile.stripeOnboardingComplete = false
+				await profile.save()
+			}
+			return response.badRequest({
+				success: false,
+				message: 'Stripe onboarding is not complete — transfers capability is required',
 			})
 		}
 
