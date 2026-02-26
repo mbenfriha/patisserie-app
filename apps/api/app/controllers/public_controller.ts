@@ -178,13 +178,13 @@ export default class PublicController {
 			return response.notFound({ success: false, message: 'Patissier not found' })
 		}
 
-		if (!profile.instagramAccessToken) {
+		if (!profile.instagramAccessToken || !profile.instagramUserId) {
 			return response.ok({ success: true, data: [] })
 		}
 
 		try {
 			const igResponse = await fetch(
-				`https://graph.instagram.com/v21.0/me/media?fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp&limit=12&access_token=${profile.instagramAccessToken}`
+				`https://graph.instagram.com/${profile.instagramUserId}/media?fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp&limit=12&access_token=${profile.instagramAccessToken}`
 			)
 
 			if (!igResponse.ok) {

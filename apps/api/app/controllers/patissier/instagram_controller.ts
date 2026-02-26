@@ -3,7 +3,7 @@ import logger from '@adonisjs/core/services/logger'
 import env from '#start/env'
 import { getActiveProfile } from '#helpers/get_active_profile'
 
-const GRAPH_API_VERSION = 'v21.0'
+const GRAPH_BASE = 'https://graph.instagram.com'
 
 export default class InstagramController {
 	async authUrl(ctx: HttpContext) {
@@ -76,28 +76,36 @@ export default class InstagramController {
 
 			const tokenData: any = await tokenResponse.json()
 			const shortLivedToken = tokenData.access_token
-			const userId = tokenData.user_id
+			const userId = String(tokenData.user_id)
 
 			logger.info({ userId, profileId: profile.id }, 'Instagram short-lived token obtained')
 
-			// Step 2: Exchange for long-lived token (60 days)
-			const longLivedUrl =
-				`https://graph.instagram.com/${GRAPH_API_VERSION}/access_token` +
-				`?grant_type=ig_exchange_token` +
-				`&client_secret=${appSecret}` +
-				`&access_token=${shortLivedToken}`
+			// Save user ID
+			profile.instagramUserId = userId
 
-			const longLivedResponse = await fetch(longLivedUrl)
+			// Step 2: Try to exchange for long-lived token (60 days)
+			// Per Meta docs: GET https://graph.instagram.com/access_token?grant_type=ig_exchange_token&client_secret=...&access_token=...
+			try {
+				const longLivedResponse = await fetch(
+					`${GRAPH_BASE}/access_token?grant_type=ig_exchange_token&client_secret=${appSecret}&access_token=${shortLivedToken}`
+				)
 
-			if (!longLivedResponse.ok) {
-				const err = await longLivedResponse.text()
-				logger.error({ err, profileId: profile.id }, 'Instagram long-lived token exchange failed')
-				// Fallback: save short-lived token
+				if (!longLivedResponse.ok) {
+					const err = await longLivedResponse.text()
+					logger.warn({ err, profileId: profile.id }, 'Instagram long-lived token exchange failed, using short-lived token')
+					profile.instagramAccessToken = shortLivedToken
+				} else {
+					const longLivedData: any = await longLivedResponse.json()
+					if (longLivedData.access_token) {
+						profile.instagramAccessToken = longLivedData.access_token
+						logger.info({ expiresIn: longLivedData.expires_in, profileId: profile.id }, 'Instagram long-lived token obtained')
+					} else {
+						profile.instagramAccessToken = shortLivedToken
+					}
+				}
+			} catch (llErr) {
+				logger.warn({ err: llErr, profileId: profile.id }, 'Instagram long-lived token exchange error, using short-lived token')
 				profile.instagramAccessToken = shortLivedToken
-			} else {
-				const longLivedData: any = await longLivedResponse.json()
-				profile.instagramAccessToken = longLivedData.access_token
-				logger.info({ expiresIn: longLivedData.expires_in, profileId: profile.id }, 'Instagram long-lived token obtained')
 			}
 
 			await profile.save()
@@ -115,6 +123,7 @@ export default class InstagramController {
 		const profile = await getActiveProfile(ctx)
 
 		profile.instagramAccessToken = null
+		profile.instagramUserId = null
 		await profile.save()
 
 		return response.ok({
@@ -138,8 +147,16 @@ export default class InstagramController {
 
 		// Verify token is still valid by fetching user info
 		try {
+			const userId = profile.instagramUserId
+			if (!userId) {
+				return response.ok({
+					success: true,
+					data: { connected: true, valid: false },
+				})
+			}
+
 			const res = await fetch(
-				`https://graph.instagram.com/${GRAPH_API_VERSION}/me?fields=user_id,username&access_token=${profile.instagramAccessToken}`
+				`${GRAPH_BASE}/me?fields=user_id,username&access_token=${profile.instagramAccessToken}`
 			)
 
 			if (!res.ok) {
@@ -181,7 +198,7 @@ export default class InstagramController {
 
 		try {
 			const res = await fetch(
-				`https://graph.instagram.com/${GRAPH_API_VERSION}/refresh_access_token` +
+				`${GRAPH_BASE}/refresh_access_token` +
 					`?grant_type=ig_refresh_token` +
 					`&access_token=${profile.instagramAccessToken}`
 			)
