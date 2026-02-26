@@ -35,7 +35,7 @@ export default function DashboardPage() {
 		api
 			.get('/patissier/stats')
 			.then((res) => {
-				setStats(res.data)
+				setStats(res.data.data)
 			})
 			.catch(console.error)
 			.finally(() => setIsLoading(false))
@@ -54,25 +54,25 @@ export default function DashboardPage() {
 				<div className="rounded-lg border bg-card p-6">
 					<h3 className="text-sm font-medium text-muted-foreground">{t('totalOrders')}</h3>
 					<p className="mt-2 text-3xl font-bold">
-						{isLoading ? '–' : stats?.orders.total ?? 0}
+						{isLoading ? '–' : stats?.orders?.total ?? 0}
 					</p>
 				</div>
 				<div className="rounded-lg border bg-card p-6">
 					<h3 className="text-sm font-medium text-muted-foreground">{t('totalRevenue')}</h3>
 					<p className="mt-2 text-3xl font-bold">
-						{isLoading ? '–' : `${stats?.revenue.total ?? 0} €`}
+						{isLoading ? '–' : `${stats?.revenue?.total ?? 0} €`}
 					</p>
 				</div>
 				<div className="rounded-lg border bg-card p-6">
 					<h3 className="text-sm font-medium text-muted-foreground">{t('activeWorkshops')}</h3>
 					<p className="mt-2 text-3xl font-bold">
-						{isLoading ? '–' : stats?.workshops.published ?? 0}
+						{isLoading ? '–' : stats?.workshops?.published ?? 0}
 					</p>
 				</div>
 				<div className="rounded-lg border bg-card p-6">
 					<h3 className="text-sm font-medium text-muted-foreground">{t('pendingOrders')}</h3>
 					<p className="mt-2 text-3xl font-bold">
-						{isLoading ? '–' : stats?.orders.pending ?? 0}
+						{isLoading ? '–' : stats?.orders?.pending ?? 0}
 					</p>
 				</div>
 			</div>
