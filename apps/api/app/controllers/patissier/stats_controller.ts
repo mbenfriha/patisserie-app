@@ -3,58 +3,42 @@ import PatissierProfile from '#models/patissier_profile'
 import Order from '#models/order'
 import Workshop from '#models/workshop'
 import WorkshopBooking from '#models/workshop_booking'
+import db from '@adonisjs/lucid/services/db'
 
 export default class StatsController {
 	async index({ auth, response }: HttpContext) {
 		const user = auth.user!
 		const profile = await PatissierProfile.findByOrFail('userId', user.id)
 
-		// Total orders
-		const totalOrders = await Order.query()
-			.where('patissierId', profile.id)
-			.count('* as total')
+		// Use raw queries via db for reliable aggregate results
+		const ordersStats = await db
+			.from('orders')
+			.where('patissier_id', profile.id)
+			.select(
+				db.raw('count(*)::int as total'),
+				db.raw("count(*) filter (where status = 'pending')::int as pending"),
+				db.raw("count(*) filter (where status = 'confirmed')::int as confirmed"),
+				db.raw("count(*) filter (where status = 'in_progress')::int as in_progress")
+			)
 			.first()
 
-		// Revenue (sum of total for paid orders)
-		const revenue = await Order.query()
-			.where('patissierId', profile.id)
-			.where('paymentStatus', 'paid')
-			.sum('total as total')
+		const revenueResult = await db
+			.from('orders')
+			.where('patissier_id', profile.id)
+			.where('payment_status', 'paid')
+			.select(db.raw('coalesce(sum(total), 0)::float as total'))
 			.first()
 
-		// Orders by status
-		const pendingOrders = await Order.query()
-			.where('patissierId', profile.id)
-			.where('status', 'pending')
-			.count('* as total')
+		const workshopsStats = await db
+			.from('workshops')
+			.where('patissier_id', profile.id)
+			.select(
+				db.raw('count(*)::int as total'),
+				db.raw("count(*) filter (where status = 'published')::int as published")
+			)
 			.first()
 
-		const confirmedOrders = await Order.query()
-			.where('patissierId', profile.id)
-			.where('status', 'confirmed')
-			.count('* as total')
-			.first()
-
-		const inProgressOrders = await Order.query()
-			.where('patissierId', profile.id)
-			.where('status', 'in_progress')
-			.count('* as total')
-			.first()
-
-		// Total workshops
-		const totalWorkshops = await Workshop.query()
-			.where('patissierId', profile.id)
-			.count('* as total')
-			.first()
-
-		// Published workshops
-		const publishedWorkshops = await Workshop.query()
-			.where('patissierId', profile.id)
-			.where('status', 'published')
-			.count('* as total')
-			.first()
-
-		// Total bookings (across all workshops)
+		// Bookings
 		const workshopIds = await Workshop.query()
 			.where('patissierId', profile.id)
 			.select('id')
@@ -64,36 +48,33 @@ export default class StatsController {
 
 		if (workshopIds.length > 0) {
 			const ids = workshopIds.map((w) => w.id)
-
-			const totalBookingsResult = await WorkshopBooking.query()
-				.whereIn('workshopId', ids)
-				.count('* as total')
+			const bookingsStats = await db
+				.from('workshop_bookings')
+				.whereIn('workshop_id', ids)
+				.select(
+					db.raw('count(*)::int as total'),
+					db.raw("count(*) filter (where status = 'confirmed')::int as confirmed")
+				)
 				.first()
-			totalBookings = Number((totalBookingsResult as any)?.$extras?.total ?? 0)
-
-			const confirmedBookingsResult = await WorkshopBooking.query()
-				.whereIn('workshopId', ids)
-				.where('status', 'confirmed')
-				.count('* as total')
-				.first()
-			confirmedBookings = Number((confirmedBookingsResult as any)?.$extras?.total ?? 0)
+			totalBookings = bookingsStats?.total ?? 0
+			confirmedBookings = bookingsStats?.confirmed ?? 0
 		}
 
 		return response.ok({
 			success: true,
 			data: {
 				orders: {
-					total: Number((totalOrders as any)?.$extras?.total ?? 0),
-					pending: Number((pendingOrders as any)?.$extras?.total ?? 0),
-					confirmed: Number((confirmedOrders as any)?.$extras?.total ?? 0),
-					inProgress: Number((inProgressOrders as any)?.$extras?.total ?? 0),
+					total: ordersStats?.total ?? 0,
+					pending: ordersStats?.pending ?? 0,
+					confirmed: ordersStats?.confirmed ?? 0,
+					inProgress: ordersStats?.in_progress ?? 0,
 				},
 				revenue: {
-					total: Number((revenue as any)?.$extras?.total ?? 0),
+					total: revenueResult?.total ?? 0,
 				},
 				workshops: {
-					total: Number((totalWorkshops as any)?.$extras?.total ?? 0),
-					published: Number((publishedWorkshops as any)?.$extras?.total ?? 0),
+					total: workshopsStats?.total ?? 0,
+					published: workshopsStats?.published ?? 0,
 				},
 				bookings: {
 					total: totalBookings,
