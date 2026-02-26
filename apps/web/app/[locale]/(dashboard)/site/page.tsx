@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { api } from '@/lib/api/client'
 import { getImageUrl } from '@/lib/utils/image-url'
 import { RichTextEditor } from '@/components/ui/rich-text-editor'
+import { ImageCropper } from '@/components/ui/image-cropper'
 
 interface SiteConfig {
 	heroSubtitle?: string
@@ -114,6 +115,9 @@ export default function SiteEditorPage() {
 	const [addressCountry, setAddressCountry] = useState('France')
 	const [socialLinks, setSocialLinks] = useState<Profile['socialLinks']>({})
 	const [operatingHours, setOperatingHours] = useState<Profile['operatingHours']>(null)
+
+	// Image cropper state
+	const [cropState, setCropState] = useState<{ src: string; file?: File; target: 'hero' | string } | null>(null)
 
 	// Marquee chip input
 	const [newMarqueeItem, setNewMarqueeItem] = useState('')
@@ -250,18 +254,12 @@ export default function SiteEditorPage() {
 		}
 	}
 
-	const handleHeroImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+	const handleHeroImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const file = e.target.files?.[0]
 		if (!file) return
-		const formData = new FormData()
-		formData.append('image', file)
-		try {
-			await api.upload('/patissier/hero-image', formData)
-			showToast('Image hero mise a jour')
-			await loadProfile()
-		} catch {
-			showToast('Erreur lors du telechargement')
-		}
+		e.target.value = ''
+		const src = URL.createObjectURL(file)
+		setCropState({ src, file, target: 'hero' })
 	}
 
 	const handleHeroImageDelete = async () => {
@@ -298,18 +296,12 @@ export default function SiteEditorPage() {
 		}
 	}
 
-	const handlePageHeroUpload = async (page: string, e: React.ChangeEvent<HTMLInputElement>) => {
+	const handlePageHeroUpload = (page: string, e: React.ChangeEvent<HTMLInputElement>) => {
 		const file = e.target.files?.[0]
 		if (!file) return
-		const formData = new FormData()
-		formData.append('image', file)
-		try {
-			await api.upload(`/patissier/page-hero/${page}`, formData)
-			showToast('Image hero mise a jour')
-			await loadProfile()
-		} catch {
-			showToast('Erreur lors du telechargement')
-		}
+		e.target.value = ''
+		const src = URL.createObjectURL(file)
+		setCropState({ src, file, target: page })
 	}
 
 	const handlePageHeroDelete = async (page: string) => {
@@ -320,6 +312,31 @@ export default function SiteEditorPage() {
 		} catch {
 			showToast('Erreur lors de la suppression')
 		}
+	}
+
+	const handleCropConfirm = async (blob: Blob) => {
+		if (!cropState) return
+		const { src, file, target } = cropState
+		const formData = new FormData()
+		formData.append('image', blob, file?.name || 'image.jpg')
+		URL.revokeObjectURL(src)
+		setCropState(null)
+		try {
+			if (target === 'hero') {
+				await api.upload('/patissier/hero-image', formData)
+			} else {
+				await api.upload(`/patissier/page-hero/${target}`, formData)
+			}
+			showToast('Image hero mise a jour')
+			await loadProfile()
+		} catch {
+			showToast('Erreur lors du telechargement')
+		}
+	}
+
+	const handleCropCancel = () => {
+		if (cropState) URL.revokeObjectURL(cropState.src)
+		setCropState(null)
 	}
 
 	const toggleSection = (key: string) => {
@@ -1223,6 +1240,16 @@ export default function SiteEditorPage() {
 					{isSaving ? 'Enregistrement...' : 'Enregistrer'}
 				</button>
 			</div>
+
+			{/* Image Cropper */}
+			{cropState && (
+				<ImageCropper
+					imageSrc={cropState.src}
+					onCrop={handleCropConfirm}
+					onCancel={handleCropCancel}
+					aspect={16 / 9}
+				/>
+			)}
 
 			{/* Toast */}
 			{toast && (
