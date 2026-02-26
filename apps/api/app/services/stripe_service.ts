@@ -249,6 +249,10 @@ export default class StripeService {
 		return this.stripe.invoices.list({ customer: customerId, limit })
 	}
 
+	async retrieveCheckoutSession(sessionId: string) {
+		return this.stripe.checkout.sessions.retrieve(sessionId)
+	}
+
 	// Webhook verification
 
 	constructWebhookEvent(payload: Buffer | string, signature: string, webhookSecret: string) {

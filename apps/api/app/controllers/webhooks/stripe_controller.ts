@@ -233,16 +233,31 @@ export default class StripeController {
 
 		console.log(`[Stripe Webhook] Order ${orderId} payment received`)
 
-		const amountPaid = session.amount_total ? (session.amount_total / 100) : Number(order.quotedPrice)
+		// Retrieve the full session to get amount_total (webhook payload may not include it)
+		let amountPaid: number
+		try {
+			const fullSession = await this.stripeService.retrieveCheckoutSession(session.id)
+			amountPaid = fullSession.amount_total ? (fullSession.amount_total / 100) : Number(order.quotedPrice)
+		} catch {
+			amountPaid = session.amount_total ? (session.amount_total / 100) : Number(order.quotedPrice)
+		}
+
+		const totalPrice = Number(order.quotedPrice)
+		const isDeposit = amountPaid < totalPrice
+		const remainingAmount = isDeposit ? (totalPrice - amountPaid) : 0
 
 		// Send payment confirmation email to client
 		try {
+			const depositInfo = isDeposit
+				? `<br><br><strong>Reste à payer :</strong> ${remainingAmount.toFixed(2)} € (sur un total de ${totalPrice.toFixed(2)} €)`
+				: ''
+
 			await this.emailService.sendStatusUpdate({
 				email: order.clientEmail,
 				recipientName: order.clientName,
 				subject: `Paiement confirmé - Commande #${order.orderNumber}`,
 				title: 'Paiement confirmé',
-				body: `Votre paiement de <strong>${amountPaid.toFixed(2)} €</strong> pour la commande #${order.orderNumber} a bien été reçu. ${order.patissier.businessName} va prendre en charge votre commande.`,
+				body: `Votre ${isDeposit ? 'acompte' : 'paiement'} de <strong>${amountPaid.toFixed(2)} €</strong> pour la commande #${order.orderNumber} a bien été reçu. ${order.patissier.businessName} va prendre en charge votre commande.${depositInfo}`,
 			})
 		} catch (err: any) {
 			console.error(`[Stripe Webhook] Failed to send payment confirmation to client for order ${orderId}:`, err.message)
@@ -257,7 +272,7 @@ export default class StripeController {
 					recipientName: order.patissier.businessName,
 					subject: `Acompte reçu - Commande #${order.orderNumber}`,
 					title: 'Acompte reçu',
-					body: `${order.clientName} a payé l'acompte de <strong>${amountPaid.toFixed(2)} €</strong> pour la commande #${order.orderNumber}. La commande est maintenant confirmée.`,
+					body: `${order.clientName} a payé ${isDeposit ? "l'acompte" : 'le montant'} de <strong>${amountPaid.toFixed(2)} €</strong> pour la commande #${order.orderNumber}. La commande est maintenant confirmée.${isDeposit ? `<br><br><strong>Reste à régler :</strong> ${remainingAmount.toFixed(2)} €` : ''}`,
 					actionUrl: `${env.get('FRONTEND_URL', 'https://patissio.com')}/orders/${order.id}`,
 					actionLabel: 'Voir la commande',
 				})

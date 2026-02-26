@@ -35,9 +35,12 @@ export default function DashboardPage() {
 		api
 			.get('/patissier/stats')
 			.then((res) => {
-				setStats(res.data.data)
+				const statsData = res.data?.data || res.data
+				setStats(statsData)
 			})
-			.catch(console.error)
+			.catch((err) => {
+				console.error('Failed to load stats:', err)
+			})
 			.finally(() => setIsLoading(false))
 	}, [])
 
