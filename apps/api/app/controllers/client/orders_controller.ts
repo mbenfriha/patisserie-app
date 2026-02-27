@@ -1,5 +1,6 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import { DateTime } from 'luxon'
+import logger from '@adonisjs/core/services/logger'
 import Order from '#models/order'
 import OrderItem from '#models/order_item'
 import OrderMessage from '#models/order_message'
@@ -8,9 +9,37 @@ import Product from '#models/product'
 import User from '#models/user'
 import EmailService from '#services/email_service'
 import StorageService from '#services/storage_service'
+import env from '#start/env'
 
 export default class OrdersController {
+	private async verifyTurnstile(token: string | null): Promise<boolean> {
+		const secret = env.get('TURNSTILE_SECRET_KEY')
+		if (!secret) return true // Skip if not configured
+
+		if (!token) return false
+
+		try {
+			const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+				body: new URLSearchParams({ secret, response: token }),
+			})
+			const data: any = await res.json()
+			return data.success === true
+		} catch (err) {
+			logger.error({ err }, 'Turnstile verification failed')
+			return false
+		}
+	}
+
 	async store({ request, response }: HttpContext) {
+		// Turnstile anti-spam verification
+		const turnstileToken = request.input('cf-turnstile-response')
+		const turnstileValid = await this.verifyTurnstile(turnstileToken)
+		if (!turnstileValid) {
+			return response.forbidden({ success: false, message: 'Vérification de sécurité échouée. Veuillez réessayer.' })
+		}
+
 		const slug = request.input('slug')
 		const type = request.input('type')
 		const clientName = request.input('clientName')

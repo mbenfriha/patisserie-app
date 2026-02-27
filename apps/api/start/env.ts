@@ -57,6 +57,9 @@ export default await Env.create(new URL('../', import.meta.url), {
 	VERCEL_PROJECT_ID: Env.schema.string.optional(),
 	VERCEL_TEAM_ID: Env.schema.string.optional(),
 
+	// Cloudflare Turnstile
+	TURNSTILE_SECRET_KEY: Env.schema.string.optional(),
+
 	// Frontend URLs
 	FRONTEND_URL: Env.schema.string(),
 	SUPERADMIN_URL: Env.schema.string.optional(),

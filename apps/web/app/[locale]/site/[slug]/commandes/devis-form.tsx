@@ -1,11 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
+import Script from 'next/script'
 import { StepHeader } from './devis-form/step-header'
 import { FlavorsSelector } from './devis-form/flavors-selector'
 import { PhotoUpload } from './devis-form/photo-upload'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333'
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
 
 interface DevisFormProps {
 	slug: string
@@ -39,6 +41,21 @@ export function DevisForm({ slug, onSuccess }: DevisFormProps) {
 
 	const [submitting, setSubmitting] = useState(false)
 	const [error, setError] = useState('')
+	const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
+	const turnstileRef = useRef<HTMLDivElement>(null)
+	const turnstileWidgetId = useRef<string | null>(null)
+
+	const renderTurnstile = useCallback(() => {
+		if (!TURNSTILE_SITE_KEY || !turnstileRef.current || !window.turnstile) return
+		if (turnstileWidgetId.current) return
+		turnstileWidgetId.current = window.turnstile.render(turnstileRef.current, {
+			sitekey: TURNSTILE_SITE_KEY,
+			callback: (token: string) => setTurnstileToken(token),
+			'expired-callback': () => setTurnstileToken(null),
+			theme: 'light',
+			size: 'flexible',
+		})
+	}, [])
 
 	async function handleSubmit(e: React.FormEvent) {
 		e.preventDefault()
@@ -47,6 +64,12 @@ export function DevisForm({ slug, onSuccess }: DevisFormProps) {
 
 		if (flavors.length === 0) {
 			setError('Veuillez sélectionner au moins un parfum.')
+			setSubmitting(false)
+			return
+		}
+
+		if (TURNSTILE_SITE_KEY && !turnstileToken) {
+			setError('Veuillez compléter la vérification de sécurité.')
 			setSubmitting(false)
 			return
 		}
@@ -76,6 +99,9 @@ export function DevisForm({ slug, onSuccess }: DevisFormProps) {
 			if (photoFile) {
 				formData.append('customPhotoInspiration', photoFile)
 			}
+			if (turnstileToken) {
+				formData.append('cf-turnstile-response', turnstileToken)
+			}
 
 			const res = await fetch(`${API_URL}/client/orders`, {
 				method: 'POST',
@@ -90,6 +116,11 @@ export function DevisForm({ slug, onSuccess }: DevisFormProps) {
 			onSuccess()
 		} catch (err: any) {
 			setError(err.message || 'Une erreur est survenue')
+			// Reset turnstile on error so user can retry
+			if (window.turnstile && turnstileWidgetId.current) {
+				window.turnstile.reset(turnstileWidgetId.current)
+				setTurnstileToken(null)
+			}
 		} finally {
 			setSubmitting(false)
 		}
@@ -404,10 +435,23 @@ export function DevisForm({ slug, onSuccess }: DevisFormProps) {
 				</p>
 			</div>
 
+			{/* ── Turnstile ────────────────────────────────────── */}
+			{TURNSTILE_SITE_KEY && (
+				<>
+					<Script
+						src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
+						onReady={renderTurnstile}
+					/>
+					<div className="mb-6 flex justify-center">
+						<div ref={turnstileRef} />
+					</div>
+				</>
+			)}
+
 			<div className="text-center">
 				<button
 					type="submit"
-					disabled={submitting}
+					disabled={submitting || (!!TURNSTILE_SITE_KEY && !turnstileToken)}
 					className="relative inline-flex items-center justify-center gap-3 rounded-lg bg-[var(--gold)] px-12 py-4 text-xs font-semibold uppercase tracking-[3px] text-[var(--dark)] transition-all duration-300 hover:bg-[var(--gold-light)] hover:shadow-[0_8px_24px_rgba(197,165,90,0.3)] disabled:cursor-not-allowed disabled:opacity-40"
 					style={{ fontFamily: "'Josefin Sans', sans-serif" }}
 				>
