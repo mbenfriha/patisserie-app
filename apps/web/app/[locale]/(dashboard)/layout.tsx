@@ -33,8 +33,8 @@ function PlanBadge({ plan }: { plan: 'pro' | 'premium' }) {
 		<span
 			className={`ml-auto rounded-full px-1.5 py-0.5 text-[10px] font-semibold leading-none ${
 				plan === 'premium'
-					? 'bg-amber-100 text-amber-700'
-					: 'bg-blue-100 text-blue-700'
+					? 'bg-[#D4816A]/15 text-[#D4816A]'
+					: 'bg-[#B8A9D4]/15 text-[#B8A9D4]'
 			}`}
 		>
 			{plan === 'premium' ? 'Premium' : 'Pro'}

@@ -239,18 +239,18 @@ export function HomeContent() {
 
 				{/* Decorative diamonds */}
 				<div className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-					<div className="h-[500px] w-[500px] rotate-45 rounded border border-gold/10" />
+					<div className="h-[500px] w-[500px] rotate-45 rounded border border-lavender/10" />
 				</div>
 				<div className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
 					<div className="h-[350px] w-[350px] rotate-45 rounded border border-gold/[0.06]" />
 				</div>
 
 				{/* Decorative side lines */}
-				<div className="pointer-events-none absolute top-1/2 left-0 h-px w-24 bg-gradient-to-r from-transparent to-gold/20 sm:w-32" />
-				<div className="pointer-events-none absolute top-1/2 right-0 h-px w-24 bg-gradient-to-l from-transparent to-gold/20 sm:w-32" />
+				<div className="pointer-events-none absolute top-1/2 left-0 h-px w-24 bg-gradient-to-r from-transparent to-lavender/20 sm:w-32" />
+				<div className="pointer-events-none absolute top-1/2 right-0 h-px w-24 bg-gradient-to-l from-transparent to-lavender/20 sm:w-32" />
 
 				<div className="animate-hero relative z-10">
-					<p className="mb-6 text-xs font-light tracking-[0.3em] text-gold/80 uppercase sm:text-sm">
+					<p className="mb-6 text-xs font-light tracking-[0.3em] text-lavender/80 uppercase sm:text-sm">
 						La plateforme des artisans pâtissiers
 					</p>
 					<h1 className="font-serif text-5xl leading-tight font-bold text-white sm:text-6xl lg:text-7xl">
@@ -274,7 +274,7 @@ export function HomeContent() {
 						<button
 							type="button"
 							onClick={() => scrollTo('features')}
-							className="rounded-full border border-white/20 px-8 py-3.5 text-sm font-medium text-white transition-all hover:border-white/40 hover:bg-white/5"
+							className="rounded-full border border-white/20 px-8 py-3.5 text-sm font-medium text-white transition-all hover:border-lavender/40 hover:bg-lavender/5"
 						>
 							Découvrir
 						</button>
@@ -291,7 +291,7 @@ export function HomeContent() {
 						{ value: '4.9/5', label: 'Satisfaction client' },
 					].map((stat) => (
 						<div key={stat.label} className="animate-on-scroll text-center">
-							<p className="font-serif text-4xl font-bold text-gold">{stat.value}</p>
+							<p className="font-serif text-4xl font-bold text-amber">{stat.value}</p>
 							<p className="mt-2 text-sm font-light tracking-wide text-white/50">
 								{stat.label}
 							</p>
@@ -346,7 +346,7 @@ export function HomeContent() {
 					</div>
 					<div className="relative mt-16">
 						{/* Connecting line (desktop only) */}
-						<div className="absolute top-8 left-1/2 hidden h-px w-2/3 -translate-x-1/2 bg-gradient-to-r from-gold/20 via-gold/40 to-gold/20 sm:block" />
+						<div className="absolute top-8 left-1/2 hidden h-px w-2/3 -translate-x-1/2 bg-gradient-to-r from-lavender/20 via-lavender/40 to-lavender/20 sm:block" />
 						<div className="grid gap-12 sm:grid-cols-3 sm:gap-8">
 							{STEPS.map((step, i) => (
 								<div
@@ -354,7 +354,7 @@ export function HomeContent() {
 									className="animate-on-scroll flex flex-col items-center text-center"
 									style={{ animationDelay: `${i * 0.2}s` }}
 								>
-									<div className="relative z-10 flex h-16 w-16 items-center justify-center rounded-full border-2 border-gold bg-[#1A1A1A] font-serif text-2xl font-bold text-gold">
+									<div className="relative z-10 flex h-16 w-16 items-center justify-center rounded-full border-2 border-lavender bg-[#1A1A1A] font-serif text-2xl font-bold text-lavender">
 										{step.number}
 									</div>
 									<h3 className="mt-6 font-serif text-xl font-semibold text-white">
