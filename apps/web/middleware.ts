@@ -15,6 +15,8 @@ const RESERVED_PATHS = new Set([
 	'dashboard',
 	'login',
 	'register',
+	'forgot-password',
+	'reset-password',
 	'settings',
 	'billing',
 	'creations',
