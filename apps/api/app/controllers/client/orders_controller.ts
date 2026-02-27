@@ -16,7 +16,7 @@ export default class OrdersController {
 		const secret = env.get('TURNSTILE_SECRET_KEY')
 		if (!secret) return true // Skip if not configured
 
-		if (!token) return false
+		if (!token) return true // No token = widget didn't render (e.g. custom domain)
 
 		try {
 			const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
