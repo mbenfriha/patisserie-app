@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import Link from 'next/link'
+// Links use <a> to ensure middleware rewrites work on custom domains
 import { SectionTitle } from '../../components/section-title'
 import { GoldDivider } from '../../components/gold-divider'
 import { getImageUrl } from '@/lib/utils/image-url'
@@ -146,7 +146,7 @@ export default async function WorkshopDetailPage({ params, searchParams }: Props
 
 			<div className="mx-auto max-w-[1200px] px-6 pt-28 pb-24">
 				{/* ── Back link ── */}
-				<Link
+				<a
 					href={`${basePath}/workshops`}
 					className="inline-flex items-center gap-2 text-sm text-[var(--gold)] transition-colors hover:text-[var(--gold-dark)]"
 					style={{ fontFamily: "'Josefin Sans', sans-serif" }}
@@ -155,7 +155,7 @@ export default async function WorkshopDetailPage({ params, searchParams }: Props
 						<path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
 					</svg>
 					Retour aux ateliers
-				</Link>
+				</a>
 
 				{/* ── Payment success banner ── */}
 				{payment === 'success' && (
@@ -442,13 +442,13 @@ export default async function WorkshopDetailPage({ params, searchParams }: Props
 							<p className="mt-2 text-sm text-[var(--dark-soft)]/60">
 								Toutes les places ont été réservées. N&apos;hésitez pas à consulter nos autres ateliers.
 							</p>
-							<Link
+							<a
 								href={`${basePath}/workshops`}
 								className="mt-6 inline-block bg-[var(--gold)] px-8 py-3 text-xs font-semibold uppercase tracking-[3px] text-[var(--dark)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[var(--gold-light)]"
 								style={{ fontFamily: "'Josefin Sans', sans-serif" }}
 							>
 								Voir les autres ateliers
-							</Link>
+							</a>
 						</div>
 					) : (
 						<WorkshopBookingForm

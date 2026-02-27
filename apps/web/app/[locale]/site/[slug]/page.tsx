@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Link from 'next/link'
 import { useSiteProfile, useSiteBasePath, useSiteConfig } from './site-provider'
 import { useInlineEdit } from './components/inline-edit-provider'
 import { EditableText } from './components/editable-text'
@@ -210,13 +209,13 @@ export default function PatissierSitePage() {
 							</select>
 						</div>
 					) : (
-						<Link
+						<a
 							href={ctaHref}
 							className="group inline-block border-2 border-[var(--gold)] bg-transparent px-12 py-4 text-xs font-normal uppercase tracking-[4px] text-[var(--gold)] transition-all duration-400 hover:bg-[var(--gold)] hover:text-[var(--dark)]"
 							style={{ fontFamily: 'var(--font-body)' }}
 						>
 							{ctaLabel}
-						</Link>
+						</a>
 					)}
 				</div>
 
@@ -348,7 +347,7 @@ export default function PatissierSitePage() {
 						{creations.map((creation, i) => {
 							const imageUrl = getCreationImage(creation)
 							return (
-								<Link
+								<a
 									key={creation.id}
 									href={`${basePath}/creations/${creation.slug}`}
 									className="group cursor-pointer overflow-hidden rounded-2xl bg-white shadow-[0_4px_24px_rgba(0,0,0,0.06)] transition-all duration-400 hover:-translate-y-2 hover:shadow-[0_16px_48px_rgba(197,165,90,0.15)]"
@@ -402,20 +401,20 @@ export default function PatissierSitePage() {
 											)}
 										</div>
 									)}
-								</Link>
+								</a>
 							)
 						})}
 					</div>
 
 					{/* View all link */}
 					<div className="mt-12 text-center">
-						<Link
+						<a
 							href={`${basePath}/creations`}
 							className="inline-block border-2 border-[var(--gold)] bg-transparent px-10 py-3 text-xs font-normal uppercase tracking-[3px] text-[var(--gold)] transition-all duration-400 hover:bg-[var(--gold)] hover:text-[var(--dark)]"
 							style={{ fontFamily: 'var(--font-body)' }}
 						>
 							Toutes nos cr&eacute;ations
-						</Link>
+						</a>
 					</div>
 				</section>
 			)}
@@ -622,7 +621,7 @@ export default function PatissierSitePage() {
 							className="mb-10 text-xl leading-[1.8] text-white/70"
 							style={{ fontFamily: 'var(--font-heading)' }}
 						/>
-						<Link
+						<a
 							href={`${basePath}/workshops`}
 							className="inline-block bg-[var(--gold)] px-12 py-4 text-xs font-semibold uppercase tracking-[4px] text-[var(--dark)] transition-all duration-400 hover:-translate-y-0.5 hover:bg-[var(--gold-light)]"
 							style={{ fontFamily: 'var(--font-body)' }}
@@ -636,7 +635,7 @@ export default function PatissierSitePage() {
 							) : (
 								config.workshopsCtaLabel
 							)}
-						</Link>
+						</a>
 					</div>
 				</section>
 			)}

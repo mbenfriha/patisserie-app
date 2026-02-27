@@ -1,7 +1,6 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import Link from 'next/link'
 import { useSiteBasePath } from '../site-provider'
 import { getImageUrl } from '@/lib/utils/image-url'
 
@@ -113,7 +112,7 @@ export function CreationsGrid({ creations }: CreationsGridProps) {
 						{filteredCreations.map((creation, i) => {
 							const imageUrl = getCreationImage(creation)
 							return (
-								<Link
+								<a
 									key={creation.id}
 									href={`${basePath}/creations/${creation.slug}`}
 									className="group cursor-pointer overflow-hidden rounded-2xl bg-white shadow-[0_4px_24px_rgba(0,0,0,0.06)] transition-all duration-400 hover:-translate-y-2 hover:shadow-[0_16px_48px_rgba(197,165,90,0.15)]"
@@ -179,7 +178,7 @@ export function CreationsGrid({ creations }: CreationsGridProps) {
 										)}
 									</div>
 									)}
-								</Link>
+								</a>
 							)
 						})}
 					</div>

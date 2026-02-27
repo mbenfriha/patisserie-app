@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import Link from 'next/link'
 import { useSiteProfile, useSiteBasePath, useSiteConfig } from '../site-provider'
 import { useAuth } from '@/lib/providers/auth-provider'
 import { getImageUrl } from '@/lib/utils/image-url'
@@ -62,7 +61,7 @@ export function SiteNavbar() {
 			<div className="mx-auto flex max-w-[1200px] items-center justify-between px-6">
 				{/* Logo / Business Name */}
 				<div className="relative">
-					<Link href={basePath || '/'} className="block">
+					<a href={basePath || '/'} className="block">
 						{profile.logoUrl ? (
 							<img
 								src={getImageUrl(profile.logoUrl)!}
@@ -78,7 +77,7 @@ export function SiteNavbar() {
 								{profile.businessName}
 							</span>
 						)}
-					</Link>
+					</a>
 
 					{/* Logo size slider in edit mode */}
 					{isEditing && (
@@ -108,21 +107,21 @@ export function SiteNavbar() {
 				<div className="flex items-center gap-8">
 					<div className="hidden items-center gap-7 md:flex">
 						{navLinks.map((link) => (
-							<Link
+							<a
 								key={link.href}
 								href={link.href}
 								className="group relative pb-1 font-[family-name:'Josefin_Sans'] text-[13px] font-normal uppercase tracking-[2px] text-white/80 transition-colors duration-300 hover:text-[var(--gold)]"
 							>
 								{link.label}
 								<span className="absolute bottom-0 left-0 h-[2px] w-0 bg-[var(--gold)] transition-all duration-300 group-hover:w-full" />
-							</Link>
+							</a>
 						))}
 					</div>
 
 
 					{/* Backoffice link for owner */}
 					{isOwner && (
-						<Link
+						<a
 							href="/dashboard"
 							className="hidden items-center gap-1.5 rounded-full border border-[var(--gold)]/40 px-3 py-1.5 font-[family-name:'Josefin_Sans'] text-[12px] tracking-[1px] text-[var(--gold)] transition-all duration-300 hover:border-[var(--gold)] hover:bg-[var(--gold)]/10 md:flex"
 						>
@@ -133,7 +132,7 @@ export function SiteNavbar() {
 								<rect x="14" y="14" width="7" height="7" />
 							</svg>
 							Backoffice
-						</Link>
+						</a>
 					)}
 
 					{/* Mobile hamburger */}
@@ -171,19 +170,18 @@ export function SiteNavbar() {
 			{mobileOpen && (
 				<div className="absolute top-full right-0 left-0 flex animate-[fadeIn_0.3s_ease-out] flex-col bg-[#1A1A1A]/98 p-6 backdrop-blur-xl md:hidden">
 					{navLinks.map((link) => (
-						<Link
+						<a
 							key={link.href}
 							href={link.href}
 							onClick={() => setMobileOpen(false)}
 							className="border-b border-white/10 py-3 font-[family-name:'Josefin_Sans'] text-[15px] uppercase tracking-[2px] text-white/80 transition-colors duration-300 hover:text-[var(--gold)]"
 						>
 							{link.label}
-						</Link>
+						</a>
 					))}
 						{isOwner && (
-						<Link
+						<a
 							href="/dashboard"
-							onClick={() => setMobileOpen(false)}
 							className="mt-4 flex items-center gap-2 rounded-full border border-[var(--gold)]/40 px-4 py-2 font-[family-name:'Josefin_Sans'] text-[13px] tracking-[1px] text-[var(--gold)] transition-all duration-300 hover:bg-[var(--gold)]/10"
 						>
 							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -193,7 +191,7 @@ export function SiteNavbar() {
 								<rect x="14" y="14" width="7" height="7" />
 							</svg>
 							Backoffice
-						</Link>
+						</a>
 					)}
 				</div>
 			)}

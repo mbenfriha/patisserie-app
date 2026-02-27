@@ -1,6 +1,5 @@
 'use client'
 
-import Link from 'next/link'
 import { useSiteProfile, useSiteBasePath } from '../site-provider'
 import { useAuth } from '@/lib/providers/auth-provider'
 
@@ -25,14 +24,14 @@ export function SiteFooter() {
 	return (
 		<footer className="border-t border-[var(--gold)]/20 bg-[#1A1A1A] px-6 pt-16 pb-8 text-center">
 			{/* Business name */}
-			<Link href={basePath || '/'} className="inline-block">
+			<a href={basePath || '/'} className="inline-block">
 				<span
 					className="font-[family-name:'Great_Vibes'] text-4xl text-[var(--gold)]"
 					style={{ letterSpacing: 1 }}
 				>
 					{profile.businessName}
 				</span>
-			</Link>
+			</a>
 
 			{/* Description */}
 			{profile.description && (
@@ -44,13 +43,13 @@ export function SiteFooter() {
 			{/* Navigation links */}
 			<div className="mt-6 flex flex-wrap items-center justify-center gap-8">
 				{navLinks.map((link) => (
-					<Link
+					<a
 						key={link.href}
 						href={link.href}
 						className="font-[family-name:'Josefin_Sans'] text-[13px] tracking-[1px] text-white/50 transition-colors duration-300 hover:text-[var(--gold)]"
 					>
 						{link.label}
-					</Link>
+					</a>
 				))}
 			</div>
 
@@ -126,12 +125,12 @@ export function SiteFooter() {
 			{/* Login link */}
 			{!isAuthenticated && (
 				<div className="mt-6">
-					<Link
+					<a
 						href="/login"
 						className="font-[family-name:'Josefin_Sans'] text-xs tracking-[1px] text-white/30 transition-colors duration-300 hover:text-[var(--gold)]"
 					>
 						Espace professionnel
-					</Link>
+					</a>
 				</div>
 			)}
 

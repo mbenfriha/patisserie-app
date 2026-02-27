@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import Link from 'next/link'
+// Links use <a> to ensure middleware rewrites work on custom domains
 import { GoldDivider } from '../../components/gold-divider'
 import { getImageUrl } from '@/lib/utils/image-url'
 import { stripHtml } from '@/lib/utils/strip-html'
@@ -109,13 +109,13 @@ export default async function CreationDetailPage({ params }: Props) {
 
 			<div className="mx-auto max-w-[1100px] px-6 pt-28 pb-20">
 				{/* ── Back link ────────────────────────────────────────────── */}
-				<Link
+				<a
 					href={`${basePath}/creations`}
 					className="mb-10 inline-flex items-center gap-2 text-sm tracking-[1px] uppercase transition-colors duration-300 hover:opacity-80"
 					style={{ color: 'var(--gold)', fontFamily: "'Josefin Sans', sans-serif" }}
 				>
 					&larr; Retour aux cr&eacute;ations
-				</Link>
+				</a>
 
 				{/* ── Two-column layout ────────────────────────────────────── */}
 				<div className="grid gap-12 lg:grid-cols-2">
@@ -188,13 +188,13 @@ export default async function CreationDetailPage({ params }: Props) {
 
 						{/* CTA Button */}
 						{profile.ordersEnabled && (
-							<Link
+							<a
 								href={`${basePath}/commandes`}
 								className="inline-block bg-[var(--gold)] px-12 py-4 text-xs font-semibold uppercase tracking-[4px] text-[var(--dark)] transition-all duration-400 hover:-translate-y-0.5 hover:bg-[var(--gold-light)]"
 								style={{ fontFamily: "'Josefin Sans', sans-serif" }}
 							>
 								Commander
-							</Link>
+							</a>
 						)}
 					</div>
 				</div>

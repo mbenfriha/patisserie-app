@@ -1,7 +1,6 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import Link from 'next/link'
 import { useSiteBasePath } from '../site-provider'
 import { getImageUrl } from '@/lib/utils/image-url'
 
@@ -103,7 +102,7 @@ export function WorkshopsGrid({ workshops }: WorkshopsGridProps) {
 						{filteredWorkshops.map((workshop, i) => {
 							const imageUrl = getImageUrl(workshop.images?.[0]?.url)
 							return (
-								<Link
+								<a
 									key={workshop.id}
 									href={`${basePath}/workshops/${workshop.slug}`}
 									className="group cursor-pointer overflow-hidden rounded-2xl bg-white shadow-[0_4px_24px_rgba(0,0,0,0.06)] transition-all duration-400 hover:-translate-y-2 hover:shadow-[0_16px_48px_rgba(197,165,90,0.15)]"
@@ -216,7 +215,7 @@ export function WorkshopsGrid({ workshops }: WorkshopsGridProps) {
 											</span>
 										</div>
 									</div>
-								</Link>
+								</a>
 							)
 						})}
 					</div>
