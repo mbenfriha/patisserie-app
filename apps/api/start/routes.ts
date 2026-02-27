@@ -17,6 +17,15 @@ router
 		router.post('/login', '#controllers/auth/auth_controller.login').use(throttle('authStrict'))
 		router.post('/logout', '#controllers/auth/auth_controller.logout').use(middleware.auth())
 		router.get('/me', '#controllers/auth/auth_controller.me').use(middleware.auth())
+		router
+			.post('/forgot-password', '#controllers/auth/auth_controller.forgotPassword')
+			.use(throttle('authStrict'))
+		router
+			.post('/reset-password', '#controllers/auth/auth_controller.resetPassword')
+			.use(throttle('authStrict'))
+		router
+			.post('/change-password', '#controllers/auth/auth_controller.changePassword')
+			.use([middleware.auth(), throttle('authStrict')])
 	})
 	.prefix('/auth')
 

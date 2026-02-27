@@ -1,6 +1,7 @@
 import mail from '@adonisjs/mail/services/main'
 import BookingCancellation from '#mails/booking_cancellation'
 import BookingConfirmation from '#mails/booking_confirmation'
+import ForgotPassword from '#mails/forgot_password'
 import NewBookingNotification from '#mails/new_booking_notification'
 import OrderConfirmation from '#mails/order_confirmation'
 import OrderMessageNotification from '#mails/order_message_notification'
@@ -179,6 +180,14 @@ export default class EmailService {
 				messagePreview: data.messagePreview,
 			})
 		)
+	}
+
+	async sendForgotPasswordEmail(data: {
+		email: string
+		fullName: string | null
+		resetUrl: string
+	}): Promise<void> {
+		await mail.send(new ForgotPassword(data.email, data.fullName, data.resetUrl))
 	}
 
 	/**

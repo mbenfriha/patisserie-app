@@ -3,12 +3,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Image from 'next/image'
-import { Pencil, Check, X, Globe, Loader2, CheckCircle2, AlertCircle, ExternalLink, Upload, Trash2 } from 'lucide-react'
+import { Pencil, Check, X, Globe, Loader2, CheckCircle2, AlertCircle, ExternalLink, Upload, Trash2, Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '@/lib/providers/auth-provider'
 import { api } from '@/lib/api/client'
 
 export default function SettingsPage() {
-	const { user, refreshUser } = useAuth()
+	const { user, refreshUser, changePassword } = useAuth()
 	const searchParams = useSearchParams()
 	const [profile, setProfile] = useState<any>(null)
 	const [isLoading, setIsLoading] = useState(true)
@@ -25,6 +25,56 @@ export default function SettingsPage() {
 	const [domainVerifying, setDomainVerifying] = useState(false)
 	const [faviconUploading, setFaviconUploading] = useState(false)
 	const faviconInputRef = useRef<HTMLInputElement>(null)
+
+	// Password change state
+	const [currentPassword, setCurrentPassword] = useState('')
+	const [newPassword, setNewPassword] = useState('')
+	const [newPasswordConfirmation, setNewPasswordConfirmation] = useState('')
+	const [showPasswords, setShowPasswords] = useState(false)
+	const [passwordError, setPasswordError] = useState('')
+	const [passwordSuccess, setPasswordSuccess] = useState(false)
+	const [isChangingPassword, setIsChangingPassword] = useState(false)
+
+	const passwordRules = [
+		{ key: 'minLength', label: '8 caractères minimum', valid: newPassword.length >= 8 },
+		{ key: 'uppercase', label: 'Une majuscule', valid: /[A-Z]/.test(newPassword) },
+		{ key: 'lowercase', label: 'Une minuscule', valid: /[a-z]/.test(newPassword) },
+		{ key: 'number', label: 'Un chiffre', valid: /[0-9]/.test(newPassword) },
+		{
+			key: 'specialChar',
+			label: 'Un caractère spécial',
+			valid: /[^A-Za-z0-9]/.test(newPassword),
+		},
+		{
+			key: 'match',
+			label: 'Les mots de passe correspondent',
+			valid:
+				newPassword.length > 0 &&
+				newPasswordConfirmation.length > 0 &&
+				newPassword === newPasswordConfirmation,
+		},
+	]
+
+	const allPasswordRulesValid = passwordRules.every((rule) => rule.valid)
+
+	const handleChangePassword = async (e: React.FormEvent) => {
+		e.preventDefault()
+		if (!allPasswordRulesValid || !currentPassword) return
+		setPasswordError('')
+		setPasswordSuccess(false)
+		setIsChangingPassword(true)
+		try {
+			await changePassword(currentPassword, newPassword)
+			setPasswordSuccess(true)
+			setCurrentPassword('')
+			setNewPassword('')
+			setNewPasswordConfirmation('')
+		} catch (err: any) {
+			setPasswordError(err.message || 'Erreur lors du changement de mot de passe')
+		} finally {
+			setIsChangingPassword(false)
+		}
+	}
 
 	const handleSaveName = async () => {
 		const trimmed = editedName.trim()
@@ -291,6 +341,123 @@ export default function SettingsPage() {
 							<p className="mt-1 text-sm capitalize">{profile?.plan}</p>
 						</div>
 					</div>
+				</section>
+
+				<section className="rounded-lg border p-6">
+					<h2 className="text-xl font-semibold">Changer le mot de passe</h2>
+					<p className="mt-2 text-sm text-muted-foreground">
+						Mettez à jour votre mot de passe pour sécuriser votre compte.
+					</p>
+
+					<form onSubmit={handleChangePassword} className="mt-4 max-w-md space-y-4">
+						{passwordError && (
+							<div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+								{passwordError}
+							</div>
+						)}
+						{passwordSuccess && (
+							<div className="rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-800">
+								Mot de passe modifié avec succès.
+							</div>
+						)}
+
+						<div className="space-y-2">
+							<label htmlFor="currentPassword" className="text-sm font-medium">
+								Mot de passe actuel
+							</label>
+							<div className="flex gap-2">
+								<input
+									id="currentPassword"
+									type={showPasswords ? 'text' : 'password'}
+									value={currentPassword}
+									onChange={(e) => {
+										setCurrentPassword(e.target.value)
+										setPasswordError('')
+										setPasswordSuccess(false)
+									}}
+									className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+									required
+								/>
+								<button
+									type="button"
+									onClick={() => setShowPasswords(!showPasswords)}
+									className="rounded-md border border-input bg-background px-3 py-2 hover:bg-accent"
+								>
+									{showPasswords ? (
+										<EyeOff className="h-4 w-4 text-muted-foreground" />
+									) : (
+										<Eye className="h-4 w-4 text-muted-foreground" />
+									)}
+								</button>
+							</div>
+						</div>
+
+						<div className="space-y-2">
+							<label htmlFor="newPassword" className="text-sm font-medium">
+								Nouveau mot de passe
+							</label>
+							<input
+								id="newPassword"
+								type={showPasswords ? 'text' : 'password'}
+								value={newPassword}
+								onChange={(e) => {
+									setNewPassword(e.target.value)
+									setPasswordSuccess(false)
+								}}
+								placeholder="••••••••"
+								className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+								required
+							/>
+						</div>
+
+						<div className="space-y-2">
+							<label htmlFor="newPasswordConfirmation" className="text-sm font-medium">
+								Confirmer le nouveau mot de passe
+							</label>
+							<input
+								id="newPasswordConfirmation"
+								type={showPasswords ? 'text' : 'password'}
+								value={newPasswordConfirmation}
+								onChange={(e) => {
+									setNewPasswordConfirmation(e.target.value)
+									setPasswordSuccess(false)
+								}}
+								placeholder="••••••••"
+								className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+								required
+							/>
+						</div>
+
+						{newPassword && (
+							<div className="space-y-2 rounded-lg border bg-muted/50 p-3">
+								<p className="mb-2 text-sm font-medium">Sécurité du mot de passe</p>
+								<div className="grid grid-cols-1 gap-1">
+									{passwordRules.map((rule) => (
+										<div key={rule.key} className="flex items-center gap-2">
+											{rule.valid ? (
+												<Check className="h-4 w-4 text-green-600" />
+											) : (
+												<X className="h-4 w-4 text-muted-foreground" />
+											)}
+											<span
+												className={`text-xs ${rule.valid ? 'text-green-600' : 'text-muted-foreground'}`}
+											>
+												{rule.label}
+											</span>
+										</div>
+									))}
+								</div>
+							</div>
+						)}
+
+						<button
+							type="submit"
+							disabled={isChangingPassword || !allPasswordRulesValid || !currentPassword}
+							className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+						>
+							{isChangingPassword ? 'Modification...' : 'Modifier le mot de passe'}
+						</button>
+					</form>
 				</section>
 
 				<section className="rounded-lg border p-6">

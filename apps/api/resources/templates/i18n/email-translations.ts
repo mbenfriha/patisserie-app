@@ -86,4 +86,15 @@ export const emailTranslations = {
 		participantsLabel: 'Participants',
 		reasonLabel: 'Raison',
 	},
+
+	forgotPassword: {
+		title: 'Réinitialiser votre mot de passe',
+		preview: 'Réinitialiser votre mot de passe Patissio',
+		heading: 'Réinitialisation du mot de passe',
+		body: 'Vous avez demandé à réinitialiser votre mot de passe. Cliquez sur le bouton ci-dessous pour en choisir un nouveau :',
+		button: 'Réinitialiser mon mot de passe',
+		expiry: 'Ce lien expire dans 1 heure.',
+		ignore:
+			"Si vous n'avez pas demandé cette réinitialisation, vous pouvez ignorer cet email. Votre mot de passe restera inchangé.",
+	},
 }
