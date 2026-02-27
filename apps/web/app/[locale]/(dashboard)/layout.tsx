@@ -6,6 +6,7 @@ import { Link, usePathname } from '@/i18n/navigation'
 import { RoleGuard } from '@/components/auth/role-guard'
 import { StripeConnectBanner } from '@/components/dashboard/stripe-connect-banner'
 import { useAuth } from '@/lib/providers/auth-provider'
+import { getImageUrl } from '@/lib/utils/image-url'
 
 const navItems: {
 	href: string
@@ -142,15 +143,28 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 				{/* ── Desktop Sidebar ── */}
 				<aside className="hidden w-64 shrink-0 border-r bg-sidebar lg:flex lg:flex-col">
 					<div className="p-6">
-						<h2 className="text-lg font-bold text-sidebar-foreground">
-							{user?.profile?.businessName || 'Patissio'}
-						</h2>
+						<div className="flex items-center gap-3">
+							{user?.profile?.logoUrl ? (
+								<img
+									src={getImageUrl(user.profile.logoUrl)!}
+									alt=""
+									className="h-10 w-10 shrink-0 rounded-lg border object-contain"
+								/>
+							) : (
+								<div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-sm font-bold text-primary">
+									{(user?.profile?.businessName || 'P').charAt(0).toUpperCase()}
+								</div>
+							)}
+							<h2 className="truncate text-lg font-bold text-sidebar-foreground">
+								{user?.profile?.businessName || 'Patissio'}
+							</h2>
+						</div>
 						{siteUrl && (
 							<a
 								href={siteUrl}
 								target="_blank"
 								rel="noopener noreferrer"
-								className="mt-2 inline-flex items-center gap-1.5 rounded-md border border-sidebar-accent px-2.5 py-1.5 text-xs font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent/50"
+								className="mt-3 inline-flex items-center gap-1.5 rounded-md border border-sidebar-accent px-2.5 py-1.5 text-xs font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent/50"
 							>
 								<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
 									<path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" />
@@ -165,6 +179,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 						<NavLinks pathname={pathname} t={t} userPlan={user?.profile?.plan || 'starter'} />
 					</nav>
 					<div className="mt-auto border-t p-4">
+						<a
+							href="https://patissio.com"
+							target="_blank"
+							rel="noopener noreferrer"
+							className="mb-2 flex items-center gap-2 px-3 py-1.5 text-xs text-muted-foreground/60 transition-colors hover:text-muted-foreground"
+						>
+							<img src="/logo-patissio.png" alt="" className="h-4 w-4" />
+							Propulsé par Patissio.com
+						</a>
 						<button
 							type="button"
 							onClick={logout}
@@ -177,9 +200,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
 				{/* ── Mobile Header ── */}
 				<div className="fixed inset-x-0 top-0 z-40 flex h-14 items-center justify-between border-b bg-sidebar px-4 lg:hidden">
-					<h2 className="text-sm font-bold text-sidebar-foreground">
-						{user?.profile?.businessName || 'Patissio'}
-					</h2>
+					<div className="flex items-center gap-2">
+						{user?.profile?.logoUrl ? (
+							<img
+								src={getImageUrl(user.profile.logoUrl)!}
+								alt=""
+								className="h-7 w-7 shrink-0 rounded-md border object-contain"
+							/>
+						) : (
+							<div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary/10 text-xs font-bold text-primary">
+								{(user?.profile?.businessName || 'P').charAt(0).toUpperCase()}
+							</div>
+						)}
+						<h2 className="truncate text-sm font-bold text-sidebar-foreground">
+							{user?.profile?.businessName || 'Patissio'}
+						</h2>
+					</div>
 					<button
 						type="button"
 						onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -213,9 +249,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 					}`}
 				>
 					<div className="flex items-center justify-between border-b p-4">
-						<h2 className="text-lg font-bold text-sidebar-foreground">
-							{user?.profile?.businessName || 'Patissio'}
-						</h2>
+						<div className="flex items-center gap-2.5">
+							{user?.profile?.logoUrl ? (
+								<img
+									src={getImageUrl(user.profile.logoUrl)!}
+									alt=""
+									className="h-8 w-8 shrink-0 rounded-lg border object-contain"
+								/>
+							) : (
+								<div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-sm font-bold text-primary">
+									{(user?.profile?.businessName || 'P').charAt(0).toUpperCase()}
+								</div>
+							)}
+							<h2 className="truncate text-lg font-bold text-sidebar-foreground">
+								{user?.profile?.businessName || 'Patissio'}
+							</h2>
+						</div>
 						<button
 							type="button"
 							onClick={() => setMobileMenuOpen(false)}
@@ -251,6 +300,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 					</nav>
 
 					<div className="mt-auto border-t p-4">
+						<a
+							href="https://patissio.com"
+							target="_blank"
+							rel="noopener noreferrer"
+							className="mb-2 flex items-center gap-2 px-3 py-1.5 text-xs text-muted-foreground/60 transition-colors hover:text-muted-foreground"
+						>
+							<img src="/logo-patissio.png" alt="" className="h-4 w-4" />
+							Propulsé par Patissio.com
+						</a>
 						<button
 							type="button"
 							onClick={logout}

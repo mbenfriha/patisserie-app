@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import Link from 'next/link'
 import { api } from '@/lib/api/client'
+import { useAuth } from '@/lib/providers/auth-provider'
 import { PlanGate } from '@/components/auth/plan-gate'
 
 interface Order {
@@ -40,9 +41,36 @@ const typeLabels: Record<string, string> = {
 	custom: 'Sur-mesure',
 }
 
+function getSiteUrl(profile: { slug: string; plan: string; customDomain?: string | null }) {
+	const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+	const { hostname, protocol, port } = new URL(baseUrl)
+	const portSuffix = port ? `:${port}` : ''
+	if (profile.plan === 'premium' && profile.customDomain) return `https://${profile.customDomain}`
+	if (profile.plan === 'pro') return `${protocol}//${profile.slug}.${hostname}${portSuffix}`
+	return `${baseUrl}/${profile.slug}`
+}
+
 export default function OrdersPage() {
+	const { user } = useAuth()
 	const [orders, setOrders] = useState<Order[]>([])
 	const [isLoading, setIsLoading] = useState(true)
+	const [copied, setCopied] = useState<string | null>(null)
+
+	const devisUrl = useMemo(() => {
+		if (!user?.profile) return null
+		return `${getSiteUrl(user.profile)}/commandes?tab=devis`
+	}, [user?.profile])
+
+	const catalogueUrl = useMemo(() => {
+		if (!user?.profile) return null
+		return `${getSiteUrl(user.profile)}/commandes?tab=catalogue`
+	}, [user?.profile])
+
+	const copyLink = (url: string, label: string) => {
+		navigator.clipboard.writeText(url)
+		setCopied(label)
+		setTimeout(() => setCopied(null), 2000)
+	}
 
 	useEffect(() => {
 		api
@@ -60,7 +88,59 @@ export default function OrdersPage() {
 	return (
 		<PlanGate minPlan="pro">
 		<div className="space-y-6">
-			<h1 className="text-3xl font-bold">Commandes</h1>
+			<div className="flex flex-wrap items-center justify-between gap-4">
+				<h1 className="text-3xl font-bold">Commandes</h1>
+				{devisUrl && (
+					<div className="flex flex-wrap gap-2">
+						<button
+							type="button"
+							onClick={() => copyLink(devisUrl, 'devis')}
+							className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted"
+						>
+							{copied === 'devis' ? (
+								<>
+									<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-green-500">
+										<path d="M20 6L9 17l-5-5" />
+									</svg>
+									<span className="text-green-600">Copié !</span>
+								</>
+							) : (
+								<>
+									<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+										<path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" />
+										<path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" />
+									</svg>
+									Partager le formulaire de devis
+								</>
+							)}
+						</button>
+						{catalogueUrl && (
+							<button
+								type="button"
+								onClick={() => copyLink(catalogueUrl, 'catalogue')}
+								className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted"
+							>
+								{copied === 'catalogue' ? (
+									<>
+										<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-green-500">
+											<path d="M20 6L9 17l-5-5" />
+										</svg>
+										<span className="text-green-600">Copié !</span>
+									</>
+								) : (
+									<>
+										<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+											<path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" />
+											<path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" />
+										</svg>
+										Partager le catalogue
+									</>
+								)}
+							</button>
+						)}
+					</div>
+				)}
+			</div>
 
 			{isLoading ? (
 				<p className="text-muted-foreground">Chargement...</p>

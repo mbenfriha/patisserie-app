@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useCallback } from 'react'
+import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { useSiteProfile, useSiteBasePath, useSiteConfig } from '../site-provider'
 import { SectionTitle } from '../components/section-title'
 import { getImageUrl } from '@/lib/utils/image-url'
@@ -23,6 +24,10 @@ export default function OrderPage() {
 	const basePath = useSiteBasePath()
 	const config = useSiteConfig()
 
+	const searchParams = useSearchParams()
+	const router = useRouter()
+	const pathname = usePathname()
+
 	const showCatalogue = config.showCatalogueTab !== false
 	const showCustom = config.showCustomOrderTab !== false
 	const showBothTabs = showCatalogue && showCustom
@@ -32,10 +37,24 @@ export default function OrderPage() {
 		[showCatalogue]
 	)
 
+	const tabFromUrl = searchParams.get('tab')
+	const initialTab = useMemo<'catalogue' | 'custom'>(() => {
+		if (tabFromUrl === 'devis' || tabFromUrl === 'custom') return 'custom'
+		if (tabFromUrl === 'catalogue') return 'catalogue'
+		return defaultTab
+	}, [tabFromUrl, defaultTab])
+
 	const [products, setProducts] = useState<Product[]>([])
 	const [loading, setLoading] = useState(true)
-	const [activeTab, setActiveTab] = useState<'catalogue' | 'custom'>(defaultTab)
+	const [activeTab, setActiveTab] = useState<'catalogue' | 'custom'>(initialTab)
 	const [success, setSuccess] = useState(false)
+
+	const switchTab = useCallback((tab: 'catalogue' | 'custom') => {
+		setActiveTab(tab)
+		const params = new URLSearchParams(searchParams.toString())
+		params.set('tab', tab === 'custom' ? 'devis' : 'catalogue')
+		router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+	}, [searchParams, router, pathname])
 
 	useEffect(() => {
 		async function fetchProducts() {
@@ -222,7 +241,7 @@ export default function OrderPage() {
 					<div className="mx-auto flex max-w-[1200px] items-center justify-center gap-0 px-6">
 						<button
 							type="button"
-							onClick={() => setActiveTab('catalogue')}
+							onClick={() => switchTab('catalogue')}
 							className="relative px-8 py-5 text-xs font-semibold uppercase tracking-[3px] transition-all duration-300"
 							style={{
 								fontFamily: "'Josefin Sans', sans-serif",
@@ -234,7 +253,7 @@ export default function OrderPage() {
 						</button>
 						<button
 							type="button"
-							onClick={() => setActiveTab('custom')}
+							onClick={() => switchTab('custom')}
 							className="relative px-8 py-5 text-xs font-semibold uppercase tracking-[3px] transition-all duration-300"
 							style={{
 								fontFamily: "'Josefin Sans', sans-serif",

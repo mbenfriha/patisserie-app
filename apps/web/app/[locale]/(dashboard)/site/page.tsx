@@ -351,7 +351,7 @@ export default function SiteEditorPage() {
 	const handleHeroImageDelete = async () => {
 		try {
 			await api.delete('/patissier/hero-image')
-			showToast('Image hero supprimee')
+			showToast('Image de bannière supprimée')
 			await loadProfile()
 		} catch {
 			showToast('Erreur lors de la suppression')
@@ -393,7 +393,7 @@ export default function SiteEditorPage() {
 	const handlePageHeroDelete = async (page: string) => {
 		try {
 			await api.delete(`/patissier/page-hero/${page}`)
-			showToast('Image hero supprimee')
+			showToast('Image de couverture supprimée')
 			await loadProfile()
 		} catch {
 			showToast('Erreur lors de la suppression')
@@ -413,7 +413,7 @@ export default function SiteEditorPage() {
 			} else {
 				await api.upload(`/patissier/page-hero/${target}`, formData)
 			}
-			showToast('Image hero mise a jour')
+			showToast('Image mise à jour')
 			await loadProfile()
 		} catch {
 			showToast('Erreur lors du telechargement')
@@ -491,7 +491,7 @@ export default function SiteEditorPage() {
 							rel="noopener noreferrer"
 							className="rounded-md border px-3 py-2 text-sm text-muted-foreground hover:bg-muted"
 						>
-							Ouvrir le site
+							Voir mon site
 						</a>
 					)}
 					<button
@@ -562,7 +562,7 @@ export default function SiteEditorPage() {
 						</div>
 					</div>
 					<p className="mt-2 text-center text-xs text-muted-foreground">
-						Enregistrez vos modifications puis cliquez sur Rafraichir pour voir les changements
+						Cliquez sur « Enregistrer » en bas de page, puis sur « Rafraîchir » ci-dessus pour voir vos changements
 					</p>
 				</div>
 			)}
@@ -593,6 +593,7 @@ export default function SiteEditorPage() {
 						{/* Logo */}
 						<section className="rounded-lg border p-6">
 							<h2 className="text-lg font-semibold">Logo</h2>
+							<p className="mt-1 text-sm text-muted-foreground">Affiché dans la barre de navigation et le pied de page de votre site</p>
 							<div className="mt-4 flex items-center gap-4">
 								{profile.logoUrl ? (
 									<img
@@ -626,6 +627,7 @@ export default function SiteEditorPage() {
 						{/* Colors */}
 						<section className="rounded-lg border p-6">
 							<h2 className="text-lg font-semibold">Couleurs</h2>
+							<p className="mt-1 text-sm text-muted-foreground">Les couleurs utilisées sur l'ensemble de votre site (boutons, titres, accents)</p>
 							<div className="mt-4 grid gap-4 md:grid-cols-2">
 								<div>
 									<label className="text-sm font-medium">Couleur principale</label>
@@ -667,6 +669,7 @@ export default function SiteEditorPage() {
 						{/* Font preset */}
 						<section className="rounded-lg border p-6">
 							<h2 className="text-lg font-semibold">Police</h2>
+							<p className="mt-1 text-sm text-muted-foreground">Le style de texte utilisé sur votre site</p>
 							<div className="mt-4 grid gap-3 sm:grid-cols-2">
 								{FONT_PRESETS.map((preset) => (
 									<label
@@ -696,9 +699,9 @@ export default function SiteEditorPage() {
 
 						{/* Hero image */}
 						<section className="rounded-lg border p-6">
-							<h2 className="text-lg font-semibold">Image hero</h2>
+							<h2 className="text-lg font-semibold">Image de bannière</h2>
 							<p className="mt-1 text-sm text-muted-foreground">
-								Image d'arriere-plan de la section principale (20 Mo max)
+								La grande image d'arrière-plan en haut de votre page d'accueil (20 Mo max)
 							</p>
 							<div className="mt-4 flex items-center gap-4">
 								{profile.heroImageUrl ? (
@@ -737,13 +740,15 @@ export default function SiteEditorPage() {
 					<>
 						{/* Hero section */}
 						<Accordion
-							title="Section Hero"
+							title="Bannière principale"
+							description="La première chose que vos visiteurs voient en arrivant sur votre site"
 							isOpen={openSections.hero}
 							onToggle={() => toggleSection('hero')}
 						>
 							<div className="grid gap-4">
 								<div>
 									<label className="text-sm font-medium">Sous-titre</label>
+									<p className="text-xs text-muted-foreground">Texte affiché sous le nom de votre pâtisserie</p>
 									<input
 										type="text"
 										value={siteConfig.heroSubtitle || ''}
@@ -753,7 +758,8 @@ export default function SiteEditorPage() {
 									/>
 								</div>
 								<div>
-									<label className="text-sm font-medium">Label du bouton CTA</label>
+									<label className="text-sm font-medium">Texte du bouton</label>
+									<p className="text-xs text-muted-foreground">Le bouton principal affiché sur votre bannière d'accueil</p>
 									<input
 										type="text"
 										value={siteConfig.heroCtaLabel || ''}
@@ -763,7 +769,8 @@ export default function SiteEditorPage() {
 									/>
 								</div>
 								<div>
-									<label className="text-sm font-medium">Destination du bouton CTA</label>
+									<label className="text-sm font-medium">Lien du bouton</label>
+									<p className="text-xs text-muted-foreground">Vers quelle page vos visiteurs seront redirigés en cliquant</p>
 									<select
 										value={siteConfig.heroCtaHref || ''}
 										onChange={(e) => updateSiteConfigField('heroCtaHref', e.target.value)}
@@ -787,7 +794,8 @@ export default function SiteEditorPage() {
 
 						{/* Story section */}
 						<Accordion
-							title="Section Notre histoire"
+							title="Notre histoire"
+							description="Présentez votre parcours et votre passion — visible sur la page d'accueil"
 							isOpen={openSections.story}
 							onToggle={() => toggleSection('story')}
 						>
@@ -858,7 +866,8 @@ export default function SiteEditorPage() {
 
 						{/* Marquee */}
 						<Accordion
-							title="Bandeau defilant (Marquee)"
+							title="Texte défilant"
+							description="Les mots qui défilent en continu sur votre page d'accueil (ex: Macarons, Entremets...)"
 							isOpen={openSections.marquee}
 							onToggle={() => toggleSection('marquee')}
 						>
@@ -911,7 +920,8 @@ export default function SiteEditorPage() {
 
 						{/* Creations section */}
 						<Accordion
-							title="Section Creations (homepage)"
+							title="Créations en vedette"
+							description="Vos dernières créations mises en avant sur la page d'accueil"
 							isOpen={openSections.creations}
 							onToggle={() => toggleSection('creations')}
 						>
@@ -943,9 +953,10 @@ export default function SiteEditorPage() {
 						<Accordion
 							title={
 								profile?.plan === 'starter'
-									? 'Section CTA Ateliers (homepage) — Pro'
-									: 'Section CTA Ateliers (homepage)'
+									? 'Mise en avant des ateliers — Pro'
+									: 'Mise en avant des ateliers'
 							}
+							description="Cette section sur votre page d'accueil incite vos visiteurs à découvrir vos ateliers"
 							isOpen={openSections.workshopsCta}
 							onToggle={() => toggleSection('workshopsCta')}
 						>
@@ -981,7 +992,7 @@ export default function SiteEditorPage() {
 									</div>
 								</div>
 								<div>
-									<label className="text-sm font-medium">Label du bouton</label>
+									<label className="text-sm font-medium">Texte du bouton</label>
 									<input
 										type="text"
 										value={siteConfig.workshopsCtaLabel || ''}
@@ -995,12 +1006,13 @@ export default function SiteEditorPage() {
 
 						{/* Page Hero Images */}
 						<Accordion
-							title="Images hero des pages"
+							title="Images de couverture"
+							description="La grande image affichée en haut de chaque page de votre site"
 							isOpen={openSections.pageHeroes}
 							onToggle={() => toggleSection('pageHeroes')}
 						>
 							<p className="mb-4 text-sm text-muted-foreground">
-								Ajoutez une image hero en haut de chaque page de votre site
+								Personnalisez l'image de couverture de chaque page
 							</p>
 							<div className="grid gap-6">
 								{([
@@ -1049,9 +1061,9 @@ export default function SiteEditorPage() {
 				{/* ─── PAGES ─────────────────────────────── */}
 				{activeTab === 'pages' && (
 					<section className="rounded-lg border p-6">
-						<h2 className="text-lg font-semibold">Visibilite des sections</h2>
+						<h2 className="text-lg font-semibold">Gérer les sections de votre site</h2>
 						<p className="mt-1 text-sm text-muted-foreground">
-							Activez ou desactivez les sections de votre site
+							Choisissez ce que vos visiteurs peuvent voir sur votre site
 						</p>
 						{(() => {
 							const isPro = profile && profile.plan !== 'starter'
@@ -1063,17 +1075,17 @@ export default function SiteEditorPage() {
 										onChange={(v) => updateSiteConfigField('showStorySection', v)}
 									/>
 									<ToggleRow
-										label="Bandeau marquee"
+										label="Texte défilant"
 										checked={siteConfig.showMarquee !== false}
 										onChange={(v) => updateSiteConfigField('showMarquee', v)}
 									/>
 									<ToggleRow
-										label="Creations sur homepage"
+										label="Créations sur la page d'accueil"
 										checked={siteConfig.showCreationsOnHomepage !== false}
 										onChange={(v) => updateSiteConfigField('showCreationsOnHomepage', v)}
 									/>
 									<ToggleRow
-										label="CTA Ateliers sur homepage"
+										label="Mise en avant des ateliers sur la page d'accueil"
 										checked={isPro ? siteConfig.showWorkshopsCta !== false : false}
 										onChange={(v) => updateSiteConfigField('showWorkshopsCta', v)}
 										locked={!isPro}
@@ -1450,11 +1462,13 @@ export default function SiteEditorPage() {
 
 function Accordion({
 	title,
+	description,
 	isOpen,
 	onToggle,
 	children,
 }: {
 	title: string
+	description?: string
 	isOpen: boolean
 	onToggle: () => void
 	children: React.ReactNode
@@ -1466,7 +1480,12 @@ function Accordion({
 				onClick={onToggle}
 				className="flex w-full items-center justify-between p-6 text-left"
 			>
-				<h2 className="text-lg font-semibold">{title}</h2>
+				<div>
+					<h2 className="text-lg font-semibold">{title}</h2>
+					{description && (
+						<p className="mt-0.5 text-sm text-muted-foreground">{description}</p>
+					)}
+				</div>
 				<svg
 					width="20"
 					height="20"
@@ -1474,7 +1493,7 @@ function Accordion({
 					fill="none"
 					stroke="currentColor"
 					strokeWidth="2"
-					className={`transition-transform ${isOpen ? 'rotate-180' : ''}`}
+					className={`shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`}
 				>
 					<polyline points="6 9 12 15 18 9" />
 				</svg>

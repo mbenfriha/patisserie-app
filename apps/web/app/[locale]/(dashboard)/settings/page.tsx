@@ -551,9 +551,9 @@ export default function SettingsPage() {
 				{profile?.plan === 'premium' && (
 					<section className="rounded-lg border p-6">
 						<div>
-							<h2 className="text-xl font-semibold">Favicon</h2>
+							<h2 className="text-xl font-semibold">Icône du navigateur</h2>
 							<p className="mt-2 text-sm text-muted-foreground">
-								L'icône qui s'affiche dans l'onglet du navigateur sur votre domaine personnalisé.
+								La petite image qui s'affiche dans l'onglet du navigateur de vos visiteurs.
 							</p>
 						</div>
 
@@ -600,7 +600,7 @@ export default function SettingsPage() {
 									) : (
 										<Upload className="h-4 w-4" />
 									)}
-									Uploader un favicon
+									Ajouter une icône
 								</button>
 							)}
 							<input
