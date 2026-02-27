@@ -406,26 +406,51 @@ export default function SettingsPage() {
 									<div className="rounded-md border border-amber-200 bg-amber-50 p-4 text-sm">
 										<p className="font-medium text-amber-800">Configuration DNS requise</p>
 										<p className="mt-1 text-amber-700">
-											Ajoutez un enregistrement CNAME chez votre registraire de domaine :
+											Ajoutez l'un des enregistrements suivants chez votre registraire de domaine :
 										</p>
-										<div className="mt-3 overflow-x-auto rounded-md bg-white p-3 font-mono text-xs">
-											<table className="w-full">
-												<thead>
-													<tr className="text-left text-amber-600">
-														<th className="pr-6">Type</th>
-														<th className="pr-6">Nom</th>
-														<th>Valeur</th>
-													</tr>
-												</thead>
-												<tbody className="text-amber-900">
-													<tr>
-														<td className="pr-6 pt-1">CNAME</td>
-														<td className="pr-6 pt-1">@</td>
-														<td className="pt-1">cname.vercel-dns.com</td>
-													</tr>
-												</tbody>
-											</table>
+										<div className="mt-3 space-y-3">
+											<div className="overflow-x-auto rounded-md bg-white p-3 font-mono text-xs">
+												<p className="mb-2 font-sans text-amber-700 font-medium">Option 1 — Enregistrement A (recommandé)</p>
+												<table className="w-full">
+													<thead>
+														<tr className="text-left text-amber-600">
+															<th className="pr-6">Type</th>
+															<th className="pr-6">Nom</th>
+															<th>Valeur</th>
+														</tr>
+													</thead>
+													<tbody className="text-amber-900">
+														<tr>
+															<td className="pr-6 pt-1">A</td>
+															<td className="pr-6 pt-1">@</td>
+															<td className="pt-1">76.76.21.21</td>
+														</tr>
+													</tbody>
+												</table>
+											</div>
+											<div className="overflow-x-auto rounded-md bg-white p-3 font-mono text-xs">
+												<p className="mb-2 font-sans text-amber-700 font-medium">Option 2 — Enregistrement CNAME (sous-domaine uniquement)</p>
+												<table className="w-full">
+													<thead>
+														<tr className="text-left text-amber-600">
+															<th className="pr-6">Type</th>
+															<th className="pr-6">Nom</th>
+															<th>Valeur</th>
+														</tr>
+													</thead>
+													<tbody className="text-amber-900">
+														<tr>
+															<td className="pr-6 pt-1">CNAME</td>
+															<td className="pr-6 pt-1">www</td>
+															<td className="pt-1">cname.vercel-dns.com</td>
+														</tr>
+													</tbody>
+												</table>
+											</div>
 										</div>
+										<p className="mt-3 text-xs text-amber-600">
+											La plupart des registraires (Gandi, OVH, Ionos…) ne permettent pas de CNAME sur la racine (@). Utilisez l'enregistrement A dans ce cas.
+										</p>
 										<div className="mt-3 flex gap-2">
 											<button
 												type="button"
