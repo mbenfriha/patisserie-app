@@ -169,9 +169,7 @@ export default function SettingsPage() {
 		try {
 			const formData = new FormData()
 			formData.append('favicon', file)
-			const res = await api.post('/patissier/favicon', formData, {
-				headers: { 'Content-Type': 'multipart/form-data' },
-			})
+			const res = await api.upload('/patissier/favicon', formData)
 			setProfile((p: any) => ({ ...p, faviconUrl: res.data.data.faviconUrl }))
 		} catch (err) {
 			console.error(err)
