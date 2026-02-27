@@ -4,6 +4,7 @@ import env from '#start/env'
 import { getActiveProfile } from '#helpers/get_active_profile'
 
 const GRAPH_BASE = 'https://graph.instagram.com'
+const GRAPH_API = 'https://graph.instagram.com/v21.0'
 
 export default class InstagramController {
 	async authUrl(ctx: HttpContext) {
@@ -84,11 +85,21 @@ export default class InstagramController {
 			profile.instagramUserId = userId
 
 			// Step 2: Try to exchange for long-lived token (60 days)
-			// Per Meta docs: GET https://graph.instagram.com/access_token?grant_type=ig_exchange_token&client_secret=...&access_token=...
+			// Per Meta docs: GET https://graph.instagram.com/access_token
+			// Try versioned endpoint first, fallback to unversioned
 			try {
-				const longLivedResponse = await fetch(
-					`${GRAPH_BASE}/access_token?grant_type=ig_exchange_token&client_secret=${appSecret}&access_token=${shortLivedToken}`
+				let longLivedResponse = await fetch(
+					`${GRAPH_API}/access_token?grant_type=ig_exchange_token&client_secret=${appSecret}&access_token=${shortLivedToken}`
 				)
+
+				// If versioned fails, try unversioned (as per docs)
+				if (!longLivedResponse.ok) {
+					const versionedErr = await longLivedResponse.text()
+					logger.warn({ err: versionedErr, profileId: profile.id }, 'Instagram long-lived token (versioned) failed, trying unversioned')
+					longLivedResponse = await fetch(
+						`${GRAPH_BASE}/access_token?grant_type=ig_exchange_token&client_secret=${appSecret}&access_token=${shortLivedToken}`
+					)
+				}
 
 				if (!longLivedResponse.ok) {
 					const err = await longLivedResponse.text()
@@ -156,7 +167,7 @@ export default class InstagramController {
 			}
 
 			const res = await fetch(
-				`${GRAPH_BASE}/me?fields=user_id,username&access_token=${profile.instagramAccessToken}`
+				`${GRAPH_API}/me?fields=user_id,username&access_token=${profile.instagramAccessToken}`
 			)
 
 			if (!res.ok) {
