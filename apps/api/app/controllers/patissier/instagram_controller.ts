@@ -87,16 +87,14 @@ export default class InstagramController {
 			// Step 2: Try to exchange for long-lived token (60 days)
 			// Per Meta docs: GET https://graph.instagram.com/access_token
 			try {
-				const llParams = new URLSearchParams({
-					grant_type: 'ig_exchange_token',
-					client_secret: appSecret!,
-					access_token: shortLivedToken,
-				})
+				const controller = new AbortController()
+				const timeout = setTimeout(() => controller.abort(), 10000)
 
-				const llUrl = `${GRAPH_BASE}/access_token?${llParams.toString()}`
-				logger.info({ url: llUrl.replace(appSecret!, '***').replace(shortLivedToken, shortLivedToken.substring(0, 10) + '...'), profileId: profile.id }, 'Instagram long-lived token request')
-
-				let longLivedResponse = await fetch(llUrl)
+				const longLivedResponse = await fetch(
+					`${GRAPH_BASE}/access_token?grant_type=ig_exchange_token&client_secret=${appSecret}&access_token=${shortLivedToken}`,
+					{ signal: controller.signal }
+				)
+				clearTimeout(timeout)
 
 				if (!longLivedResponse.ok) {
 					const err = await longLivedResponse.text()
@@ -111,8 +109,8 @@ export default class InstagramController {
 						profile.instagramAccessToken = shortLivedToken
 					}
 				}
-			} catch (llErr) {
-				logger.warn({ err: llErr, profileId: profile.id }, 'Instagram long-lived token exchange error, using short-lived token')
+			} catch (llErr: any) {
+				logger.warn({ err: llErr?.message || llErr, profileId: profile.id }, 'Instagram long-lived token exchange error, using short-lived token')
 				profile.instagramAccessToken = shortLivedToken
 			}
 
