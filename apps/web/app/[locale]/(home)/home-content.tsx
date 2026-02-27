@@ -474,10 +474,10 @@ export function HomeContent() {
 						</p>
 					</div>
 					<Link
-						href="/mentions-legales"
+						href="/privacy"
 						className="text-sm text-white/30 transition-colors hover:text-white/50"
 					>
-						Mentions légales
+						Politique de confidentialité
 					</Link>
 				</div>
 			</footer>
