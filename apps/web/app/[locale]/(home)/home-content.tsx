@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { PLANS } from '@patissio/config'
 
@@ -136,7 +137,10 @@ export function HomeContent() {
 				}`}
 			>
 				<div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-					<span className="font-serif text-2xl font-semibold text-gold">Patissio</span>
+					<Link href="/" className="flex items-center gap-2">
+						<Image src="/logo-patissio.png" alt="Patissio" width={32} height={32} className="h-8 w-8" />
+						<span className="font-serif text-2xl font-semibold text-gold">Patissio</span>
+					</Link>
 
 					{/* Desktop nav */}
 					<div className="hidden items-center gap-8 md:flex">
