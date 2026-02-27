@@ -79,27 +79,24 @@ export default class InstagramController {
 			const shortLivedToken = tokenData.access_token
 			const userId = String(tokenData.user_id)
 
-			logger.info({ userId, profileId: profile.id }, 'Instagram short-lived token obtained')
+			logger.info({ userId, tokenPrefix: shortLivedToken?.substring(0, 10), profileId: profile.id }, 'Instagram short-lived token obtained')
 
 			// Save user ID
 			profile.instagramUserId = userId
 
 			// Step 2: Try to exchange for long-lived token (60 days)
 			// Per Meta docs: GET https://graph.instagram.com/access_token
-			// Try versioned endpoint first, fallback to unversioned
 			try {
-				let longLivedResponse = await fetch(
-					`${GRAPH_API}/access_token?grant_type=ig_exchange_token&client_secret=${appSecret}&access_token=${shortLivedToken}`
-				)
+				const llParams = new URLSearchParams({
+					grant_type: 'ig_exchange_token',
+					client_secret: appSecret!,
+					access_token: shortLivedToken,
+				})
 
-				// If versioned fails, try unversioned (as per docs)
-				if (!longLivedResponse.ok) {
-					const versionedErr = await longLivedResponse.text()
-					logger.warn({ err: versionedErr, profileId: profile.id }, 'Instagram long-lived token (versioned) failed, trying unversioned')
-					longLivedResponse = await fetch(
-						`${GRAPH_BASE}/access_token?grant_type=ig_exchange_token&client_secret=${appSecret}&access_token=${shortLivedToken}`
-					)
-				}
+				const llUrl = `${GRAPH_BASE}/access_token?${llParams.toString()}`
+				logger.info({ url: llUrl.replace(appSecret!, '***').replace(shortLivedToken, shortLivedToken.substring(0, 10) + '...'), profileId: profile.id }, 'Instagram long-lived token request')
+
+				let longLivedResponse = await fetch(llUrl)
 
 				if (!longLivedResponse.ok) {
 					const err = await longLivedResponse.text()
