@@ -140,6 +140,21 @@ export function SiteFooter() {
 				&copy; {new Date().getFullYear()} {profile.businessName} &mdash; Tous
 				droits r&eacute;serv&eacute;s.
 			</p>
+
+			{/* Patissio attribution (Premium: discrete footer text) */}
+			{profile.plan === 'premium' && (
+				<p className="mt-3 font-[family-name:'Josefin_Sans'] text-[10px] text-white/20">
+					Site créé avec{' '}
+					<a
+						href="https://patissio.com"
+						target="_blank"
+						rel="noreferrer"
+						className="underline transition-colors duration-300 hover:text-white/40"
+					>
+						Patissio.com
+					</a>
+				</p>
+			)}
 		</footer>
 	)
 }

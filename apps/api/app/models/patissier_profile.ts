@@ -156,6 +156,9 @@ export default class PatissierProfile extends BaseModel {
 	declare storyImageUrl: string | null
 
 	@column()
+	declare faviconUrl: string | null
+
+	@column()
 	declare acceptsCustomOrders: boolean
 
 	@column()

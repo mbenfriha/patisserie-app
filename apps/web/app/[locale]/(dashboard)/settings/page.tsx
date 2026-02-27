@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Pencil, Check, X, Globe, Loader2, CheckCircle2, AlertCircle, ExternalLink } from 'lucide-react'
+import Image from 'next/image'
+import { Pencil, Check, X, Globe, Loader2, CheckCircle2, AlertCircle, ExternalLink, Upload, Trash2 } from 'lucide-react'
 import { useAuth } from '@/lib/providers/auth-provider'
 import { api } from '@/lib/api/client'
 
@@ -22,6 +23,8 @@ export default function SettingsPage() {
 	const [domainError, setDomainError] = useState<string | null>(null)
 	const [domainStatus, setDomainStatus] = useState<{ status: string; domain: string } | null>(null)
 	const [domainVerifying, setDomainVerifying] = useState(false)
+	const [faviconUploading, setFaviconUploading] = useState(false)
+	const faviconInputRef = useRef<HTMLInputElement>(null)
 
 	const handleSaveName = async () => {
 		const trimmed = editedName.trim()
@@ -156,6 +159,37 @@ export default function SettingsPage() {
 			console.error(err)
 		} finally {
 			setDomainVerifying(false)
+		}
+	}
+
+	const handleUploadFavicon = async (e: React.ChangeEvent<HTMLInputElement>) => {
+		const file = e.target.files?.[0]
+		if (!file) return
+		setFaviconUploading(true)
+		try {
+			const formData = new FormData()
+			formData.append('favicon', file)
+			const res = await api.post('/patissier/favicon', formData, {
+				headers: { 'Content-Type': 'multipart/form-data' },
+			})
+			setProfile((p: any) => ({ ...p, faviconUrl: res.data.data.faviconUrl }))
+		} catch (err) {
+			console.error(err)
+		} finally {
+			setFaviconUploading(false)
+			if (faviconInputRef.current) faviconInputRef.current.value = ''
+		}
+	}
+
+	const handleDeleteFavicon = async () => {
+		setFaviconUploading(true)
+		try {
+			await api.delete('/patissier/favicon')
+			setProfile((p: any) => ({ ...p, faviconUrl: null }))
+		} catch (err) {
+			console.error(err)
+		} finally {
+			setFaviconUploading(false)
 		}
 	}
 
@@ -514,6 +548,74 @@ export default function SettingsPage() {
 								)}
 							</div>
 						)}
+					</section>
+				)}
+				{profile?.plan === 'premium' && (
+					<section className="rounded-lg border p-6">
+						<div>
+							<h2 className="text-xl font-semibold">Favicon</h2>
+							<p className="mt-2 text-sm text-muted-foreground">
+								L'icône qui s'affiche dans l'onglet du navigateur sur votre domaine personnalisé.
+							</p>
+						</div>
+
+						<div className="mt-4 flex items-center gap-4">
+							{profile?.faviconUrl ? (
+								<>
+									<div className="flex h-12 w-12 items-center justify-center rounded-lg border bg-white">
+										<Image
+											src={profile.faviconUrl.startsWith('http') ? profile.faviconUrl : `${process.env.NEXT_PUBLIC_STORAGE_URL}/${profile.faviconUrl}`}
+											alt="Favicon"
+											width={32}
+											height={32}
+											className="h-8 w-8 object-contain"
+										/>
+									</div>
+									<div className="flex gap-2">
+										<button
+											type="button"
+											onClick={() => faviconInputRef.current?.click()}
+											disabled={faviconUploading}
+											className="rounded-md border border-input bg-background px-3 py-1.5 text-xs font-medium hover:bg-accent disabled:opacity-50"
+										>
+											{faviconUploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <><Upload className="mr-1.5 inline h-3.5 w-3.5" />Changer</>}
+										</button>
+										<button
+											type="button"
+											onClick={handleDeleteFavicon}
+											disabled={faviconUploading}
+											className="rounded-md border border-input bg-background px-3 py-1.5 text-xs font-medium text-red-500 hover:bg-red-50 disabled:opacity-50"
+										>
+											<Trash2 className="mr-1.5 inline h-3.5 w-3.5" />Supprimer
+										</button>
+									</div>
+								</>
+							) : (
+								<button
+									type="button"
+									onClick={() => faviconInputRef.current?.click()}
+									disabled={faviconUploading}
+									className="flex items-center gap-2 rounded-md border border-dashed border-input bg-background px-4 py-3 text-sm text-muted-foreground hover:border-primary hover:text-foreground disabled:opacity-50"
+								>
+									{faviconUploading ? (
+										<Loader2 className="h-4 w-4 animate-spin" />
+									) : (
+										<Upload className="h-4 w-4" />
+									)}
+									Uploader un favicon
+								</button>
+							)}
+							<input
+								ref={faviconInputRef}
+								type="file"
+								accept="image/png,image/jpeg,image/webp,image/x-icon,image/svg+xml"
+								onChange={handleUploadFavicon}
+								className="hidden"
+							/>
+						</div>
+						<p className="mt-2 text-xs text-muted-foreground">
+							PNG, JPG, ICO ou SVG. 512x512px recommandé.
+						</p>
 					</section>
 				)}
 			</div>

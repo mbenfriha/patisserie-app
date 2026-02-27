@@ -61,6 +61,7 @@ export interface PatissierProfile {
 	productsHeroImageUrl: string | null
 	ordersHeroImageUrl: string | null
 	storyImageUrl: string | null
+	faviconUrl: string | null
 	siteConfig: SiteConfig
 	plan: string
 	ordersEnabled: boolean

@@ -34,6 +34,8 @@ router
 		router.delete('/hero-image', '#controllers/patissier/profile_controller.deleteHeroImage')
 		router.post('/story-image', '#controllers/patissier/profile_controller.uploadStoryImage')
 		router.delete('/story-image', '#controllers/patissier/profile_controller.deleteStoryImage')
+		router.post('/favicon', '#controllers/patissier/profile_controller.uploadFavicon')
+		router.delete('/favicon', '#controllers/patissier/profile_controller.deleteFavicon')
 		router.post('/page-hero/:page', '#controllers/patissier/profile_controller.uploadPageHeroImage')
 		router.delete('/page-hero/:page', '#controllers/patissier/profile_controller.deletePageHeroImage')
 

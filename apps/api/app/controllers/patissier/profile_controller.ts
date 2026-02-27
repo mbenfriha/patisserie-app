@@ -306,6 +306,60 @@ export default class ProfileController {
 		})
 	}
 
+	async uploadFavicon(ctx: HttpContext) {
+		const { request, response } = ctx
+		const profile = await getActiveProfile(ctx)
+
+		if (profile.plan !== 'premium') {
+			return response.forbidden({ success: false, message: 'Favicon is only available on the Premium plan' })
+		}
+
+		const image = request.file('favicon', {
+			size: '1mb',
+			extnames: ['jpg', 'jpeg', 'png', 'webp', 'ico', 'svg'],
+		})
+
+		if (!image) {
+			return response.badRequest({ success: false, message: 'No favicon file provided' })
+		}
+
+		if (!image.isValid) {
+			return response.badRequest({ success: false, message: 'Invalid file', errors: image.errors })
+		}
+
+		if (profile.faviconUrl && !profile.faviconUrl.startsWith('http')) {
+			try {
+				await storage.deleteImage(profile.faviconUrl)
+			} catch {
+				// Ignore
+			}
+		}
+
+		const key = await storage.uploadImage(image, `favicon/${profile.id}`)
+		profile.faviconUrl = key
+		await profile.save()
+
+		return response.ok({ success: true, data: profile.serialize() })
+	}
+
+	async deleteFavicon(ctx: HttpContext) {
+		const { response } = ctx
+		const profile = await getActiveProfile(ctx)
+
+		if (profile.faviconUrl && !profile.faviconUrl.startsWith('http')) {
+			try {
+				await storage.deleteImage(profile.faviconUrl)
+			} catch {
+				// Ignore
+			}
+		}
+
+		profile.faviconUrl = null
+		await profile.save()
+
+		return response.ok({ success: true, data: profile.serialize() })
+	}
+
 	private static pageHeroFields = {
 		creations: 'creationsHeroImageUrl',
 		workshops: 'workshopsHeroImageUrl',

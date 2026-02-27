@@ -62,6 +62,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 	if (!profile) return {}
 
 	const heroImage = getImageUrl(profile.heroImageUrl)
+	const faviconImage = getImageUrl(profile.faviconUrl)
 
 	return {
 		title: {
@@ -73,6 +74,14 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 			siteName: profile.businessName,
 			...(heroImage ? { images: [heroImage] } : {}),
 		},
+		...(faviconImage
+			? {
+					icons: {
+						icon: faviconImage,
+						apple: faviconImage,
+					},
+				}
+			: {}),
 	}
 }
 
