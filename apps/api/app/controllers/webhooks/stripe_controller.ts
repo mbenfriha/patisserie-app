@@ -1,5 +1,6 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import { DateTime } from 'luxon'
+import logger from '@adonisjs/core/services/logger'
 import PatissierProfile from '#models/patissier_profile'
 import Subscription from '#models/subscription'
 import WorkshopBooking from '#models/workshop_booking'
@@ -7,6 +8,7 @@ import Workshop from '#models/workshop'
 import Order from '#models/order'
 import EmailService from '#services/email_service'
 import StripeService from '#services/stripe_service'
+import VercelService from '#services/vercel_service'
 import env from '#start/env'
 
 function toDateTime(value: any): DateTime {
@@ -19,6 +21,7 @@ function toDateTime(value: any): DateTime {
 export default class StripeController {
 	private stripeService = new StripeService()
 	private emailService = new EmailService()
+	private vercel = new VercelService()
 
 	async handle({ request, response }: HttpContext) {
 		const signature = request.header('stripe-signature')
@@ -135,8 +138,12 @@ export default class StripeController {
 
 		const profile = await PatissierProfile.findBy('userId', userId)
 		if (profile) {
+			const oldPlan = profile.plan
 			profile.plan = planInfo.plan
 			await profile.save()
+
+			// Provision/remove Vercel subdomain based on plan change
+			await this.syncVercelSubdomain(profile, oldPlan, planInfo.plan)
 		}
 
 		console.log(`[Stripe Webhook] Subscription activated for user ${userId}: ${planInfo.plan} (${planInfo.interval})`)
@@ -302,6 +309,7 @@ export default class StripeController {
 		if (priceId) {
 			const planInfo = this.stripeService.getPlanFromPriceId(priceId)
 			if (planInfo && planInfo.plan !== sub.plan) {
+				const oldPlan = sub.plan
 				sub.plan = planInfo.plan
 				sub.billingInterval = planInfo.interval
 
@@ -309,6 +317,9 @@ export default class StripeController {
 				if (profile) {
 					profile.plan = planInfo.plan
 					await profile.save()
+
+					// Provision/remove Vercel subdomain based on plan change
+					await this.syncVercelSubdomain(profile, oldPlan, planInfo.plan)
 				}
 			}
 		}
@@ -329,8 +340,21 @@ export default class StripeController {
 
 		const profile = await PatissierProfile.findBy('userId', sub.userId)
 		if (profile) {
+			const oldPlan = profile.plan
 			profile.plan = 'starter'
+
+			// Remove custom domain if downgrading from premium
+			if (oldPlan === 'premium' && profile.customDomain) {
+				await this.vercel.removeDomain(profile.customDomain)
+				profile.customDomain = null
+				profile.customDomainVerified = false
+				logger.info({ domain: profile.customDomain, profileId: profile.id }, 'Custom domain removed on downgrade')
+			}
+
 			await profile.save()
+
+			// Remove Vercel subdomain
+			await this.syncVercelSubdomain(profile, oldPlan, 'starter')
 		}
 
 		console.log(`[Stripe Webhook] Subscription ${subscription.id} deleted, user ${sub.userId} downgraded to starter`)
@@ -376,6 +400,33 @@ export default class StripeController {
 			profile.stripeOnboardingComplete = true
 			await profile.save()
 			console.log(`[Stripe Webhook] Connect account ${account.id} onboarding complete (transfers active)`)
+		}
+	}
+
+	/**
+	 * Add or remove a Vercel subdomain (slug.patissio.com)
+	 * when a patissier's plan changes.
+	 */
+	private async syncVercelSubdomain(
+		profile: PatissierProfile,
+		oldPlan: string,
+		newPlan: string
+	) {
+		if (!this.vercel.isConfigured) return
+
+		const needsSubdomain = newPlan === 'pro' || newPlan === 'premium'
+		const hadSubdomain = oldPlan === 'pro' || oldPlan === 'premium'
+
+		if (needsSubdomain && !hadSubdomain) {
+			const result = await this.vercel.addSubdomain(profile.slug)
+			if (result.success) {
+				logger.info({ slug: profile.slug, plan: newPlan }, 'Vercel subdomain provisioned')
+			}
+		} else if (!needsSubdomain && hadSubdomain) {
+			const result = await this.vercel.removeSubdomain(profile.slug)
+			if (result.success) {
+				logger.info({ slug: profile.slug, plan: newPlan }, 'Vercel subdomain removed')
+			}
 		}
 	}
 }
