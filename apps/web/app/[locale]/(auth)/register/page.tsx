@@ -2,6 +2,7 @@
 
 import { Check, Eye, EyeOff, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import Image from 'next/image'
 import { useTranslations } from 'next-intl'
 import { Link } from '@/i18n/navigation'
 import { api } from '@/lib/api/client'
@@ -128,9 +129,11 @@ export default function RegisterPage() {
 	return (
 		<div className="flex min-h-screen items-center justify-center bg-background">
 			<div className="mx-auto w-full max-w-md space-y-6 p-8">
-				<div className="text-center">
-					<h1 className="text-2xl font-bold">Patissio</h1>
-					<p className="text-muted-foreground mt-2">{t('register')}</p>
+				<div className="flex flex-col items-center">
+					<Link href="/">
+						<Image src="/logo-patissio-full.png" alt="Patissio" width={886} height={368} className="h-12 w-auto" />
+					</Link>
+					<p className="text-muted-foreground mt-3">{t('register')}</p>
 				</div>
 
 				<form onSubmit={handleSubmit} className="space-y-4">

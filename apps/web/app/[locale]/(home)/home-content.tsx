@@ -467,9 +467,12 @@ export function HomeContent() {
 			{/* ── Footer ── */}
 			<footer className="border-t border-white/10 bg-[#111] px-6 py-8">
 				<div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 sm:flex-row">
-					<p className="text-sm text-white/30">
-						&copy; {new Date().getFullYear()} Patissio. Tous droits réservés.
-					</p>
+					<div className="flex items-center gap-3">
+						<Image src="/logo-patissio-full.png" alt="Patissio" width={886} height={368} className="h-6 w-auto opacity-40" />
+						<p className="text-sm text-white/30">
+							&copy; {new Date().getFullYear()} Tous droits réservés.
+						</p>
+					</div>
 					<Link
 						href="/mentions-legales"
 						className="text-sm text-white/30 transition-colors hover:text-white/50"
