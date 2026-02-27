@@ -138,7 +138,7 @@ export function HomeContent() {
 			>
 				<div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
 					<Link href="/" className="flex items-center">
-						<Image src="/logo-patissio-full.png" alt="Patissio" width={400} height={128} className="h-9 w-auto" />
+						<Image src="/logo-patissio-full.png" alt="Patissio" width={886} height={368} className="h-9 w-auto" />
 					</Link>
 
 					{/* Desktop nav */}
