@@ -1,4 +1,5 @@
 import type { HttpContext } from '@adonisjs/core/http'
+import { DateTime } from 'luxon'
 import PatissierProfile from '#models/patissier_profile'
 import Workshop from '#models/workshop'
 import WorkshopBooking from '#models/workshop_booking'
@@ -284,7 +285,11 @@ export default class WorkshopsController {
 			.where('workshopId', workshop.id)
 			.firstOrFail()
 
-		const { status, cancellationReason } = request.only(['status', 'cancellationReason'])
+		const { status, cancellationReason, refundType } = request.only([
+			'status',
+			'cancellationReason',
+			'refundType',
+		])
 
 		const validStatuses: WorkshopBooking['status'][] = [
 			'pending_payment',
@@ -300,12 +305,41 @@ export default class WorkshopsController {
 			})
 		}
 
-		booking.status = status
+		// Handle cancellation with optional refund
+		if (status === 'cancelled') {
+			if (cancellationReason) {
+				booking.cancellationReason = cancellationReason
+			}
+			booking.cancelledAt = DateTime.now()
 
-		if (status === 'cancelled' && cancellationReason) {
-			booking.cancellationReason = cancellationReason
+			// Process Stripe refund if requested and a payment was made
+			if (refundType && refundType !== 'none' && booking.stripePaymentIntentId) {
+				const stripe = new StripeService()
+
+				try {
+					if (refundType === 'deposit') {
+						// Refund only the deposit amount
+						const amountInCents = Math.round(Number(booking.depositAmount) * 100)
+						await stripe.refundPayment(booking.stripePaymentIntentId, amountInCents)
+						booking.depositPaymentStatus = 'refunded'
+					} else if (refundType === 'full') {
+						// Full refund of whatever was charged
+						await stripe.refundPayment(booking.stripePaymentIntentId)
+						booking.depositPaymentStatus = 'refunded'
+						if (booking.remainingPaymentStatus === 'paid') {
+							booking.remainingPaymentStatus = 'not_required'
+						}
+					}
+				} catch (err: any) {
+					return response.internalServerError({
+						success: false,
+						message: `Refund failed: ${err.message}`,
+					})
+				}
+			}
 		}
 
+		booking.status = status
 		await booking.save()
 
 		return response.ok({

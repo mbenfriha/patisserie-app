@@ -7,6 +7,7 @@ import { getImageUrl } from '@/lib/utils/image-url'
 import { CategoryCombobox } from '@/components/ui/category-combobox'
 import { RichEditor } from '@/components/ui/rich-editor'
 import { PlanGate } from '@/components/auth/plan-gate'
+import { useDashboardPrefix } from '@/lib/hooks/use-custom-domain'
 
 interface Category {
 	id: string
@@ -98,6 +99,7 @@ export default function WorkshopsPage() {
 	const [toast, setToast] = useState('')
 	const [openMenuId, setOpenMenuId] = useState<string | null>(null)
 	const menuRef = useRef<HTMLDivElement>(null)
+	const dashboardPrefix = useDashboardPrefix()
 
 	const showToast = (msg: string) => {
 		setToast(msg)
@@ -375,7 +377,7 @@ export default function WorkshopsPage() {
 								{/* Actions */}
 								<div className="mt-4 flex items-center gap-2 border-t pt-4">
 									<Link
-										href={`/dashboard/workshops/${workshop.id}`}
+										href={`${dashboardPrefix}/workshops/${workshop.id}`}
 										className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"
 									>
 										Voir

@@ -7,6 +7,7 @@ import { RoleGuard } from '@/components/auth/role-guard'
 import { StripeConnectBanner } from '@/components/dashboard/stripe-connect-banner'
 import { useAuth } from '@/lib/providers/auth-provider'
 import { getImageUrl } from '@/lib/utils/image-url'
+import { useDashboardPrefix } from '@/lib/hooks/use-custom-domain'
 
 const navItems: {
 	href: string
@@ -72,11 +73,17 @@ function NavLinks({
 	onNavigate?: () => void
 }) {
 	const userLevel = PLAN_LEVELS[userPlan] || 1
+	const dashboardPrefix = useDashboardPrefix()
 
 	return (
 		<>
 			{navItems.map((item) => {
-				const isActive = pathname === item.href
+				// On custom domains, prefix dashboard links (except /dashboard itself)
+				const href =
+					item.href === '/dashboard'
+						? '/dashboard'
+						: `${dashboardPrefix}${item.href}`
+				const isActive = pathname === href
 				const requiredLevel = item.minPlan ? PLAN_LEVELS[item.minPlan] || 1 : 1
 				const locked = userLevel < requiredLevel
 
@@ -84,7 +91,7 @@ function NavLinks({
 					return (
 						<Link
 							key={item.href}
-							href="/billing"
+							href={`${dashboardPrefix}/billing`}
 							onClick={onNavigate}
 							className="flex items-center rounded-md px-3 py-2 text-sm font-medium text-sidebar-foreground/50 transition-colors hover:bg-sidebar-accent/30"
 						>
@@ -97,7 +104,7 @@ function NavLinks({
 				return (
 					<Link
 						key={item.href}
-						href={item.href}
+						href={href}
 						onClick={onNavigate}
 						className={`block rounded-md px-3 py-2 text-sm font-medium transition-colors ${
 							isActive

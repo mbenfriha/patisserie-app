@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { api } from '@/lib/api/client'
 import { useAuth } from '@/lib/providers/auth-provider'
 import { PlanGate } from '@/components/auth/plan-gate'
+import { useDashboardPrefix } from '@/lib/hooks/use-custom-domain'
 
 interface Order {
 	id: string
@@ -55,6 +56,7 @@ export default function OrdersPage() {
 	const [orders, setOrders] = useState<Order[]>([])
 	const [isLoading, setIsLoading] = useState(true)
 	const [copied, setCopied] = useState<string | null>(null)
+	const dashboardPrefix = useDashboardPrefix()
 
 	const devisUrl = useMemo(() => {
 		if (!user?.profile) return null
@@ -155,7 +157,7 @@ export default function OrdersPage() {
 					{orders.map((order) => (
 						<Link
 							key={order.id}
-							href={`/orders/${order.id}`}
+							href={`${dashboardPrefix}/orders/${order.id}`}
 							className="block rounded-lg border p-4 transition-colors hover:bg-muted/30"
 						>
 							<div className="flex items-center justify-between">
@@ -195,7 +197,7 @@ export default function OrdersPage() {
 							{orders.map((order) => (
 								<tr key={order.id} className="border-b last:border-0 transition-colors hover:bg-muted/30">
 									<td className="px-4 py-3 text-sm">
-										<Link href={`/orders/${order.id}`} className="font-mono text-primary hover:underline">
+										<Link href={`${dashboardPrefix}/orders/${order.id}`} className="font-mono text-primary hover:underline">
 											{order.orderNumber}
 										</Link>
 									</td>

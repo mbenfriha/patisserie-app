@@ -249,6 +249,18 @@ export default class StripeService {
 		return this.stripe.invoices.list({ customer: customerId, limit })
 	}
 
+	async refundPayment(
+		paymentIntentId: string,
+		amountInCents?: number
+	): Promise<{ id: string; status: string }> {
+		const params: Record<string, any> = { payment_intent: paymentIntentId }
+		if (amountInCents) {
+			params.amount = amountInCents
+		}
+		const refund = await this.stripe.refunds.create(params)
+		return { id: refund.id, status: refund.status ?? 'unknown' }
+	}
+
 	async retrieveCheckoutSession(sessionId: string) {
 		return this.stripe.checkout.sessions.retrieve(sessionId)
 	}

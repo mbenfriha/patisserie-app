@@ -34,6 +34,16 @@ const RESERVED_PATHS = new Set([
 	'favicon.ico',
 ])
 
+// Auth/standalone pages that should work directly on custom domains (no /dashboard prefix needed)
+const CUSTOM_DOMAIN_AUTH_PATHS = new Set([
+	'login',
+	'register',
+	'forgot-password',
+	'reset-password',
+	'privacy',
+	'data-deletion',
+])
+
 /**
  * Detect locale from the pathname or fallback to default.
  * e.g. /en/latelier-de-zina → 'en', /latelier-de-zina → 'fr'
@@ -99,6 +109,24 @@ export default function middleware(request: NextRequest) {
 	if (!isLocalhost && !hostWithoutPort.endsWith(MAIN_DOMAIN) && hostWithoutPort !== MAIN_DOMAIN) {
 		const locale = detectLocale(pathname)
 		const cleanPath = stripLocale(pathname)
+		const firstSegment = cleanPath.split('/').filter(Boolean)[0]
+
+		// Auth pages: pass through to intlMiddleware so login/register work on custom domains
+		if (firstSegment && CUSTOM_DOMAIN_AUTH_PATHS.has(firstSegment)) {
+			return intlMiddleware(request)
+		}
+
+		// Dashboard routes: /dashboard/workshops → rewrite to /[locale]/workshops
+		// This lets the back-office work on custom domains via /dashboard prefix
+		if (firstSegment === 'dashboard') {
+			const rest = cleanPath.split('/').filter(Boolean).slice(1).join('/')
+			const newPath = rest ? `/${rest}` : '/dashboard'
+			const url = request.nextUrl.clone()
+			url.pathname = `/${locale}${newPath}`
+			return NextResponse.rewrite(url)
+		}
+
+		// Everything else → public site
 		const url = request.nextUrl.clone()
 		url.pathname = `/${locale}/site/_custom-domain${cleanPath === '/' ? '' : cleanPath}`
 		url.searchParams.set('domain', hostWithoutPort)

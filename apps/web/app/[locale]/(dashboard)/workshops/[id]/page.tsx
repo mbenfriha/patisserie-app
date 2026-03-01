@@ -13,12 +13,18 @@ interface Booking {
 	clientEmail: string
 	clientPhone: string | null
 	nbParticipants: number
+	message: string | null
 	totalPrice: number
 	depositAmount: number
 	remainingAmount: number
 	status: 'pending_payment' | 'confirmed' | 'cancelled' | 'completed'
+	stripePaymentIntentId: string | null
 	depositPaymentStatus: 'pending' | 'paid' | 'refunded'
+	depositPaidAt: string | null
 	remainingPaymentStatus: 'pending' | 'paid' | 'not_required'
+	remainingPaidAt: string | null
+	cancellationReason: string | null
+	cancelledAt: string | null
 	createdAt: string
 }
 
@@ -86,7 +92,6 @@ const depositStatusLabels: Record<string, string> = {
 }
 
 const allWorkshopStatuses = ['draft', 'published', 'full', 'cancelled', 'completed']
-const allBookingStatuses = ['pending_payment', 'confirmed', 'cancelled', 'completed']
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -106,6 +111,17 @@ export default function PatissierWorkshopDetailPage() {
 
 	// Booking status update
 	const [updatingBookingId, setUpdatingBookingId] = useState<string | null>(null)
+
+	// Cancel modal
+	const [cancelBooking, setCancelBooking] = useState<Booking | null>(null)
+	const [cancelRefundType, setCancelRefundType] = useState<'none' | 'deposit' | 'full'>('none')
+	const [cancelReason, setCancelReason] = useState('')
+	const [isCancelling, setIsCancelling] = useState(false)
+	const [cancelError, setCancelError] = useState('')
+	const cancelModalRef = useRef<HTMLDivElement>(null)
+
+	// Detail panel
+	const [expandedBookingId, setExpandedBookingId] = useState<string | null>(null)
 
 	// Booking modal
 	const [showBookingModal, setShowBookingModal] = useState(false)
@@ -179,10 +195,58 @@ export default function PatissierWorkshopDetailPage() {
 				status,
 			})
 			fetchBookings()
+			showToast(status === 'completed' ? 'Reservation marquee comme terminee.' : 'Statut mis a jour.')
 		} catch (err: any) {
-			alert(err.message || 'Erreur lors de la mise a jour de la reservation')
+			showToast(err.message || 'Erreur lors de la mise a jour de la reservation')
 		} finally {
 			setUpdatingBookingId(null)
+		}
+	}
+
+	const handleOpenCancelModal = (booking: Booking) => {
+		setCancelBooking(booking)
+		setCancelError('')
+		setCancelReason('')
+		// Default refund type based on what's been paid
+		if (booking.depositPaymentStatus === 'paid' && booking.stripePaymentIntentId) {
+			setCancelRefundType('deposit')
+		} else {
+			setCancelRefundType('none')
+		}
+	}
+
+	const handleConfirmCancel = async () => {
+		if (!cancelBooking) return
+		setIsCancelling(true)
+		setCancelError('')
+		try {
+			await api.put(
+				`/patissier/workshops/${workshopId}/bookings/${cancelBooking.id}/status`,
+				{
+					status: 'cancelled',
+					cancellationReason: cancelReason.trim() || undefined,
+					refundType: cancelRefundType,
+				}
+			)
+			setCancelBooking(null)
+			fetchBookings()
+			const refundMsg =
+				cancelRefundType === 'full'
+					? ' Le remboursement integral a ete effectue.'
+					: cancelRefundType === 'deposit'
+						? " L'acompte a ete rembourse."
+						: ''
+			showToast(`Reservation annulee.${refundMsg}`)
+		} catch (err: any) {
+			setCancelError(err.message || "Erreur lors de l'annulation")
+		} finally {
+			setIsCancelling(false)
+		}
+	}
+
+	const handleCancelBackdropClick = (e: React.MouseEvent) => {
+		if (e.target === cancelModalRef.current) {
+			setCancelBooking(null)
 		}
 	}
 
@@ -437,61 +501,330 @@ export default function PatissierWorkshopDetailPage() {
 				{bookings.length === 0 ? (
 					<p className="mt-4 text-sm text-muted-foreground">Aucune reservation</p>
 				) : (
-					<div className="mt-4 overflow-x-auto">
-						<table className="w-full">
-							<thead>
-								<tr className="border-b bg-muted/50">
-									<th className="px-4 py-3 text-left text-sm font-medium">Client</th>
-									<th className="px-4 py-3 text-left text-sm font-medium">Email</th>
-									<th className="px-4 py-3 text-center text-sm font-medium">Participants</th>
-									<th className="px-4 py-3 text-left text-sm font-medium">Statut</th>
-									<th className="px-4 py-3 text-left text-sm font-medium">Acompte</th>
-									<th className="px-4 py-3 text-right text-sm font-medium">Total</th>
-									<th className="px-4 py-3 text-center text-sm font-medium">Actions</th>
-								</tr>
-							</thead>
-							<tbody>
-								{bookings.map((booking) => (
-									<tr key={booking.id} className="border-b last:border-0">
-										<td className="px-4 py-3 text-sm">{booking.clientName}</td>
-										<td className="px-4 py-3 text-sm">{booking.clientEmail || '—'}</td>
-										<td className="px-4 py-3 text-center text-sm">{booking.nbParticipants}</td>
-										<td className="px-4 py-3">
-											<span
-												className={`rounded-full px-2 py-1 text-xs font-medium ${bookingStatusColors[booking.status] || 'bg-gray-100'}`}
+					<div className="mt-4 space-y-0 divide-y">
+						{bookings.map((booking) => {
+							const isExpanded = expandedBookingId === booking.id
+							const hasPaid = booking.depositPaymentStatus === 'paid'
+							const hasFullPaid = booking.remainingPaymentStatus === 'paid'
+
+							return (
+								<div key={booking.id} className="py-4 first:pt-0 last:pb-0">
+									{/* Main row */}
+									<div className="flex items-center gap-4">
+										<button
+											type="button"
+											onClick={() => setExpandedBookingId(isExpanded ? null : booking.id)}
+											className="shrink-0 text-muted-foreground hover:text-foreground"
+											title={isExpanded ? 'Masquer les details' : 'Voir les details'}
+										>
+											<svg
+												className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+												fill="none"
+												viewBox="0 0 24 24"
+												stroke="currentColor"
+												strokeWidth={2}
 											>
-												{bookingStatusLabels[booking.status] || booking.status}
-											</span>
-										</td>
-										<td className="px-4 py-3">
-											<span
-												className={`rounded-full px-2 py-1 text-xs font-medium ${depositStatusColors[booking.depositPaymentStatus] || 'bg-gray-100'}`}
-											>
-												{depositStatusLabels[booking.depositPaymentStatus] || booking.depositPaymentStatus}
-											</span>
-										</td>
-										<td className="px-4 py-3 text-right text-sm">{booking.totalPrice} &euro;</td>
-										<td className="px-4 py-3 text-center">
-											<select
-												value={booking.status}
-												onChange={(e) => handleUpdateBookingStatus(booking.id, e.target.value)}
-												disabled={updatingBookingId === booking.id}
-												className="rounded-md border bg-background px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
-											>
-												{allBookingStatuses.map((s) => (
-													<option key={s} value={s}>
-														{bookingStatusLabels[s] || s}
-													</option>
-												))}
-											</select>
-										</td>
-									</tr>
-								))}
-							</tbody>
-						</table>
+												<path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+											</svg>
+										</button>
+										<div className="min-w-0 flex-1">
+											<div className="flex items-center gap-2">
+												<span className="font-medium text-sm">{booking.clientName}</span>
+												<span
+													className={`rounded-full px-2 py-0.5 text-xs font-medium ${bookingStatusColors[booking.status] || 'bg-gray-100'}`}
+												>
+													{bookingStatusLabels[booking.status] || booking.status}
+												</span>
+												{hasPaid && (
+													<span
+														className={`rounded-full px-2 py-0.5 text-xs font-medium ${depositStatusColors[booking.depositPaymentStatus]}`}
+													>
+														Acompte {depositStatusLabels[booking.depositPaymentStatus]}
+													</span>
+												)}
+												{booking.depositPaymentStatus === 'refunded' && (
+													<span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800">
+														Rembourse
+													</span>
+												)}
+											</div>
+											<div className="mt-0.5 flex items-center gap-3 text-xs text-muted-foreground">
+												{booking.clientEmail && <span>{booking.clientEmail}</span>}
+												{booking.clientPhone && <span>{booking.clientPhone}</span>}
+												<span>{booking.nbParticipants} participant{booking.nbParticipants !== 1 ? 's' : ''}</span>
+												<span>{booking.totalPrice} &euro;</span>
+											</div>
+										</div>
+										<div className="flex shrink-0 items-center gap-2">
+											{booking.status === 'confirmed' && (
+												<>
+													<button
+														type="button"
+														onClick={() => handleUpdateBookingStatus(booking.id, 'completed')}
+														disabled={updatingBookingId === booking.id}
+														className="rounded-md bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50"
+													>
+														Terminer
+													</button>
+													<button
+														type="button"
+														onClick={() => handleOpenCancelModal(booking)}
+														className="rounded-md bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700"
+													>
+														Annuler
+													</button>
+												</>
+											)}
+											{booking.status === 'pending_payment' && (
+												<button
+													type="button"
+													onClick={() => handleOpenCancelModal(booking)}
+													className="rounded-md bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700"
+												>
+													Annuler
+												</button>
+											)}
+										</div>
+									</div>
+
+									{/* Expanded details */}
+									{isExpanded && (
+										<div className="ml-8 mt-3 rounded-md bg-muted/50 p-4">
+											<div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+												<div>
+													<p className="text-xs text-muted-foreground">Nom</p>
+													<p className="text-sm font-medium">{booking.clientName}</p>
+												</div>
+												<div>
+													<p className="text-xs text-muted-foreground">Email</p>
+													<p className="text-sm">{booking.clientEmail || '—'}</p>
+												</div>
+												<div>
+													<p className="text-xs text-muted-foreground">Telephone</p>
+													<p className="text-sm">{booking.clientPhone || '—'}</p>
+												</div>
+												<div>
+													<p className="text-xs text-muted-foreground">Participants</p>
+													<p className="text-sm">{booking.nbParticipants}</p>
+												</div>
+												<div>
+													<p className="text-xs text-muted-foreground">Prix total</p>
+													<p className="text-sm font-medium">{booking.totalPrice} &euro;</p>
+												</div>
+												<div>
+													<p className="text-xs text-muted-foreground">Acompte</p>
+													<p className="text-sm">
+														{booking.depositAmount} &euro;
+														<span className={`ml-1 rounded-full px-1.5 py-0.5 text-xs ${depositStatusColors[booking.depositPaymentStatus]}`}>
+															{depositStatusLabels[booking.depositPaymentStatus]}
+														</span>
+													</p>
+												</div>
+												<div>
+													<p className="text-xs text-muted-foreground">Reste a payer</p>
+													<p className="text-sm">{booking.remainingAmount} &euro;</p>
+												</div>
+												<div>
+													<p className="text-xs text-muted-foreground">Date de reservation</p>
+													<p className="text-sm">
+														{new Date(booking.createdAt).toLocaleDateString('fr-FR', {
+															day: 'numeric',
+															month: 'long',
+															year: 'numeric',
+															hour: '2-digit',
+															minute: '2-digit',
+														})}
+													</p>
+												</div>
+												{booking.depositPaidAt && (
+													<div>
+														<p className="text-xs text-muted-foreground">Acompte paye le</p>
+														<p className="text-sm">
+															{new Date(booking.depositPaidAt).toLocaleDateString('fr-FR', {
+																day: 'numeric',
+																month: 'long',
+																year: 'numeric',
+															})}
+														</p>
+													</div>
+												)}
+											</div>
+											{booking.message && (
+												<div className="mt-3 border-t pt-3">
+													<p className="text-xs text-muted-foreground">Message du client</p>
+													<p className="mt-1 text-sm">{booking.message}</p>
+												</div>
+											)}
+											{booking.cancellationReason && (
+												<div className="mt-3 border-t pt-3">
+													<p className="text-xs text-muted-foreground">Raison d'annulation</p>
+													<p className="mt-1 text-sm text-red-600">{booking.cancellationReason}</p>
+												</div>
+											)}
+										</div>
+									)}
+								</div>
+							)
+						})}
 					</div>
 				)}
 			</div>
+
+			{/* Cancel booking modal */}
+			{cancelBooking && (
+				<div
+					ref={cancelModalRef}
+					onClick={handleCancelBackdropClick}
+					className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+				>
+					<div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-lg bg-white p-6 shadow-xl dark:bg-gray-900">
+						<div className="flex items-center justify-between">
+							<h2 className="text-lg font-semibold">Annuler la reservation</h2>
+							<button
+								type="button"
+								onClick={() => setCancelBooking(null)}
+								className="text-muted-foreground hover:text-foreground"
+							>
+								&times;
+							</button>
+						</div>
+
+						{/* Booking recap */}
+						<div className="mt-4 rounded-md bg-muted/50 p-4">
+							<div className="grid gap-2 sm:grid-cols-2">
+								<div>
+									<p className="text-xs text-muted-foreground">Client</p>
+									<p className="text-sm font-medium">{cancelBooking.clientName}</p>
+								</div>
+								<div>
+									<p className="text-xs text-muted-foreground">Participants</p>
+									<p className="text-sm">{cancelBooking.nbParticipants}</p>
+								</div>
+								<div>
+									<p className="text-xs text-muted-foreground">Prix total</p>
+									<p className="text-sm font-medium">{cancelBooking.totalPrice} &euro;</p>
+								</div>
+								<div>
+									<p className="text-xs text-muted-foreground">Acompte</p>
+									<p className="text-sm">
+										{cancelBooking.depositAmount} &euro;
+										{cancelBooking.depositPaymentStatus === 'paid' && (
+											<span className="ml-1 text-xs text-green-600">(paye)</span>
+										)}
+									</p>
+								</div>
+								{cancelBooking.remainingPaymentStatus === 'paid' && (
+									<div>
+										<p className="text-xs text-muted-foreground">Reste</p>
+										<p className="text-sm">
+											{cancelBooking.remainingAmount} &euro;
+											<span className="ml-1 text-xs text-green-600">(paye)</span>
+										</p>
+									</div>
+								)}
+							</div>
+						</div>
+
+						<div className="mt-4 space-y-4">
+							{/* Refund options - only if something was paid via Stripe */}
+							{cancelBooking.stripePaymentIntentId && cancelBooking.depositPaymentStatus === 'paid' && (
+								<div>
+									<label className="block text-sm font-medium">Remboursement</label>
+									<div className="mt-2 space-y-2">
+										<label className="flex items-start gap-3 rounded-md border p-3 cursor-pointer hover:bg-muted/50">
+											<input
+												type="radio"
+												name="refundType"
+												value="none"
+												checked={cancelRefundType === 'none'}
+												onChange={() => setCancelRefundType('none')}
+												className="mt-0.5"
+											/>
+											<div>
+												<p className="text-sm font-medium">Aucun remboursement</p>
+												<p className="text-xs text-muted-foreground">Le client ne sera pas rembourse</p>
+											</div>
+										</label>
+										<label className="flex items-start gap-3 rounded-md border p-3 cursor-pointer hover:bg-muted/50">
+											<input
+												type="radio"
+												name="refundType"
+												value="deposit"
+												checked={cancelRefundType === 'deposit'}
+												onChange={() => setCancelRefundType('deposit')}
+												className="mt-0.5"
+											/>
+											<div>
+												<p className="text-sm font-medium">
+													Rembourser l'acompte ({cancelBooking.depositAmount} &euro;)
+												</p>
+												<p className="text-xs text-muted-foreground">
+													Seul l'acompte verse sera rembourse
+												</p>
+											</div>
+										</label>
+										{cancelBooking.remainingPaymentStatus === 'paid' && (
+											<label className="flex items-start gap-3 rounded-md border p-3 cursor-pointer hover:bg-muted/50">
+												<input
+													type="radio"
+													name="refundType"
+													value="full"
+													checked={cancelRefundType === 'full'}
+													onChange={() => setCancelRefundType('full')}
+													className="mt-0.5"
+												/>
+												<div>
+													<p className="text-sm font-medium">
+														Remboursement integral ({cancelBooking.totalPrice} &euro;)
+													</p>
+													<p className="text-xs text-muted-foreground">
+														La totalite du montant paye sera remboursee
+													</p>
+												</div>
+											</label>
+										)}
+									</div>
+								</div>
+							)}
+
+							{/* Cancellation reason */}
+							<div>
+								<label htmlFor="cancelReason" className="block text-sm font-medium">
+									Raison de l'annulation
+								</label>
+								<textarea
+									id="cancelReason"
+									value={cancelReason}
+									onChange={(e) => setCancelReason(e.target.value)}
+									rows={3}
+									className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+									placeholder="Raison optionnelle..."
+								/>
+							</div>
+
+							{cancelError && <p className="text-sm text-red-600">{cancelError}</p>}
+
+							<div className="flex justify-end gap-3 pt-2">
+								<button
+									type="button"
+									onClick={() => setCancelBooking(null)}
+									className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted"
+								>
+									Retour
+								</button>
+								<button
+									type="button"
+									onClick={handleConfirmCancel}
+									disabled={isCancelling}
+									className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+								>
+									{isCancelling ? 'Annulation...' : 'Confirmer l\'annulation'}
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			)}
 
 			{/* Booking modal */}
 			{showBookingModal && (
