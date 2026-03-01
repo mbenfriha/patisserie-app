@@ -134,6 +134,9 @@ router
 
 		// Stats
 		router.get('/stats', '#controllers/patissier/stats_controller.index')
+
+		// Calendar
+		router.get('/calendar', '#controllers/patissier/calendar_controller.index')
 	})
 	.prefix('/patissier')
 	.use([throttle('api'), middleware.auth(), middleware.patissier()])

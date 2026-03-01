@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { useAuth } from '@/lib/providers/auth-provider'
+import { useEffect, useState } from 'react'
+import { DashboardCalendar } from '@/components/dashboard/calendar'
 import { api } from '@/lib/api/client'
+import { useAuth } from '@/lib/providers/auth-provider'
 
 interface Stats {
 	orders: {
@@ -56,9 +57,7 @@ export default function DashboardPage() {
 			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
 				<div className="rounded-lg border bg-card p-6">
 					<h3 className="text-sm font-medium text-muted-foreground">{t('totalOrders')}</h3>
-					<p className="mt-2 text-3xl font-bold">
-						{isLoading ? '–' : stats?.orders?.total ?? 0}
-					</p>
+					<p className="mt-2 text-3xl font-bold">{isLoading ? '–' : (stats?.orders?.total ?? 0)}</p>
 				</div>
 				<div className="rounded-lg border bg-card p-6">
 					<h3 className="text-sm font-medium text-muted-foreground">{t('totalRevenue')}</h3>
@@ -69,16 +68,18 @@ export default function DashboardPage() {
 				<div className="rounded-lg border bg-card p-6">
 					<h3 className="text-sm font-medium text-muted-foreground">{t('activeWorkshops')}</h3>
 					<p className="mt-2 text-3xl font-bold">
-						{isLoading ? '–' : stats?.workshops?.published ?? 0}
+						{isLoading ? '–' : (stats?.workshops?.published ?? 0)}
 					</p>
 				</div>
 				<div className="rounded-lg border bg-card p-6">
 					<h3 className="text-sm font-medium text-muted-foreground">{t('pendingOrders')}</h3>
 					<p className="mt-2 text-3xl font-bold">
-						{isLoading ? '–' : stats?.orders?.pending ?? 0}
+						{isLoading ? '–' : (stats?.orders?.pending ?? 0)}
 					</p>
 				</div>
 			</div>
+
+			<DashboardCalendar />
 		</div>
 	)
 }
