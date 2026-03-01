@@ -1,11 +1,12 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-// Links use <a> to ensure middleware rewrites work on custom domains
-import { SectionTitle } from '../../components/section-title'
-import { GoldDivider } from '../../components/gold-divider'
-import { getImageUrl } from '@/lib/utils/image-url'
 import { resolveSlug } from '@/lib/resolve-slug'
+import { getImageUrl } from '@/lib/utils/image-url'
+import { GoldDivider } from '../../components/gold-divider'
+import { SectionTitle } from '../../components/section-title'
 import { WorkshopBookingForm } from './booking-form'
+// Links use <a> to ensure middleware rewrites work on custom domains
+import { ScrollToBookingButton } from './scroll-to-booking'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333'
 
@@ -22,7 +23,9 @@ async function getProfile(slug: string) {
 }
 
 async function getWorkshop(slug: string, workshopSlug: string) {
-	const res = await fetch(`${API_URL}/public/${slug}/workshops/${workshopSlug}`, { next: { revalidate: 60 } })
+	const res = await fetch(`${API_URL}/public/${slug}/workshops/${workshopSlug}`, {
+		next: { revalidate: 60 },
+	})
 	if (!res.ok) return null
 	const data = await res.json()
 	return data.data || null
@@ -48,10 +51,7 @@ function formatDuration(minutes: number): string {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
 	const { slug: paramSlug, workshopSlug } = await params
 	const slug = await resolveSlug(paramSlug)
-	const [profile, workshop] = await Promise.all([
-		getProfile(slug),
-		getWorkshop(slug, workshopSlug),
-	])
+	const [profile, workshop] = await Promise.all([getProfile(slug), getWorkshop(slug, workshopSlug)])
 	if (!profile || !workshop) return {}
 
 	const description = workshop.description
@@ -85,10 +85,7 @@ export default async function WorkshopDetailPage({ params, searchParams }: Props
 	let workshop: any = null
 
 	try {
-		;[profile, workshop] = await Promise.all([
-			getProfile(slug),
-			getWorkshop(slug, workshopSlug),
-		])
+		;[profile, workshop] = await Promise.all([getProfile(slug), getWorkshop(slug, workshopSlug)])
 	} catch {
 		return notFound()
 	}
@@ -106,6 +103,16 @@ export default async function WorkshopDetailPage({ params, searchParams }: Props
 			: null
 	const duration = workshop.durationMinutes ? formatDuration(workshop.durationMinutes) : null
 
+	// Compute end time
+	let endTime: string | null = null
+	if (workshop.startTime && workshop.durationMinutes) {
+		const [sh, sm] = workshop.startTime.split(':').map(Number)
+		const totalMin = sh * 60 + sm + workshop.durationMinutes
+		const endH = Math.floor(totalMin / 60) % 24
+		const endM = totalMin % 60
+		endTime = `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`
+	}
+
 	// JSON-LD Event structured data
 	const jsonLd: any = {
 		'@context': 'https://schema.org',
@@ -114,9 +121,7 @@ export default async function WorkshopDetailPage({ params, searchParams }: Props
 		description: workshop.description || undefined,
 		...(imageUrl ? { image: imageUrl } : {}),
 		...(workshop.date ? { startDate: workshop.date } : {}),
-		...(workshop.location
-			? { location: { '@type': 'Place', name: workshop.location } }
-			: {}),
+		...(workshop.location ? { location: { '@type': 'Place', name: workshop.location } } : {}),
 		organizer: {
 			'@type': 'Organization',
 			name: profile.businessName,
@@ -128,9 +133,7 @@ export default async function WorkshopDetailPage({ params, searchParams }: Props
 			'@type': 'Offer',
 			price: String(workshop.price),
 			priceCurrency: 'EUR',
-			availability: isFull
-				? 'https://schema.org/SoldOut'
-				: 'https://schema.org/InStock',
+			availability: isFull ? 'https://schema.org/SoldOut' : 'https://schema.org/InStock',
 		}
 	}
 
@@ -155,8 +158,18 @@ export default async function WorkshopDetailPage({ params, searchParams }: Props
 					className="inline-flex items-center gap-2 text-sm text-[var(--gold)] transition-colors hover:text-[var(--gold-dark)]"
 					style={{ fontFamily: "'Josefin Sans', sans-serif" }}
 				>
-					<svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-						<path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+					<svg
+						className="h-4 w-4"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+						strokeWidth={2}
+					>
+						<path
+							strokeLinecap="round"
+							strokeLinejoin="round"
+							d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"
+						/>
 					</svg>
 					Retour aux ateliers
 				</a>
@@ -168,21 +181,26 @@ export default async function WorkshopDetailPage({ params, searchParams }: Props
 						style={{ animation: 'fadeInUp 0.6s ease-out' }}
 					>
 						<div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-100">
-							<svg className="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+							<svg
+								className="h-5 w-5 text-green-600"
+								fill="none"
+								viewBox="0 0 24 24"
+								stroke="currentColor"
+								strokeWidth={2}
+							>
 								<path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
 							</svg>
 						</div>
 						<div>
-							<p
-								className="font-[family-name:'Cormorant_Garamond'] text-lg font-semibold text-green-800"
-							>
+							<p className="font-[family-name:'Cormorant_Garamond'] text-lg font-semibold text-green-800">
 								Paiement confirmé !
 							</p>
 							<p
 								className="text-sm text-green-700"
 								style={{ fontFamily: "'Josefin Sans', sans-serif" }}
 							>
-								Votre réservation a bien été enregistrée. Vous recevrez un email de confirmation sous peu.
+								Votre réservation a bien été enregistrée. Vous recevrez un email de confirmation
+								sous peu.
 							</p>
 						</div>
 					</div>
@@ -197,11 +215,7 @@ export default async function WorkshopDetailPage({ params, searchParams }: Props
 					<div>
 						<div className="overflow-hidden rounded-2xl" style={{ aspectRatio: '4/3' }}>
 							{imageUrl ? (
-								<img
-									src={imageUrl}
-									alt={workshop.title}
-									className="h-full w-full object-cover"
-								/>
+								<img src={imageUrl} alt={workshop.title} className="h-full w-full object-cover" />
 							) : (
 								<div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[var(--cream)] to-[var(--cream-dark)]">
 									<span className="font-[family-name:'Cormorant_Garamond'] text-3xl text-[var(--gold)]/40">
@@ -257,6 +271,13 @@ export default async function WorkshopDetailPage({ params, searchParams }: Props
 							</p>
 						)}
 
+						{/* Reserve CTA */}
+						{!isFull && (
+							<div className="mt-6">
+								<ScrollToBookingButton />
+							</div>
+						)}
+
 						<div className="my-6">
 							<GoldDivider />
 						</div>
@@ -267,8 +288,18 @@ export default async function WorkshopDetailPage({ params, searchParams }: Props
 							{workshop.date && (
 								<div className="rounded-xl bg-[var(--cream)] p-4">
 									<div className="flex items-center gap-2 text-[var(--gold)]">
-										<svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-											<path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+										<svg
+											className="h-5 w-5"
+											fill="none"
+											viewBox="0 0 24 24"
+											stroke="currentColor"
+											strokeWidth={1.5}
+										>
+											<path
+												strokeLinecap="round"
+												strokeLinejoin="round"
+												d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"
+											/>
 										</svg>
 										<span
 											className="text-[11px] uppercase tracking-wider text-[var(--dark-soft)]/60"
@@ -292,8 +323,18 @@ export default async function WorkshopDetailPage({ params, searchParams }: Props
 							{workshop.startTime && (
 								<div className="rounded-xl bg-[var(--cream)] p-4">
 									<div className="flex items-center gap-2 text-[var(--gold)]">
-										<svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-											<path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+										<svg
+											className="h-5 w-5"
+											fill="none"
+											viewBox="0 0 24 24"
+											stroke="currentColor"
+											strokeWidth={1.5}
+										>
+											<path
+												strokeLinecap="round"
+												strokeLinejoin="round"
+												d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"
+											/>
 										</svg>
 										<span
 											className="text-[11px] uppercase tracking-wider text-[var(--dark-soft)]/60"
@@ -304,6 +345,7 @@ export default async function WorkshopDetailPage({ params, searchParams }: Props
 									</div>
 									<p className="mt-2 font-[family-name:'Cormorant_Garamond'] text-lg text-[var(--dark)]">
 										{workshop.startTime}
+										{endTime ? ` — ${endTime}` : ''}
 									</p>
 								</div>
 							)}
@@ -312,8 +354,18 @@ export default async function WorkshopDetailPage({ params, searchParams }: Props
 							{duration && (
 								<div className="rounded-xl bg-[var(--cream)] p-4">
 									<div className="flex items-center gap-2 text-[var(--gold)]">
-										<svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-											<path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+										<svg
+											className="h-5 w-5"
+											fill="none"
+											viewBox="0 0 24 24"
+											stroke="currentColor"
+											strokeWidth={1.5}
+										>
+											<path
+												strokeLinecap="round"
+												strokeLinejoin="round"
+												d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"
+											/>
 										</svg>
 										<span
 											className="text-[11px] uppercase tracking-wider text-[var(--dark-soft)]/60"
@@ -332,9 +384,23 @@ export default async function WorkshopDetailPage({ params, searchParams }: Props
 							{workshop.location && (
 								<div className="rounded-xl bg-[var(--cream)] p-4">
 									<div className="flex items-center gap-2 text-[var(--gold)]">
-										<svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-											<path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-											<path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+										<svg
+											className="h-5 w-5"
+											fill="none"
+											viewBox="0 0 24 24"
+											stroke="currentColor"
+											strokeWidth={1.5}
+										>
+											<path
+												strokeLinecap="round"
+												strokeLinejoin="round"
+												d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"
+											/>
+											<path
+												strokeLinecap="round"
+												strokeLinejoin="round"
+												d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"
+											/>
 										</svg>
 										<span
 											className="text-[11px] uppercase tracking-wider text-[var(--dark-soft)]/60"
@@ -353,8 +419,18 @@ export default async function WorkshopDetailPage({ params, searchParams }: Props
 							{workshop.capacity != null && (
 								<div className="rounded-xl bg-[var(--cream)] p-4">
 									<div className="flex items-center gap-2 text-[var(--gold)]">
-										<svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-											<path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+										<svg
+											className="h-5 w-5"
+											fill="none"
+											viewBox="0 0 24 24"
+											stroke="currentColor"
+											strokeWidth={1.5}
+										>
+											<path
+												strokeLinecap="round"
+												strokeLinejoin="round"
+												d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"
+											/>
 										</svg>
 										<span
 											className="text-[11px] uppercase tracking-wider text-[var(--dark-soft)]/60"
@@ -368,7 +444,11 @@ export default async function WorkshopDetailPage({ params, searchParams }: Props
 										{spotsLeft !== null && (
 											<>
 												{' — '}
-												<span style={{ color: isFull ? '#DC2626' : spotsLeft <= 3 ? '#DC2626' : '#16a34a' }}>
+												<span
+													style={{
+														color: isFull ? '#DC2626' : spotsLeft <= 3 ? '#DC2626' : '#16a34a',
+													}}
+												>
 													{isFull
 														? 'Complet'
 														: `${spotsLeft} disponible${spotsLeft > 1 ? 's' : ''}`}
@@ -427,7 +507,11 @@ export default async function WorkshopDetailPage({ params, searchParams }: Props
 				</div>
 
 				{/* ── Booking section ── */}
-				<div className="mt-20" style={{ animation: 'fadeInUp 0.8s ease-out 0.3s both' }}>
+				<div
+					id="booking-section"
+					className="mt-20"
+					style={{ animation: 'fadeInUp 0.8s ease-out 0.3s both' }}
+				>
 					<SectionTitle subtitle="réservation" title="Réserver cet atelier" />
 
 					{isFull ? (
@@ -436,15 +520,26 @@ export default async function WorkshopDetailPage({ params, searchParams }: Props
 								className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full"
 								style={{ backgroundColor: 'rgba(220,38,38,0.08)' }}
 							>
-								<svg className="h-8 w-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-									<path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+								<svg
+									className="h-8 w-8 text-red-500"
+									fill="none"
+									viewBox="0 0 24 24"
+									stroke="currentColor"
+									strokeWidth={1.5}
+								>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
+									/>
 								</svg>
 							</div>
 							<h3 className="font-[family-name:'Cormorant_Garamond'] text-2xl font-medium text-[var(--dark)]">
 								Cet atelier est complet
 							</h3>
 							<p className="mt-2 text-sm text-[var(--dark-soft)]/60">
-								Toutes les places ont été réservées. N&apos;hésitez pas à consulter nos autres ateliers.
+								Toutes les places ont été réservées. N&apos;hésitez pas à consulter nos autres
+								ateliers.
 							</p>
 							<a
 								href={`${basePath}/workshops`}
