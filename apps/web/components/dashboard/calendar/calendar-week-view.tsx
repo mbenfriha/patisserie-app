@@ -63,11 +63,9 @@ export function CalendarWeekView({ currentWeek, events, filters }: CalendarWeekV
 		return { top, height }
 	}
 
-	const hasAllDayEvents = days.some((d) => getAllDayEvents(d).length > 0)
-
 	return (
 		<div className="flex flex-col overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm">
-			{/* Day headers */}
+			{/* Day headers with inline all-day events */}
 			<div
 				className="grid border-b border-border/40"
 				style={{ gridTemplateColumns: '60px repeat(7, 1fr)' }}
@@ -75,64 +73,53 @@ export function CalendarWeekView({ currentWeek, events, filters }: CalendarWeekV
 				<div className="border-r border-border/30" />
 				{days.map((day) => {
 					const today = isToday(day)
+					const allDay = getAllDayEvents(day)
 					return (
 						<div
 							key={day.toISOString()}
-							className={`border-r border-border/30 px-2 py-3 text-center last:border-r-0 ${today ? 'bg-primary/5' : ''}`}
+							className={`border-r border-border/30 px-1.5 py-2.5 last:border-r-0 ${today ? 'bg-primary/5' : ''}`}
 						>
-							<div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
-								{format(day, 'EEE', { locale: fr })}
+							{/* Day name & number */}
+							<div className="mb-1 text-center">
+								<div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+									{format(day, 'EEE', { locale: fr })}
+								</div>
+								<div
+									className={`mx-auto mt-0.5 flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold ${
+										today ? 'bg-primary text-primary-foreground shadow-sm' : 'text-foreground'
+									}`}
+								>
+									{format(day, 'd')}
+								</div>
 							</div>
-							<div
-								className={`mx-auto mt-1 flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold ${
-									today ? 'bg-primary text-primary-foreground shadow-sm' : 'text-foreground'
-								}`}
-							>
-								{format(day, 'd')}
-							</div>
+
+							{/* Orders/devis for this day */}
+							{allDay.length > 0 && (
+								<div className="mt-1.5 space-y-0.5">
+									{allDay.map((event) => {
+										const colors = KIND_COLORS[event.kind]
+										return (
+											<Link
+												key={`${event.kind}-${event.id}`}
+												href={getEventLink(event)}
+												className={`flex items-center gap-1 truncate rounded-md border-l-2 px-1.5 py-1 text-[10px] leading-tight transition-all hover:shadow-sm ${colors.bg} ${colors.border}`}
+												title={`${event.title} — ${getStatusLabel(event.kind, event.status)}`}
+											>
+												<span className={`truncate font-medium ${colors.text}`}>{event.title}</span>
+												<span
+													className={`ml-auto hidden shrink-0 rounded px-1 py-px text-[8px] font-semibold leading-none sm:inline-block ${getStatusColor(event.kind, event.status)}`}
+												>
+													{getStatusLabel(event.kind, event.status)}
+												</span>
+											</Link>
+										)
+									})}
+								</div>
+							)}
 						</div>
 					)
 				})}
 			</div>
-
-			{/* All-day events section */}
-			{hasAllDayEvents && (
-				<div
-					className="grid border-b border-border/40 bg-muted/20"
-					style={{ gridTemplateColumns: '60px repeat(7, 1fr)' }}
-				>
-					<div className="flex items-start justify-end border-r border-border/30 px-2 py-2">
-						<span className="text-[10px] font-medium text-muted-foreground/50">journée</span>
-					</div>
-					{days.map((day) => {
-						const allDay = getAllDayEvents(day)
-						const today = isToday(day)
-						return (
-							<div
-								key={day.toISOString()}
-								className={`space-y-0.5 border-r border-border/30 p-1 last:border-r-0 ${today ? 'bg-primary/5' : ''}`}
-							>
-								{allDay.map((event) => {
-									const colors = KIND_COLORS[event.kind]
-									return (
-										<Link
-											key={`${event.kind}-${event.id}`}
-											href={getEventLink(event)}
-											className={`flex items-center gap-1 truncate rounded-md border-l-2 px-1.5 py-1 text-[10px] leading-tight transition-all hover:shadow-sm ${colors.bg} ${colors.border}`}
-											title={`${event.title} — ${getStatusLabel(event.kind, event.status)}`}
-										>
-											<span
-												className={`inline-block h-1.5 w-1.5 shrink-0 rounded-full ${getStatusColor(event.kind, event.status).split(' ')[0]}`}
-											/>
-											<span className={`truncate font-medium ${colors.text}`}>{event.title}</span>
-										</Link>
-									)
-								})}
-							</div>
-						)
-					})}
-				</div>
-			)}
 
 			{/* Time grid */}
 			<div className="relative overflow-auto" style={{ maxHeight: '640px' }}>
