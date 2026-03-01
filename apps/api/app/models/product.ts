@@ -37,13 +37,13 @@ export default class Product extends BaseModel {
 	declare unit: string | null
 
 	@column()
-	declare minQuantity: number
+	declare minQuantity: number | null
 
 	@column()
 	declare maxQuantity: number | null
 
 	@column()
-	declare preparationDays: number
+	declare preparationDays: number | null
 
 	@column()
 	declare isAvailable: boolean

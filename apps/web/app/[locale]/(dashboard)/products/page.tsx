@@ -14,9 +14,9 @@ interface Product {
 	description: string | null
 	price: number
 	unit: string | null
-	minQuantity: number
+	minQuantity: number | null
 	maxQuantity: number | null
-	preparationDays: number
+	preparationDays: number | null
 	isAvailable: boolean
 	isVisible: boolean
 	categoryId: string | null
@@ -52,9 +52,9 @@ const emptyForm: ProductForm = {
 	categoryId: '',
 	price: '',
 	unit: '',
-	minQuantity: '1',
+	minQuantity: '',
 	maxQuantity: '',
-	preparationDays: '2',
+	preparationDays: '',
 	isAvailable: true,
 	isVisible: true,
 	allergens: [],
@@ -125,9 +125,9 @@ export default function ProductsPage() {
 			categoryId: product.categoryId || '',
 			price: String(product.price),
 			unit: product.unit || '',
-			minQuantity: String(product.minQuantity),
-			maxQuantity: product.maxQuantity ? String(product.maxQuantity) : '',
-			preparationDays: String(product.preparationDays),
+			minQuantity: product.minQuantity != null ? String(product.minQuantity) : '',
+			maxQuantity: product.maxQuantity != null ? String(product.maxQuantity) : '',
+			preparationDays: product.preparationDays != null ? String(product.preparationDays) : '',
 			isAvailable: product.isAvailable,
 			isVisible: product.isVisible,
 			allergens: product.allergens || [],
@@ -149,9 +149,9 @@ export default function ProductsPage() {
 				categoryId: form.categoryId || null,
 				price: Number(form.price),
 				unit: form.unit || null,
-				minQuantity: Number(form.minQuantity) || 1,
+				minQuantity: form.minQuantity ? Number(form.minQuantity) : null,
 				maxQuantity: form.maxQuantity ? Number(form.maxQuantity) : null,
-				preparationDays: Number(form.preparationDays) || 2,
+				preparationDays: form.preparationDays ? Number(form.preparationDays) : null,
 				isAvailable: form.isAvailable,
 				isVisible: form.isVisible,
 				allergens: form.allergens,
@@ -357,7 +357,7 @@ export default function ProductsPage() {
 										Masqué
 									</span>
 								)}
-								{product.preparationDays > 0 && (
+								{product.preparationDays != null && product.preparationDays > 0 && (
 									<span className="rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground">
 										{product.preparationDays}j de prépa
 									</span>
@@ -532,6 +532,7 @@ export default function ProductsPage() {
 										value={form.minQuantity}
 										onChange={(e) => setForm((f) => ({ ...f, minQuantity: e.target.value }))}
 										className="w-full rounded border px-3 py-2 text-sm"
+										placeholder="—"
 									/>
 								</div>
 								<div>
@@ -542,7 +543,7 @@ export default function ProductsPage() {
 										value={form.maxQuantity}
 										onChange={(e) => setForm((f) => ({ ...f, maxQuantity: e.target.value }))}
 										className="w-full rounded border px-3 py-2 text-sm"
-										placeholder="Illimité"
+										placeholder="—"
 									/>
 								</div>
 								<div>
@@ -553,6 +554,7 @@ export default function ProductsPage() {
 										value={form.preparationDays}
 										onChange={(e) => setForm((f) => ({ ...f, preparationDays: e.target.value }))}
 										className="w-full rounded border px-3 py-2 text-sm"
+										placeholder="—"
 									/>
 								</div>
 							</div>
