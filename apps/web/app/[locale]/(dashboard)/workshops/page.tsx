@@ -41,6 +41,7 @@ interface WorkshopForm {
 	paymentMode: 'full' | 'deposit'
 	depositPercent: string
 	capacity: string
+	durationHours: string
 	durationMinutes: string
 	location: string
 	date: string
@@ -59,7 +60,8 @@ const emptyForm: WorkshopForm = {
 	paymentMode: 'deposit',
 	depositPercent: '30',
 	capacity: '10',
-	durationMinutes: '120',
+	durationHours: '2',
+	durationMinutes: '0',
 	location: '',
 	date: '',
 	startHour: '14',
@@ -72,6 +74,22 @@ const emptyForm: WorkshopForm = {
 
 const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'))
 const MINUTES = ['00', '15', '30', '45']
+const DURATION_HOURS = Array.from({ length: 13 }, (_, i) => String(i))
+const DURATION_MINUTES = ['0', '15', '30', '45']
+
+function formatDuration(minutes: number): string {
+	const h = Math.floor(minutes / 60)
+	const m = minutes % 60
+	if (h > 0) return `${h}h${m > 0 ? m.toString().padStart(2, '0') : ''}`
+	return `${m}min`
+}
+
+function computeEndTime(startHour: string, startMinute: string, durationMinutes: number): string {
+	const totalMin = Number(startHour) * 60 + Number(startMinute) + durationMinutes
+	const endH = Math.floor(totalMin / 60) % 24
+	const endM = totalMin % 60
+	return `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`
+}
 
 const LEVELS = [
 	{ value: 'tous_niveaux', label: 'Tous niveaux' },
