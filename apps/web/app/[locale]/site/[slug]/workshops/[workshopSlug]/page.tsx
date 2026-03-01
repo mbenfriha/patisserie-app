@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import { SectionTitle } from '../../components/section-title'
 import { GoldDivider } from '../../components/gold-divider'
 import { getImageUrl } from '@/lib/utils/image-url'
+import { resolveSlug } from '@/lib/resolve-slug'
 import { WorkshopBookingForm } from './booking-form'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333'
@@ -45,7 +46,8 @@ function formatDuration(minutes: number): string {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-	const { slug, workshopSlug } = await params
+	const { slug: paramSlug, workshopSlug } = await params
+	const slug = await resolveSlug(paramSlug)
 	const [profile, workshop] = await Promise.all([
 		getProfile(slug),
 		getWorkshop(slug, workshopSlug),
@@ -57,6 +59,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 		: `Atelier ${workshop.title} par ${profile.businessName}`
 
 	const imageUrl = workshop.images?.[0]?.url ? getImageUrl(workshop.images[0].url) : null
+	const basePath = paramSlug === '_custom-domain' ? '' : `/${slug}`
 
 	return {
 		title: workshop.title,
@@ -68,13 +71,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 			...(imageUrl ? { images: [imageUrl] } : {}),
 		},
 		alternates: {
-			canonical: `/${slug}/workshops/${workshopSlug}`,
+			canonical: `${basePath}/workshops/${workshopSlug}`,
 		},
 	}
 }
 
 export default async function WorkshopDetailPage({ params, searchParams }: Props) {
-	const { slug, workshopSlug } = await params
+	const { slug: paramSlug, workshopSlug } = await params
+	const slug = await resolveSlug(paramSlug)
 	const { payment } = await searchParams
 
 	let profile: any = null
@@ -91,7 +95,7 @@ export default async function WorkshopDetailPage({ params, searchParams }: Props
 
 	if (!profile || !workshop) return notFound()
 
-	const basePath = `/${slug}`
+	const basePath = paramSlug === '_custom-domain' ? '' : `/${slug}`
 	const imageUrl = getImageUrl(workshop.images?.[0]?.url)
 	const levelBadge = workshop.level ? getLevelBadge(workshop.level) : null
 	const spotsLeft = workshop.spotsLeft ?? null

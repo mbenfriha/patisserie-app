@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import { resolveSlug } from '@/lib/resolve-slug'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333'
 
@@ -7,7 +8,8 @@ type Props = {
 }
 
 export default async function ProductsCataloguePage({ params }: Props) {
-	const { slug } = await params
+	const { slug: paramSlug } = await params
+	const slug = await resolveSlug(paramSlug)
 
 	let profile: any = null
 	let products: any[] = []

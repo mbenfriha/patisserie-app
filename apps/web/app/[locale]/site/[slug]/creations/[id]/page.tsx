@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import { GoldDivider } from '../../components/gold-divider'
 import { getImageUrl } from '@/lib/utils/image-url'
 import { stripHtml } from '@/lib/utils/strip-html'
+import { resolveSlug } from '@/lib/resolve-slug'
 import { ImageGallery } from './image-gallery'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333'
@@ -27,7 +28,8 @@ async function getCreation(slug: string, creationSlug: string) {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-	const { slug, id } = await params
+	const { slug: paramSlug, id } = await params
+	const slug = await resolveSlug(paramSlug)
 	const [profile, creation] = await Promise.all([
 		getProfile(slug),
 		getCreation(slug, id),
@@ -41,6 +43,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 	const coverUrl = coverImage ? getImageUrl(coverImage.url) : null
 
 	const displayTitle = creation.title || 'Création'
+	const basePath = paramSlug === '_custom-domain' ? '' : `/${slug}`
 
 	return {
 		title: displayTitle,
@@ -52,13 +55,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 			...(coverUrl ? { images: [coverUrl] } : {}),
 		},
 		alternates: {
-			canonical: `/${slug}/creations/${creation.slug}`,
+			canonical: `${basePath}/creations/${creation.slug}`,
 		},
 	}
 }
 
 export default async function CreationDetailPage({ params }: Props) {
-	const { slug, id } = await params
+	const { slug: paramSlug, id } = await params
+	const slug = await resolveSlug(paramSlug)
 
 	let profile: any = null
 	let creation: any = null
@@ -74,7 +78,7 @@ export default async function CreationDetailPage({ params }: Props) {
 
 	if (!profile || !creation) return notFound()
 
-	const basePath = `/${slug}`
+	const basePath = paramSlug === '_custom-domain' ? '' : `/${slug}`
 	const images = creation.images || []
 
 	// JSON-LD Product structured data

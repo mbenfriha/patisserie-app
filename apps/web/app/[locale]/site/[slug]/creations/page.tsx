@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { SectionTitle } from '../components/section-title'
 import { getImageUrl } from '@/lib/utils/image-url'
+import { resolveSlug } from '@/lib/resolve-slug'
 import { CreationsGrid } from './creations-grid'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333'
@@ -25,7 +26,8 @@ async function getCreations(slug: string) {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-	const { slug } = await params
+	const { slug: paramSlug } = await params
+	const slug = await resolveSlug(paramSlug)
 	const profile = await getProfile(slug)
 	if (!profile) return {}
 
@@ -46,7 +48,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function CreationsGalleryPage({ params }: Props) {
-	const { slug } = await params
+	const { slug: paramSlug } = await params
+	const slug = await resolveSlug(paramSlug)
 
 	let profile: any = null
 	let creations: any[] = []
