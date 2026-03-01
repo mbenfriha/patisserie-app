@@ -95,26 +95,45 @@ export function CalendarWeekView({ currentWeek, events, filters }: CalendarWeekV
 
 							{/* Orders/devis for this day */}
 							{allDay.length > 0 && (
-								<div className="mt-1.5 space-y-0.5">
-									{allDay.map((event) => {
-										const colors = KIND_COLORS[event.kind]
-										return (
-											<Link
-												key={`${event.kind}-${event.id}`}
-												href={getEventLink(event)}
-												className={`flex items-center gap-1 truncate rounded-md border-l-2 px-1.5 py-1 text-[10px] leading-tight transition-all hover:shadow-sm ${colors.bg} ${colors.border}`}
-												title={`${event.title} — ${getStatusLabel(event.kind, event.status)}`}
-											>
-												<span className={`truncate font-medium ${colors.text}`}>{event.title}</span>
-												<span
-													className={`ml-auto hidden shrink-0 rounded px-1 py-px text-[8px] font-semibold leading-none sm:inline-block ${getStatusColor(event.kind, event.status)}`}
+								<>
+									{/* Mobile: dots */}
+									<div className="mt-1.5 flex flex-wrap justify-center gap-1 sm:hidden">
+										{allDay.map((event) => {
+											const colors = KIND_COLORS[event.kind]
+											return (
+												<Link
+													key={`${event.kind}-${event.id}`}
+													href={getEventLink(event)}
+													className={`h-2 w-2 rounded-full ${colors.dot}`}
+													title={`${event.title} — ${getStatusLabel(event.kind, event.status)}`}
+												/>
+											)
+										})}
+									</div>
+									{/* Desktop: labels */}
+									<div className="mt-1.5 hidden space-y-0.5 sm:block">
+										{allDay.map((event) => {
+											const colors = KIND_COLORS[event.kind]
+											return (
+												<Link
+													key={`${event.kind}-${event.id}`}
+													href={getEventLink(event)}
+													className={`flex items-center gap-1 truncate rounded-md border-l-2 px-1.5 py-1 text-[10px] leading-tight transition-all hover:shadow-sm ${colors.bg} ${colors.border}`}
+													title={`${event.title} — ${getStatusLabel(event.kind, event.status)}`}
 												>
-													{getStatusLabel(event.kind, event.status)}
-												</span>
-											</Link>
-										)
-									})}
-								</div>
+													<span className={`truncate font-medium ${colors.text}`}>
+														{event.title}
+													</span>
+													<span
+														className={`ml-auto shrink-0 rounded px-1 py-px text-[8px] font-semibold leading-none ${getStatusColor(event.kind, event.status)}`}
+													>
+														{getStatusLabel(event.kind, event.status)}
+													</span>
+												</Link>
+											)
+										})}
+									</div>
+								</>
 							)}
 						</div>
 					)
@@ -188,49 +207,57 @@ export function CalendarWeekView({ currentWeek, events, filters }: CalendarWeekV
 										<Link
 											key={`${event.kind}-${event.id}`}
 											href={getEventLink(event)}
-											className={`absolute right-1.5 left-1.5 overflow-hidden rounded-lg px-2 py-1.5 shadow-sm transition-all hover:shadow-md ${colors.bg} border border-l-[3px] ${colors.border}`}
+											className={`absolute right-0.5 left-0.5 overflow-hidden rounded-lg shadow-sm transition-all hover:shadow-md sm:right-1.5 sm:left-1.5 ${colors.bg} border border-l-[3px] ${colors.border}`}
 											style={{
 												top: `${pos.top}px`,
 												height: `${pos.height}px`,
 											}}
 											title={`${event.title} — ${getStatusLabel(event.kind, event.status)}`}
 										>
-											<div
-												className={`truncate text-[11px] font-semibold leading-tight ${colors.text}`}
-											>
-												{event.title}
+											{/* Mobile: dot only */}
+											<div className="flex h-full items-center justify-center sm:hidden">
+												<span className={`h-2.5 w-2.5 rounded-full ${colors.dot}`} />
 											</div>
-											<div className="mt-0.5 flex items-center gap-1.5">
-												<span className={`text-[10px] ${colors.text} opacity-60`}>
-													{event.meta.startTime} · {durationLabel}
-												</span>
-												<span
-													className={`rounded px-1 py-px text-[8px] font-semibold leading-none ${getStatusColor(event.kind, event.status)}`}
-												>
-													{getStatusLabel(event.kind, event.status)}
-												</span>
-											</div>
-											{pos.height > 55 && event.meta.location && (
+											{/* Desktop: full labels */}
+											<div className="hidden px-2 py-1.5 sm:block">
 												<div
-													className={`mt-0.5 flex items-center gap-1 truncate text-[10px] ${colors.text} opacity-50`}
+													className={`truncate text-[11px] font-semibold leading-tight ${colors.text}`}
 												>
-													<svg
-														width="10"
-														height="10"
-														viewBox="0 0 24 24"
-														fill="none"
-														stroke="currentColor"
-														strokeWidth="2"
-														strokeLinecap="round"
-														strokeLinejoin="round"
-														aria-hidden="true"
-													>
-														<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
-														<circle cx="12" cy="10" r="3" />
-													</svg>
-													{event.meta.location}
+													{event.title}
 												</div>
-											)}
+												<div className="mt-0.5 flex items-center gap-1.5">
+													<span className={`text-[10px] ${colors.text} opacity-60`}>
+														{event.meta.startTime} · {durationLabel}
+													</span>
+													<span
+														className={`rounded px-1 py-px text-[8px] font-semibold leading-none ${getStatusColor(event.kind, event.status)}`}
+													>
+														{getStatusLabel(event.kind, event.status)}
+													</span>
+												</div>
+												{pos.height > 55 && event.meta.location && (
+													<div
+														className={`mt-0.5 flex items-center gap-1 truncate text-[10px] ${colors.text} opacity-50`}
+													>
+														<svg
+															width="10"
+															height="10"
+															viewBox="0 0 24 24"
+															fill="none"
+															stroke="currentColor"
+															strokeWidth="2"
+															strokeLinecap="round"
+															strokeLinejoin="round"
+															aria-hidden="true"
+														>
+															<title>Lieu</title>
+															<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+															<circle cx="12" cy="10" r="3" />
+														</svg>
+														{event.meta.location}
+													</div>
+												)}
+											</div>
 										</Link>
 									)
 								})}
