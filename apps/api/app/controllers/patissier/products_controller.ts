@@ -1,6 +1,7 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import PatissierProfile from '#models/patissier_profile'
 import Product from '#models/product'
+import StorageService from '#services/storage_service'
 
 export default class ProductsController {
 	async index({ auth, request, response }: HttpContext) {
@@ -140,6 +141,76 @@ export default class ProductsController {
 		return response.ok({
 			success: true,
 			message: 'Product deleted',
+		})
+	}
+
+	async uploadIllustration({ auth, params, request, response }: HttpContext) {
+		const user = auth.user!
+		const profile = await PatissierProfile.findByOrFail('userId', user.id)
+
+		const product = await Product.query()
+			.where('id', params.id)
+			.where('patissierId', profile.id)
+			.firstOrFail()
+
+		const file = request.file('image', {
+			size: '5mb',
+			extnames: ['jpg', 'jpeg', 'png', 'webp', 'avif'],
+		})
+
+		if (!file) {
+			return response.badRequest({ success: false, message: 'Image file is required' })
+		}
+
+		if (!file.isValid) {
+			return response.badRequest({ success: false, message: 'Invalid file', errors: file.errors })
+		}
+
+		const storage = new StorageService()
+
+		// Delete previous illustration if exists
+		const currentImages = product.images || []
+		if (currentImages.length > 0 && currentImages[0]?.url) {
+			const key = currentImages[0].url
+			if (!key.startsWith('http')) {
+				await storage.deleteImage(key).catch(() => {})
+			}
+		}
+
+		const imageUrl = await storage.uploadImage(file, `products/${product.id}`)
+		product.images = [{ url: imageUrl, alt: product.name }]
+		await product.save()
+
+		return response.ok({
+			success: true,
+			data: product.serialize(),
+		})
+	}
+
+	async deleteIllustration({ auth, params, response }: HttpContext) {
+		const user = auth.user!
+		const profile = await PatissierProfile.findByOrFail('userId', user.id)
+
+		const product = await Product.query()
+			.where('id', params.id)
+			.where('patissierId', profile.id)
+			.firstOrFail()
+
+		const currentImages = product.images || []
+		if (currentImages.length > 0 && currentImages[0]?.url) {
+			const key = currentImages[0].url
+			if (!key.startsWith('http')) {
+				const storage = new StorageService()
+				await storage.deleteImage(key).catch(() => {})
+			}
+		}
+
+		product.images = []
+		await product.save()
+
+		return response.ok({
+			success: true,
+			data: product.serialize(),
 		})
 	}
 }

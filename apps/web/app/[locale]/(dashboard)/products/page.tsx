@@ -5,6 +5,8 @@ import { useTranslations } from 'next-intl'
 import { api } from '@/lib/api/client'
 import { PlanGate } from '@/components/auth/plan-gate'
 import { CategoryCombobox } from '@/components/ui/category-combobox'
+import { ImageCropper } from '@/components/ui/image-cropper'
+import { getImageUrl } from '@/lib/utils/image-url'
 
 interface Product {
 	id: string
@@ -20,6 +22,7 @@ interface Product {
 	categoryId: string | null
 	allergens: string[]
 	tags: string[]
+	images: { url: string; alt?: string }[]
 }
 
 interface Category {
@@ -71,6 +74,12 @@ export default function ProductsPage() {
 	const [tagInput, setTagInput] = useState('')
 	const [allergenInput, setAllergenInput] = useState('')
 	const [toast, setToast] = useState('')
+	const [cropState, setCropState] = useState<{
+		productId: string | null
+		src: string
+		file?: File
+	} | null>(null)
+	const [stagedFile, setStagedFile] = useState<File | null>(null)
 
 	const showToast = (msg: string) => {
 		setToast(msg)
@@ -104,6 +113,7 @@ export default function ProductsPage() {
 		setForm(emptyForm)
 		setTagInput('')
 		setAllergenInput('')
+		setStagedFile(null)
 		setShowModal(true)
 	}
 
@@ -125,6 +135,7 @@ export default function ProductsPage() {
 		})
 		setTagInput('')
 		setAllergenInput('')
+		setStagedFile(null)
 		setShowModal(true)
 	}
 
@@ -150,7 +161,14 @@ export default function ProductsPage() {
 				await api.put(`/patissier/products/${editingId}`, body)
 				showToast('Produit modifié')
 			} else {
-				await api.post('/patissier/products', body)
+				const res = await api.post('/patissier/products', body)
+				const newProduct = res.data?.data
+				if (stagedFile && newProduct?.id) {
+					const formData = new FormData()
+					formData.append('image', stagedFile, stagedFile.name)
+					await api.upload(`/patissier/products/${newProduct.id}/illustration`, formData)
+					setStagedFile(null)
+				}
 				showToast('Produit créé')
 			}
 			setShowModal(false)
@@ -213,6 +231,50 @@ export default function ProductsPage() {
 	const getCategoryName = (id: string | null) => {
 		if (!id) return null
 		return categories.find((c) => c.id === id)?.name || null
+	}
+
+	const handleIllustrationSelect = (productId: string | null, e: React.ChangeEvent<HTMLInputElement>) => {
+		const file = e.target.files?.[0]
+		if (!file) return
+		const src = URL.createObjectURL(file)
+		setCropState({ productId, src, file })
+		e.target.value = ''
+	}
+
+	const handleCropConfirm = async (blob: Blob) => {
+		if (!cropState) return
+		const fileName = cropState.file?.name || 'illustration.jpg'
+		if (cropState.src.startsWith('blob:')) URL.revokeObjectURL(cropState.src)
+		const productId = cropState.productId
+		setCropState(null)
+
+		if (!productId) {
+			// Create flow: stage the blob as a File for upload after product creation
+			const file = new File([blob], fileName, { type: blob.type })
+			setStagedFile(file)
+			showToast('Illustration prête')
+			return
+		}
+
+		const formData = new FormData()
+		formData.append('image', blob, fileName)
+		try {
+			await api.upload(`/patissier/products/${productId}/illustration`, formData)
+			showToast('Illustration ajoutée')
+			await loadData()
+		} catch {
+			showToast("Erreur lors de l'upload")
+		}
+	}
+
+	const handleIllustrationDelete = async (productId: string) => {
+		try {
+			await api.delete(`/patissier/products/${productId}/illustration`)
+			showToast('Illustration supprimée')
+			await loadData()
+		} catch {
+			showToast('Erreur lors de la suppression')
+		}
 	}
 
 	return (
@@ -301,6 +363,17 @@ export default function ProductsPage() {
 									</span>
 								)}
 							</div>
+							{product.images?.[0]?.url && (
+								<div className="mt-3">
+									<div className="h-16 w-24 shrink-0 overflow-hidden rounded">
+										<img
+											src={getImageUrl(product.images[0].url) || ''}
+											alt=""
+											className="h-full w-full object-cover"
+										/>
+									</div>
+								</div>
+							)}
 						</div>
 					))}
 				</div>
@@ -337,6 +410,79 @@ export default function ProductsPage() {
 									rows={3}
 									placeholder="Description du produit"
 								/>
+							</div>
+
+							{/* Illustration */}
+							<div>
+								<label className="mb-1 block text-sm font-medium">Illustration</label>
+								{editingId ? (() => {
+									const currentProduct = products.find((p) => p.id === editingId)
+									const hasImage = currentProduct?.images?.[0]?.url
+									return hasImage ? (
+										<div className="flex items-center gap-3">
+											<div className="h-16 w-24 shrink-0 overflow-hidden rounded border">
+												<img
+													src={getImageUrl(currentProduct!.images[0].url) || ''}
+													alt=""
+													className="h-full w-full object-cover"
+												/>
+											</div>
+											<div className="flex gap-2">
+												<label className="cursor-pointer rounded border px-3 py-1.5 text-xs hover:bg-muted">
+													Changer
+													<input
+														type="file"
+														accept="image/*"
+														className="hidden"
+														onChange={(e) => handleIllustrationSelect(editingId, e)}
+													/>
+												</label>
+												<button
+													type="button"
+													onClick={() => handleIllustrationDelete(editingId)}
+													className="rounded border px-3 py-1.5 text-xs text-destructive hover:bg-destructive/10"
+												>
+													Supprimer
+												</button>
+											</div>
+										</div>
+									) : (
+										<label className="inline-flex cursor-pointer items-center gap-2 rounded border px-3 py-2 text-sm hover:bg-muted">
+											Ajouter une illustration
+											<input
+												type="file"
+												accept="image/*"
+												className="hidden"
+												onChange={(e) => handleIllustrationSelect(editingId, e)}
+											/>
+										</label>
+									)
+								})() : (
+									<div>
+										{stagedFile ? (
+											<div className="flex items-center gap-3">
+												<span className="text-sm text-muted-foreground">{stagedFile.name}</span>
+												<button
+													type="button"
+													onClick={() => setStagedFile(null)}
+													className="rounded border px-3 py-1.5 text-xs text-destructive hover:bg-destructive/10"
+												>
+													Retirer
+												</button>
+											</div>
+										) : (
+											<label className="inline-flex cursor-pointer items-center gap-2 rounded border px-3 py-2 text-sm hover:bg-muted">
+												Ajouter une illustration
+												<input
+													type="file"
+													accept="image/*"
+													className="hidden"
+													onChange={(e) => handleIllustrationSelect(null, e)}
+												/>
+											</label>
+										)}
+									</div>
+								)}
 							</div>
 
 							{/* Price + Unit */}
@@ -528,6 +674,19 @@ export default function ProductsPage() {
 
 			{showCategories && (
 				<CategoriesDialog onClose={() => setShowCategories(false)} />
+			)}
+
+			{/* ── Image Cropper ── */}
+			{cropState && (
+				<ImageCropper
+					imageSrc={cropState.src}
+					onCrop={handleCropConfirm}
+					onCancel={() => {
+						if (cropState.src.startsWith('blob:')) URL.revokeObjectURL(cropState.src)
+						setCropState(null)
+					}}
+					aspect={4 / 3}
+				/>
 			)}
 
 			{/* Toast */}

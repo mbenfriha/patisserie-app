@@ -74,6 +74,8 @@ router
 				router.get('/:id', '#controllers/patissier/products_controller.show')
 				router.put('/:id', '#controllers/patissier/products_controller.update')
 				router.delete('/:id', '#controllers/patissier/products_controller.destroy')
+				router.post('/:id/illustration', '#controllers/patissier/products_controller.uploadIllustration')
+				router.delete('/:id/illustration', '#controllers/patissier/products_controller.deleteIllustration')
 			})
 			.prefix('/products')
 			.use(middleware.planGuard({ minPlan: 'pro' }))
