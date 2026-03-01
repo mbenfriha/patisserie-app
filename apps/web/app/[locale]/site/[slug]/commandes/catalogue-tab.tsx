@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { getImageUrl } from '@/lib/utils/image-url'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333'
 
@@ -49,9 +50,7 @@ export function CatalogueTab({ products, slug, onSuccess }: CatalogueTabProps) {
 			}
 			const existing = prev.find((item) => item.product_id === productId)
 			if (existing) {
-				return prev.map((item) =>
-					item.product_id === productId ? { ...item, quantity } : item
-				)
+				return prev.map((item) => (item.product_id === productId ? { ...item, quantity } : item))
 			}
 			return [...prev, { product_id: productId, quantity }]
 		})
@@ -132,7 +131,8 @@ export function CatalogueTab({ products, slug, onSuccess }: CatalogueTabProps) {
 					className="mx-auto mt-3 max-w-md text-sm leading-relaxed"
 					style={{ color: 'var(--dark-soft)', fontFamily: "'Josefin Sans', sans-serif" }}
 				>
-					Notre catalogue sera bient&ocirc;t disponible. Vous pouvez passer une commande sur-mesure en attendant.
+					Notre catalogue sera bient&ocirc;t disponible. Vous pouvez passer une commande sur-mesure
+					en attendant.
 				</p>
 			</div>
 		)
@@ -150,19 +150,16 @@ export function CatalogueTab({ products, slug, onSuccess }: CatalogueTabProps) {
 							className="group overflow-hidden rounded-2xl bg-white transition-all duration-400 hover:-translate-y-2"
 							style={{
 								animation: `fadeInUp 0.6s ease-out ${i * 0.08}s both`,
-								boxShadow: qty > 0
-									? '0 8px 32px rgba(197,165,90,0.2)'
-									: '0 4px 24px rgba(0,0,0,0.06)',
-								border: qty > 0
-									? '2px solid var(--gold)'
-									: '2px solid transparent',
+								boxShadow:
+									qty > 0 ? '0 8px 32px rgba(197,165,90,0.2)' : '0 4px 24px rgba(0,0,0,0.06)',
+								border: qty > 0 ? '2px solid var(--gold)' : '2px solid transparent',
 							}}
 						>
 							{/* Product image */}
 							<div className="relative overflow-hidden" style={{ aspectRatio: '3/2' }}>
 								{product.images?.[0]?.url ? (
 									<img
-										src={product.images[0].url}
+										src={getImageUrl(product.images[0].url) || ''}
 										alt={product.name}
 										className="h-full w-full object-cover transition-transform duration-600 group-hover:scale-[1.05]"
 									/>
@@ -186,9 +183,7 @@ export function CatalogueTab({ products, slug, onSuccess }: CatalogueTabProps) {
 										{product.price}&nbsp;&euro;
 									</span>
 									{product.unit && (
-										<span className="text-xs text-[var(--dark-soft)]/50">
-											/ {product.unit}
-										</span>
+										<span className="text-xs text-[var(--dark-soft)]/50">/ {product.unit}</span>
 									)}
 								</div>
 
@@ -291,7 +286,11 @@ export function CatalogueTab({ products, slug, onSuccess }: CatalogueTabProps) {
 
 						<div className="space-y-6">
 							<div>
-								<label htmlFor="cat_client_name" className={labelClassName} style={{ fontFamily: "'Josefin Sans', sans-serif" }}>
+								<label
+									htmlFor="cat_client_name"
+									className={labelClassName}
+									style={{ fontFamily: "'Josefin Sans', sans-serif" }}
+								>
 									Nom complet
 								</label>
 								<input
@@ -307,7 +306,11 @@ export function CatalogueTab({ products, slug, onSuccess }: CatalogueTabProps) {
 							</div>
 
 							<div>
-								<label htmlFor="cat_client_email" className={labelClassName} style={{ fontFamily: "'Josefin Sans', sans-serif" }}>
+								<label
+									htmlFor="cat_client_email"
+									className={labelClassName}
+									style={{ fontFamily: "'Josefin Sans', sans-serif" }}
+								>
 									Email
 								</label>
 								<input
@@ -323,7 +326,11 @@ export function CatalogueTab({ products, slug, onSuccess }: CatalogueTabProps) {
 							</div>
 
 							<div>
-								<label htmlFor="cat_client_phone" className={labelClassName} style={{ fontFamily: "'Josefin Sans', sans-serif" }}>
+								<label
+									htmlFor="cat_client_phone"
+									className={labelClassName}
+									style={{ fontFamily: "'Josefin Sans', sans-serif" }}
+								>
 									T&eacute;l&eacute;phone
 								</label>
 								<input
@@ -339,7 +346,11 @@ export function CatalogueTab({ products, slug, onSuccess }: CatalogueTabProps) {
 							</div>
 
 							<div>
-								<label htmlFor="cat_delivery_method" className={labelClassName} style={{ fontFamily: "'Josefin Sans', sans-serif" }}>
+								<label
+									htmlFor="cat_delivery_method"
+									className={labelClassName}
+									style={{ fontFamily: "'Josefin Sans', sans-serif" }}
+								>
 									Mode de r&eacute;cup&eacute;ration
 								</label>
 								<select
@@ -356,7 +367,11 @@ export function CatalogueTab({ products, slug, onSuccess }: CatalogueTabProps) {
 							</div>
 
 							<div>
-								<label htmlFor="cat_requested_date" className={labelClassName} style={{ fontFamily: "'Josefin Sans', sans-serif" }}>
+								<label
+									htmlFor="cat_requested_date"
+									className={labelClassName}
+									style={{ fontFamily: "'Josefin Sans', sans-serif" }}
+								>
 									Date souhait&eacute;e
 								</label>
 								<input
@@ -419,8 +434,19 @@ export function CatalogueTab({ products, slug, onSuccess }: CatalogueTabProps) {
 								{submitting ? (
 									<>
 										<svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
-											<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-											<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+											<circle
+												className="opacity-25"
+												cx="12"
+												cy="12"
+												r="10"
+												stroke="currentColor"
+												strokeWidth="4"
+											/>
+											<path
+												className="opacity-75"
+												fill="currentColor"
+												d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+											/>
 										</svg>
 										Envoi en cours...
 									</>

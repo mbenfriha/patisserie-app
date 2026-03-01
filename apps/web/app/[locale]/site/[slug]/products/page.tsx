@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import { resolveSlug } from '@/lib/resolve-slug'
+import { getImageUrl } from '@/lib/utils/image-url'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333'
 
@@ -42,7 +43,7 @@ export default async function ProductsCataloguePage({ params }: Props) {
 						>
 							{product.images?.[0]?.url && (
 								<img
-									src={product.images[0].url}
+									src={getImageUrl(product.images[0].url) || ''}
 									alt={product.name}
 									className="h-56 w-full object-cover"
 								/>
@@ -58,23 +59,19 @@ export default async function ProductsCataloguePage({ params }: Props) {
 
 								<div className="mt-3 flex items-baseline gap-2">
 									{product.price && (
-										<span
-											className="text-lg font-semibold"
-											style={{ color: profile.primaryColor }}
-										>
+										<span className="text-lg font-semibold" style={{ color: profile.primaryColor }}>
 											{product.price} &euro;
 										</span>
 									)}
 									{product.unit && (
-										<span className="text-sm text-muted-foreground">
-											/ {product.unit}
-										</span>
+										<span className="text-sm text-muted-foreground">/ {product.unit}</span>
 									)}
 								</div>
 
 								{product.preparation_days != null && (
 									<p className="mt-2 text-sm text-muted-foreground">
-										Pr&eacute;paration : {product.preparation_days} jour{product.preparation_days > 1 ? 's' : ''}
+										Pr&eacute;paration : {product.preparation_days} jour
+										{product.preparation_days > 1 ? 's' : ''}
 									</p>
 								)}
 
