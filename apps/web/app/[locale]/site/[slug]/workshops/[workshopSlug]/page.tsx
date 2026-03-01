@@ -151,7 +151,7 @@ export default async function WorkshopDetailPage({ params, searchParams }: Props
 				}
 			`}</style>
 
-			<div className="mx-auto max-w-[1200px] px-6 pt-28 pb-24">
+			<div className="mx-auto max-w-[1200px] px-6 pb-24" style={{ paddingTop: 'calc(var(--navbar-height, 80px) + 16px)' }}>
 				{/* ── Back link ── */}
 				<a
 					href={`${basePath}/workshops`}

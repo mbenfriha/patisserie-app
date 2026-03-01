@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useSiteProfile, useSiteBasePath, useSiteConfig } from '../site-provider'
 import { useAuth } from '@/lib/providers/auth-provider'
 import { getImageUrl } from '@/lib/utils/image-url'
@@ -14,6 +14,7 @@ export function SiteNavbar() {
 	const { isEditing, getConfigValue, updateConfig } = useInlineEdit()
 	const [scrolled, setScrolled] = useState(false)
 	const [mobileOpen, setMobileOpen] = useState(false)
+	const navRef = useRef<HTMLElement>(null)
 
 	const isOwner = user?.role === 'patissier' && user?.profile?.slug === profile.slug
 
@@ -28,6 +29,27 @@ export function SiteNavbar() {
 		handleScroll()
 		return () => window.removeEventListener('scroll', handleScroll)
 	}, [handleScroll])
+
+	// Track navbar height and expose as CSS custom property
+	useEffect(() => {
+		const nav = navRef.current
+		if (!nav) return
+		const observer = new ResizeObserver((entries) => {
+			for (const entry of entries) {
+				document.documentElement.style.setProperty(
+					'--navbar-height',
+					`${entry.contentRect.height}px`
+				)
+			}
+		})
+		observer.observe(nav)
+		// Set initial value
+		document.documentElement.style.setProperty(
+			'--navbar-height',
+			`${nav.offsetHeight}px`
+		)
+		return () => observer.disconnect()
+	}, [])
 
 	// Close mobile menu on route change / resize
 	useEffect(() => {
@@ -52,6 +74,7 @@ export function SiteNavbar() {
 
 	return (
 		<nav
+			ref={navRef}
 			className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${
 				scrolled
 					? 'bg-[#1A1A1A]/97 backdrop-blur-lg border-b border-[var(--gold)]/20 py-3'

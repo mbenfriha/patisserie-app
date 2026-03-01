@@ -111,7 +111,7 @@ export default async function CreationDetailPage({ params }: Props) {
 				dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
 			/>
 
-			<div className="mx-auto max-w-[1100px] px-6 pt-28 pb-20">
+			<div className="mx-auto max-w-[1100px] px-6 pb-20" style={{ paddingTop: 'calc(var(--navbar-height, 80px) + 16px)' }}>
 				{/* ── Back link ────────────────────────────────────────────── */}
 				<a
 					href={`${basePath}/creations`}
