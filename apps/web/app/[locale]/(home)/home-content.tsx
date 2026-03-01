@@ -19,7 +19,13 @@ function CheckIcon() {
 
 function VitrineIcon() {
 	return (
-		<svg className="h-8 w-8" viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.5">
+		<svg
+			className="h-8 w-8"
+			viewBox="0 0 32 32"
+			fill="none"
+			stroke="currentColor"
+			strokeWidth="1.5"
+		>
 			<rect x="3" y="6" width="26" height="20" rx="2" />
 			<path d="M3 12h26" />
 			<circle cx="8" cy="9" r="1" fill="currentColor" stroke="none" />
@@ -31,7 +37,13 @@ function VitrineIcon() {
 
 function CommandesIcon() {
 	return (
-		<svg className="h-8 w-8" viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.5">
+		<svg
+			className="h-8 w-8"
+			viewBox="0 0 32 32"
+			fill="none"
+			stroke="currentColor"
+			strokeWidth="1.5"
+		>
 			<rect x="6" y="4" width="20" height="24" rx="2" />
 			<path d="M11 12h10M11 17h10M11 22h6" strokeLinecap="round" />
 			<path d="M12 4V2M20 4V2" strokeLinecap="round" />
@@ -41,7 +53,13 @@ function CommandesIcon() {
 
 function AteliersIcon() {
 	return (
-		<svg className="h-8 w-8" viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.5">
+		<svg
+			className="h-8 w-8"
+			viewBox="0 0 32 32"
+			fill="none"
+			stroke="currentColor"
+			strokeWidth="1.5"
+		>
 			<rect x="4" y="6" width="24" height="22" rx="2" />
 			<path d="M4 12h24" />
 			<path d="M10 4v4M22 4v4" strokeLinecap="round" />
@@ -111,7 +129,7 @@ export function HomeContent() {
 					}
 				}
 			},
-			{ threshold: 0.1 },
+			{ threshold: 0.1 }
 		)
 		document.querySelectorAll('.animate-on-scroll').forEach((el) => observer.observe(el))
 
@@ -138,7 +156,13 @@ export function HomeContent() {
 			>
 				<div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
 					<Link href="/" className="flex items-center">
-						<Image src="/logo-patissio-full.png" alt="Patissio" width={886} height={368} className="h-[47px] w-auto" />
+						<Image
+							src="/logo-patissio-full.png"
+							alt="Patissio"
+							width={886}
+							height={368}
+							className="h-[47px] w-auto"
+						/>
 					</Link>
 
 					{/* Desktop nav */}
@@ -295,9 +319,7 @@ export function HomeContent() {
 					].map((stat) => (
 						<div key={stat.label} className="animate-on-scroll text-center">
 							<p className="font-serif text-4xl font-bold text-amber">{stat.value}</p>
-							<p className="mt-2 text-sm font-light tracking-wide text-white/50">
-								{stat.label}
-							</p>
+							<p className="mt-2 text-sm font-light tracking-wide text-white/50">{stat.label}</p>
 						</div>
 					))}
 				</div>
@@ -336,6 +358,113 @@ export function HomeContent() {
 				</div>
 			</section>
 
+			{/* ── Calendar Spotlight ── */}
+			<section className="bg-[#1A1A1A] px-6 py-24">
+				<div className="mx-auto grid max-w-6xl items-center gap-16 lg:grid-cols-2">
+					{/* Text */}
+					<div className="animate-on-scroll">
+						<p className="text-sm font-light tracking-[0.2em] text-gold uppercase">
+							Gestion simplifiée
+						</p>
+						<h2 className="mt-3 font-serif text-3xl font-bold text-white sm:text-4xl">
+							Pilotez votre activité au quotidien
+						</h2>
+						<p className="mt-6 text-base leading-relaxed font-light text-white/60">
+							Commandes, devis sur-mesure, ateliers… Fini le jonglage entre carnets et tableurs.
+							Retrouvez tout dans un calendrier unifié avec code couleur pour ne plus rien oublier.
+						</p>
+						<ul className="mt-8 space-y-4">
+							<li className="flex items-center gap-3 text-sm text-white/80">
+								<span className="h-2.5 w-2.5 shrink-0 rounded-full bg-blue-500" />
+								Commandes et livraisons
+							</li>
+							<li className="flex items-center gap-3 text-sm text-white/80">
+								<span className="h-2.5 w-2.5 shrink-0 rounded-full bg-amber-500" />
+								Devis et demandes sur-mesure
+							</li>
+							<li className="flex items-center gap-3 text-sm text-white/80">
+								<span className="h-2.5 w-2.5 shrink-0 rounded-full bg-violet-500" />
+								Ateliers et cours
+							</li>
+						</ul>
+						<Link
+							href="/register"
+							className="mt-10 inline-block rounded-full bg-gold px-8 py-3 text-sm font-medium text-white transition-all hover:bg-gold-light hover:shadow-lg hover:shadow-gold/20"
+						>
+							Commencer gratuitement
+						</Link>
+					</div>
+
+					{/* Calendar mockup */}
+					<div className="animate-on-scroll" style={{ animationDelay: '0.2s' }}>
+						<div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-2xl shadow-gold/5">
+							{/* Month header */}
+							<div className="mb-4 flex items-center justify-between">
+								<h3 className="font-serif text-lg font-semibold text-white">Mars 2026</h3>
+								<div className="flex gap-1">
+									<div className="h-7 w-7 rounded-lg bg-white/10" />
+									<div className="h-7 w-7 rounded-lg bg-white/10" />
+								</div>
+							</div>
+							{/* Day headers */}
+							<div className="mb-2 grid grid-cols-7 text-center text-[11px] font-medium text-white/40">
+								{['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((d, i) => (
+									<div key={`${d}-${i}`} className="py-1">
+										{d}
+									</div>
+								))}
+							</div>
+							{/* Calendar grid */}
+							<div className="grid grid-cols-7 gap-1">
+								{/* Empty cells for offset (March 2026 starts on Sunday) */}
+								{Array.from({ length: 6 }).map((_, i) => (
+									<div key={`empty-${i}`} className="aspect-square" />
+								))}
+								{/* Days 1-28 */}
+								{Array.from({ length: 28 }, (_, i) => i + 1).map((day) => {
+									const isToday = day === 1
+									const hasBlue = [3, 10, 17, 24].includes(day)
+									const hasAmber = [5, 12, 19].includes(day)
+									const hasViolet = [7, 14, 21].includes(day)
+									const hasEvent = hasBlue || hasAmber || hasViolet
+									return (
+										<div
+											key={day}
+											className={`relative flex aspect-square items-center justify-center rounded-lg text-xs ${
+												isToday ? 'bg-gold font-bold text-white' : 'text-white/60'
+											}`}
+										>
+											{day}
+											{hasEvent && (
+												<span
+													className={`absolute bottom-1 h-1 w-1 rounded-full ${
+														hasBlue ? 'bg-blue-500' : hasAmber ? 'bg-amber-500' : 'bg-violet-500'
+													}`}
+												/>
+											)}
+										</div>
+									)
+								})}
+							</div>
+							{/* Mini event card */}
+							<div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-3">
+								<div className="flex items-center justify-between">
+									<div className="flex items-center gap-2">
+										<span className="h-2 w-2 rounded-full bg-blue-500" />
+										<span className="text-xs font-medium text-white/80">
+											Commande #1234 — Marie D.
+										</span>
+									</div>
+									<span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
+										Confirmée
+									</span>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</section>
+
 			{/* ── How It Works ── */}
 			<section className="bg-[#1A1A1A] px-6 py-24">
 				<div className="mx-auto max-w-4xl">
@@ -360,9 +489,7 @@ export function HomeContent() {
 									<div className="relative z-10 flex h-16 w-16 items-center justify-center rounded-full border-2 border-lavender bg-[#1A1A1A] font-serif text-2xl font-bold text-lavender">
 										{step.number}
 									</div>
-									<h3 className="mt-6 font-serif text-xl font-semibold text-white">
-										{step.title}
-									</h3>
+									<h3 className="mt-6 font-serif text-xl font-semibold text-white">{step.title}</h3>
 									<p className="mt-3 text-sm leading-relaxed font-light text-white/50">
 										{step.description}
 									</p>
@@ -403,14 +530,10 @@ export function HomeContent() {
 											Populaire
 										</div>
 									)}
-									<h3 className="font-serif text-2xl font-bold text-foreground">
-										{plan.name}
-									</h3>
+									<h3 className="font-serif text-2xl font-bold text-foreground">{plan.name}</h3>
 									<div className="mt-4 flex items-baseline gap-1">
 										<span className="font-serif text-4xl font-bold text-gold">
-											{plan.priceMonthly === 0
-												? 'Gratuit'
-												: `${plan.priceMonthly}€`}
+											{plan.priceMonthly === 0 ? 'Gratuit' : `${plan.priceMonthly}€`}
 										</span>
 										{plan.priceMonthly > 0 && (
 											<span className="text-sm text-muted-foreground">/mois</span>
@@ -435,9 +558,7 @@ export function HomeContent() {
 												: 'border border-gold/50 text-gold hover:border-gold hover:bg-gold/10'
 										}`}
 									>
-										{plan.priceMonthly === 0
-											? 'Commencer gratuitement'
-											: 'Choisir ce plan'}
+										{plan.priceMonthly === 0 ? 'Commencer gratuitement' : 'Choisir ce plan'}
 									</Link>
 								</div>
 							)
@@ -468,7 +589,13 @@ export function HomeContent() {
 			<footer className="border-t border-white/10 bg-[#111] px-6 py-8">
 				<div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 sm:flex-row">
 					<div className="flex items-center gap-3">
-						<Image src="/logo-patissio-full.png" alt="Patissio" width={886} height={368} className="h-6 w-auto opacity-40" />
+						<Image
+							src="/logo-patissio-full.png"
+							alt="Patissio"
+							width={886}
+							height={368}
+							className="h-6 w-auto opacity-40"
+						/>
 						<p className="text-sm text-white/30">
 							&copy; {new Date().getFullYear()} Tous droits réservés.
 						</p>
