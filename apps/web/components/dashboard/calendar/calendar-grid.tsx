@@ -13,7 +13,7 @@ import {
 } from 'date-fns'
 import Link from 'next/link'
 import { useDashboardPrefix } from '@/lib/hooks/use-custom-domain'
-import { getStatusLabel, KIND_COLORS } from './colors'
+import { getStatusColor, getStatusLabel, KIND_COLORS } from './colors'
 import type { ActiveFilters, CalendarEvent } from './types'
 
 interface CalendarGridProps {
@@ -75,13 +75,19 @@ export function CalendarGrid({
 
 	return (
 		<div>
-			<div className="grid grid-cols-7 border-b">
+			{/* Weekday headers */}
+			<div className="grid grid-cols-7">
 				{WEEKDAYS.map((day) => (
-					<div key={day} className="py-2 text-center text-xs font-medium text-muted-foreground">
+					<div
+						key={day}
+						className="py-2.5 text-center text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70"
+					>
 						{day}
 					</div>
 				))}
 			</div>
+
+			{/* Day cells */}
 			<div className="grid grid-cols-7">
 				{days.map((day) => {
 					const inMonth = isSameMonth(day, currentMonth)
@@ -95,31 +101,50 @@ export function CalendarGrid({
 						<div
 							key={day.toISOString()}
 							onClick={() => onSelectDate(day)}
-							className={`relative flex min-h-[90px] cursor-pointer flex-col border-b border-r p-1 transition-colors hover:bg-muted/50 ${
-								!inMonth ? 'bg-muted/20 text-muted-foreground/40' : ''
-							} ${selected ? 'bg-primary/5 ring-1 ring-inset ring-primary/30' : ''}`}
+							className={`relative flex min-h-[100px] cursor-pointer flex-col border-b border-r border-border/40 p-1.5 transition-colors last:border-r-0 [&:nth-child(7n)]:border-r-0 ${
+								!inMonth ? 'bg-muted/20' : 'hover:bg-muted/30'
+							} ${selected ? 'bg-primary/5 ring-1 ring-inset ring-primary/20' : ''}`}
 						>
-							<span
-								className={`mb-0.5 flex h-6 w-6 items-center justify-center self-end rounded-full text-xs ${
-									today ? 'bg-primary font-bold text-primary-foreground' : ''
-								}`}
-							>
-								{dayNum}
-							</span>
-							<div className="flex min-w-0 flex-1 flex-col gap-px">
-								{dayEvents.slice(0, MAX_VISIBLE_EVENTS).map((event) => (
-									<Link
-										key={`${event.kind}-${event.id}`}
-										href={getEventLink(event)}
-										onClick={(e) => e.stopPropagation()}
-										className={`flex items-center gap-1 truncate rounded border-l-2 px-1 py-px text-[10px] leading-tight transition-colors hover:opacity-80 ${KIND_COLORS[event.kind].bg} ${KIND_COLORS[event.kind].border} ${KIND_COLORS[event.kind].text}`}
-										title={`${getEventLabel(event)} — ${getStatusLabel(event.kind, event.status)}`}
-									>
-										<span className="truncate font-medium">{getEventLabel(event)}</span>
-									</Link>
-								))}
+							{/* Day number */}
+							<div className="mb-1 flex justify-end">
+								<span
+									className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium ${
+										today
+											? 'bg-primary font-bold text-primary-foreground shadow-sm'
+											: !inMonth
+												? 'text-muted-foreground/30'
+												: 'text-muted-foreground'
+									}`}
+								>
+									{dayNum}
+								</span>
+							</div>
+
+							{/* Events */}
+							<div className="flex min-w-0 flex-1 flex-col gap-0.5">
+								{dayEvents.slice(0, MAX_VISIBLE_EVENTS).map((event) => {
+									const colors = KIND_COLORS[event.kind]
+									return (
+										<Link
+											key={`${event.kind}-${event.id}`}
+											href={getEventLink(event)}
+											onClick={(e) => e.stopPropagation()}
+											className={`group flex items-center gap-1 truncate rounded-md border-l-2 px-1.5 py-0.5 text-[10px] leading-tight transition-all hover:shadow-sm ${colors.bg} ${colors.border}`}
+											title={`${getEventLabel(event)} — ${getStatusLabel(event.kind, event.status)}`}
+										>
+											<span className={`truncate font-medium ${colors.text}`}>
+												{getEventLabel(event)}
+											</span>
+											<span
+												className={`ml-auto hidden shrink-0 rounded px-1 py-px text-[8px] font-semibold leading-none group-hover:inline-block ${getStatusColor(event.kind, event.status)}`}
+											>
+												{getStatusLabel(event.kind, event.status)}
+											</span>
+										</Link>
+									)
+								})}
 								{extraCount > 0 && (
-									<span className="px-1 text-[10px] font-medium text-muted-foreground">
+									<span className="px-1.5 text-[10px] font-medium text-muted-foreground/60">
 										+{extraCount} autre{extraCount > 1 ? 's' : ''}
 									</span>
 								)}

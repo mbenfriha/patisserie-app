@@ -37,7 +37,20 @@ export function DashboardCalendar() {
 		setIsLoading(true)
 		try {
 			const res = await api.get<{ data: CalendarEvent[] }>('/patissier/calendar', { start, end })
-			setEvents(res.data?.data || res.data || [])
+			const raw = res.data?.data || res.data || []
+			// Normalize dates that may come as ISO timestamps (e.g. "2026-03-11T23:00:00.000Z")
+			const normalized = (raw as CalendarEvent[]).map((e) => ({
+				...e,
+				date: e.date?.includes('T') ? format(new Date(e.date), 'yyyy-MM-dd') : e.date,
+				meta: {
+					...e.meta,
+					startTime:
+						typeof e.meta?.startTime === 'string'
+							? e.meta.startTime.substring(0, 5)
+							: e.meta?.startTime,
+				},
+			}))
+			setEvents(normalized)
 		} catch (err) {
 			console.error('Failed to load calendar events:', err)
 			setEvents([])
@@ -90,7 +103,6 @@ export function DashboardCalendar() {
 	function handleViewModeChange(mode: ViewMode) {
 		if (mode === viewMode) return
 		setViewMode(mode)
-		// Sync week/month when switching
 		if (mode === 'week') {
 			const ref = selectedDate || currentMonth
 			setCurrentWeek(startOfWeek(ref, { weekStartsOn: 1 }))
@@ -104,7 +116,8 @@ export function DashboardCalendar() {
 
 	return (
 		<div className="space-y-4">
-			<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+			{/* Header row */}
+			<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 				<CalendarHeader
 					currentMonth={headerDate}
 					viewMode={viewMode}
@@ -116,9 +129,12 @@ export function DashboardCalendar() {
 				<CalendarFilters filters={filters} onToggle={handleToggleFilter} events={events} />
 			</div>
 
-			<div className={isLoading ? 'opacity-60' : ''}>
+			{/* Calendar body */}
+			<div
+				className={`transition-opacity duration-200 ${isLoading ? 'pointer-events-none opacity-50' : ''}`}
+			>
 				{viewMode === 'month' ? (
-					<div className="rounded-lg border bg-card">
+					<div className="overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm">
 						<CalendarGrid
 							currentMonth={currentMonth}
 							selectedDate={selectedDate}
@@ -132,6 +148,7 @@ export function DashboardCalendar() {
 				)}
 			</div>
 
+			{/* Day detail panel */}
 			{selectedDate && viewMode === 'month' && (
 				<CalendarDayDetail date={selectedDate} events={events} filters={filters} />
 			)}

@@ -19,7 +19,7 @@ export function CalendarFilters({ filters, onToggle, events }: CalendarFiltersPr
 	const kinds: CalendarEventKind[] = ['order', 'devis', 'workshop']
 
 	return (
-		<div className="flex flex-wrap gap-2">
+		<div className="flex flex-wrap gap-1.5">
 			{kinds.map((kind) => {
 				const { dot, label } = KIND_COLORS[kind]
 				const active = filters[kind]
@@ -29,15 +29,23 @@ export function CalendarFilters({ filters, onToggle, events }: CalendarFiltersPr
 						key={kind}
 						type="button"
 						onClick={() => onToggle(kind)}
-						className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
+						className={`group inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-all ${
 							active
-								? 'border-foreground/20 bg-foreground/5'
-								: 'border-transparent bg-muted/50 text-muted-foreground opacity-60'
+								? 'bg-muted/60 text-foreground'
+								: 'text-muted-foreground/50 hover:text-muted-foreground'
 						}`}
 					>
-						<span className={`inline-block h-2.5 w-2.5 rounded-full ${dot}`} />
+						<span
+							className={`inline-block h-2 w-2 rounded-full transition-opacity ${dot} ${active ? 'opacity-100' : 'opacity-30'}`}
+						/>
 						{label}
-						<span className="ml-0.5 text-xs text-muted-foreground">({counts[kind]})</span>
+						{counts[kind] > 0 && (
+							<span
+								className={`tabular-nums transition-opacity ${active ? 'text-muted-foreground' : 'opacity-40'}`}
+							>
+								{counts[kind]}
+							</span>
+						)}
 					</button>
 				)
 			})}

@@ -13,7 +13,7 @@ interface CalendarWeekViewProps {
 	filters: ActiveFilters
 }
 
-const HOUR_HEIGHT = 56
+const HOUR_HEIGHT = 60
 const START_HOUR = 7
 const END_HOUR = 22
 const HOURS = Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR + i)
@@ -45,7 +45,6 @@ export function CalendarWeekView({ currentWeek, events, filters }: CalendarWeekV
 		return `${prefix}/orders/${event.id}`
 	}
 
-	// Separate timed events (workshops) from all-day events (orders/devis)
 	function getTimedEvents(day: Date): CalendarEvent[] {
 		return getEventsForDay(day).filter((e) => e.kind === 'workshop' && e.meta.startTime)
 	}
@@ -60,30 +59,33 @@ export function CalendarWeekView({ currentWeek, events, filters }: CalendarWeekV
 		const duration = Number(event.meta.durationMinutes) || 60
 		const topMinutes = (time.hours - START_HOUR) * 60 + time.minutes
 		const top = (topMinutes / 60) * HOUR_HEIGHT
-		const height = Math.max((duration / 60) * HOUR_HEIGHT, 24)
+		const height = Math.max((duration / 60) * HOUR_HEIGHT, 28)
 		return { top, height }
 	}
 
 	const hasAllDayEvents = days.some((d) => getAllDayEvents(d).length > 0)
 
 	return (
-		<div className="flex flex-col overflow-hidden rounded-lg border bg-card">
+		<div className="flex flex-col overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm">
 			{/* Day headers */}
-			<div className="grid border-b" style={{ gridTemplateColumns: '56px repeat(7, 1fr)' }}>
-				<div className="border-r" />
+			<div
+				className="grid border-b border-border/40"
+				style={{ gridTemplateColumns: '60px repeat(7, 1fr)' }}
+			>
+				<div className="border-r border-border/30" />
 				{days.map((day) => {
 					const today = isToday(day)
 					return (
 						<div
 							key={day.toISOString()}
-							className={`border-r p-2 text-center last:border-r-0 ${today ? 'bg-primary/5' : ''}`}
+							className={`border-r border-border/30 px-2 py-3 text-center last:border-r-0 ${today ? 'bg-primary/5' : ''}`}
 						>
-							<div className="text-[11px] font-medium uppercase text-muted-foreground">
+							<div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
 								{format(day, 'EEE', { locale: fr })}
 							</div>
 							<div
-								className={`mx-auto mt-0.5 flex h-7 w-7 items-center justify-center rounded-full text-sm font-semibold ${
-									today ? 'bg-primary text-primary-foreground' : ''
+								className={`mx-auto mt-1 flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold ${
+									today ? 'bg-primary text-primary-foreground shadow-sm' : 'text-foreground'
 								}`}
 							>
 								{format(day, 'd')}
@@ -95,9 +97,12 @@ export function CalendarWeekView({ currentWeek, events, filters }: CalendarWeekV
 
 			{/* All-day events section */}
 			{hasAllDayEvents && (
-				<div className="grid border-b" style={{ gridTemplateColumns: '56px repeat(7, 1fr)' }}>
-					<div className="flex items-start justify-end border-r px-1.5 py-1.5">
-						<span className="text-[10px] text-muted-foreground">journée</span>
+				<div
+					className="grid border-b border-border/40 bg-muted/20"
+					style={{ gridTemplateColumns: '60px repeat(7, 1fr)' }}
+				>
+					<div className="flex items-start justify-end border-r border-border/30 px-2 py-2">
+						<span className="text-[10px] font-medium text-muted-foreground/50">journée</span>
 					</div>
 					{days.map((day) => {
 						const allDay = getAllDayEvents(day)
@@ -105,21 +110,24 @@ export function CalendarWeekView({ currentWeek, events, filters }: CalendarWeekV
 						return (
 							<div
 								key={day.toISOString()}
-								className={`space-y-px border-r p-1 last:border-r-0 ${today ? 'bg-primary/5' : ''}`}
+								className={`space-y-0.5 border-r border-border/30 p-1 last:border-r-0 ${today ? 'bg-primary/5' : ''}`}
 							>
-								{allDay.map((event) => (
-									<Link
-										key={`${event.kind}-${event.id}`}
-										href={getEventLink(event)}
-										className={`flex items-center gap-1 truncate rounded border-l-2 px-1.5 py-0.5 text-[10px] leading-tight transition-colors hover:opacity-80 ${KIND_COLORS[event.kind].bg} ${KIND_COLORS[event.kind].border} ${KIND_COLORS[event.kind].text}`}
-										title={`${event.title} — ${getStatusLabel(event.kind, event.status)}`}
-									>
-										<span
-											className={`inline-block h-1.5 w-1.5 shrink-0 rounded-full ${getStatusColor(event.kind, event.status)}`}
-										/>
-										<span className="truncate font-medium">{event.title}</span>
-									</Link>
-								))}
+								{allDay.map((event) => {
+									const colors = KIND_COLORS[event.kind]
+									return (
+										<Link
+											key={`${event.kind}-${event.id}`}
+											href={getEventLink(event)}
+											className={`flex items-center gap-1 truncate rounded-md border-l-2 px-1.5 py-1 text-[10px] leading-tight transition-all hover:shadow-sm ${colors.bg} ${colors.border}`}
+											title={`${event.title} — ${getStatusLabel(event.kind, event.status)}`}
+										>
+											<span
+												className={`inline-block h-1.5 w-1.5 shrink-0 rounded-full ${getStatusColor(event.kind, event.status).split(' ')[0]}`}
+											/>
+											<span className={`truncate font-medium ${colors.text}`}>{event.title}</span>
+										</Link>
+									)
+								})}
 							</div>
 						)
 					})}
@@ -127,26 +135,26 @@ export function CalendarWeekView({ currentWeek, events, filters }: CalendarWeekV
 			)}
 
 			{/* Time grid */}
-			<div className="relative overflow-auto" style={{ maxHeight: '600px' }}>
+			<div className="relative overflow-auto" style={{ maxHeight: '640px' }}>
 				<div
 					className="relative grid"
 					style={{
-						gridTemplateColumns: '56px repeat(7, 1fr)',
+						gridTemplateColumns: '60px repeat(7, 1fr)',
 						height: `${HOURS.length * HOUR_HEIGHT}px`,
 					}}
 				>
 					{/* Hour labels */}
-					<div className="relative border-r">
+					<div className="relative border-r border-border/30">
 						{HOURS.map((hour) => (
 							<div
 								key={hour}
-								className="absolute right-0 left-0 border-t"
+								className="absolute right-0 left-0 border-t border-border/30"
 								style={{
 									top: `${(hour - START_HOUR) * HOUR_HEIGHT}px`,
 									height: `${HOUR_HEIGHT}px`,
 								}}
 							>
-								<span className="relative -top-2.5 block pr-1.5 text-right text-[10px] text-muted-foreground">
+								<span className="relative -top-2.5 block pr-2 text-right text-[10px] font-medium tabular-nums text-muted-foreground/50">
 									{String(hour).padStart(2, '0')}:00
 								</span>
 							</div>
@@ -161,13 +169,13 @@ export function CalendarWeekView({ currentWeek, events, filters }: CalendarWeekV
 						return (
 							<div
 								key={day.toISOString()}
-								className={`relative border-r last:border-r-0 ${today ? 'bg-primary/[0.02]' : ''}`}
+								className={`relative border-r border-border/30 last:border-r-0 ${today ? 'bg-primary/[0.02]' : ''}`}
 							>
 								{/* Hour grid lines */}
 								{HOURS.map((hour) => (
 									<div
 										key={hour}
-										className="absolute right-0 left-0 border-t border-dashed border-muted/60"
+										className="absolute right-0 left-0 border-t border-dashed border-border/20"
 										style={{
 											top: `${(hour - START_HOUR) * HOUR_HEIGHT}px`,
 											height: `${HOUR_HEIGHT}px`,
@@ -193,11 +201,10 @@ export function CalendarWeekView({ currentWeek, events, filters }: CalendarWeekV
 										<Link
 											key={`${event.kind}-${event.id}`}
 											href={getEventLink(event)}
-											className={`absolute right-1 left-1 overflow-hidden rounded border-l-3 px-1.5 py-1 transition-opacity hover:opacity-90 ${colors.bg} ${colors.border}`}
+											className={`absolute right-1.5 left-1.5 overflow-hidden rounded-lg px-2 py-1.5 shadow-sm transition-all hover:shadow-md ${colors.bg} border border-l-[3px] ${colors.border}`}
 											style={{
 												top: `${pos.top}px`,
 												height: `${pos.height}px`,
-												borderLeftWidth: '3px',
 											}}
 											title={`${event.title} — ${getStatusLabel(event.kind, event.status)}`}
 										>
@@ -206,18 +213,34 @@ export function CalendarWeekView({ currentWeek, events, filters }: CalendarWeekV
 											>
 												{event.title}
 											</div>
-											<div className="mt-px flex items-center gap-1.5">
-												<span className={`text-[10px] ${colors.text} opacity-70`}>
+											<div className="mt-0.5 flex items-center gap-1.5">
+												<span className={`text-[10px] ${colors.text} opacity-60`}>
 													{event.meta.startTime} · {durationLabel}
 												</span>
 												<span
-													className={`rounded-sm px-1 py-px text-[9px] font-medium leading-none ${getStatusColor(event.kind, event.status)}`}
+													className={`rounded px-1 py-px text-[8px] font-semibold leading-none ${getStatusColor(event.kind, event.status)}`}
 												>
 													{getStatusLabel(event.kind, event.status)}
 												</span>
 											</div>
-											{pos.height > 50 && event.meta.location && (
-												<div className={`mt-0.5 truncate text-[10px] ${colors.text} opacity-60`}>
+											{pos.height > 55 && event.meta.location && (
+												<div
+													className={`mt-0.5 flex items-center gap-1 truncate text-[10px] ${colors.text} opacity-50`}
+												>
+													<svg
+														width="10"
+														height="10"
+														viewBox="0 0 24 24"
+														fill="none"
+														stroke="currentColor"
+														strokeWidth="2"
+														strokeLinecap="round"
+														strokeLinejoin="round"
+														aria-hidden="true"
+													>
+														<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+														<circle cx="12" cy="10" r="3" />
+													</svg>
 													{event.meta.location}
 												</div>
 											)}
@@ -242,8 +265,8 @@ function NowIndicator() {
 	return (
 		<div className="pointer-events-none absolute right-0 left-0 z-10" style={{ top: `${top}px` }}>
 			<div className="relative flex items-center">
-				<div className="h-2.5 w-2.5 rounded-full bg-red-500" />
-				<div className="h-px flex-1 bg-red-500" />
+				<div className="h-3 w-3 -translate-x-[5px] rounded-full bg-red-500 shadow-sm shadow-red-500/30" />
+				<div className="h-[2px] flex-1 bg-red-500/80" />
 			</div>
 		</div>
 	)
