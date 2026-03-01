@@ -283,7 +283,9 @@ export default class StripeService {
 		return priceIds[`${plan}_${interval}`]
 	}
 
-	getPlanFromPriceId(priceId: string): { plan: 'pro' | 'premium'; interval: 'monthly' | 'yearly' } | null {
+	getPlanFromPriceId(
+		priceId: string
+	): { plan: 'pro' | 'premium'; interval: 'monthly' | 'yearly' } | null {
 		const mapping: Record<string, { plan: 'pro' | 'premium'; interval: 'monthly' | 'yearly' }> = {
 			[env.get('STRIPE_PRICE_PRO_MONTHLY', '')]: { plan: 'pro', interval: 'monthly' },
 			[env.get('STRIPE_PRICE_PRO_YEARLY', '')]: { plan: 'pro', interval: 'yearly' },

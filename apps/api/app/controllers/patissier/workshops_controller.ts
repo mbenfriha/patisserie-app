@@ -23,9 +23,7 @@ async function uniqueSlug(title: string, patissierId: string, excludeId?: string
 	let slug = baseSlug
 	let counter = 1
 	while (true) {
-		const query = Workshop.query()
-			.where('patissierId', patissierId)
-			.where('slug', slug)
+		const query = Workshop.query().where('patissierId', patissierId).where('slug', slug)
 		if (excludeId) query.whereNot('id', excludeId)
 		const existing = await query.first()
 		if (!existing) break
@@ -219,7 +217,7 @@ export default class WorkshopsController {
 				.whereNot('status', 'cancelled')
 
 			const emailService = new EmailService()
-			const reasonText = reason || "Le pâtissier a annulé cet atelier."
+			const reasonText = reason || 'Le pâtissier a annulé cet atelier.'
 
 			for (const booking of bookings) {
 				await emailService.sendStatusUpdate({
@@ -245,10 +243,7 @@ export default class WorkshopsController {
 		const profile = await PatissierProfile.findByOrFail('userId', user.id)
 
 		// Ensure the workshop belongs to this patissier
-		await Workshop.query()
-			.where('id', params.id)
-			.where('patissierId', profile.id)
-			.firstOrFail()
+		await Workshop.query().where('id', params.id).where('patissierId', profile.id).firstOrFail()
 
 		const page = request.input('page', 1)
 		const limit = request.input('limit', 20)
@@ -397,10 +392,11 @@ export default class WorkshopsController {
 		const depositAmount = Math.round(totalPrice * (workshop.depositPercent / 100))
 		const remainingAmount = totalPrice - depositAmount
 
-		const canAcceptOnlinePayment = clientEmail
-			&& depositAmount > 0
-			&& profile.stripeAccountId
-			&& profile.stripeOnboardingComplete
+		const canAcceptOnlinePayment =
+			clientEmail &&
+			depositAmount > 0 &&
+			profile.stripeAccountId &&
+			profile.stripeOnboardingComplete
 
 		const booking = await WorkshopBooking.create({
 			workshopId: workshop.id,
@@ -429,7 +425,7 @@ export default class WorkshopsController {
 				clientEmail!,
 				profile.stripeAccountId!,
 				`${frontendUrl}/site/${profile.slug}/workshops/${workshop.slug}?payment=success`,
-				`${frontendUrl}/site/${profile.slug}/workshops/${workshop.slug}?payment=cancelled`,
+				`${frontendUrl}/site/${profile.slug}/workshops/${workshop.slug}?payment=cancelled`
 			)
 		}
 
@@ -456,7 +452,7 @@ export default class WorkshopsController {
 			'new_booking',
 			`Nouvelle réservation : ${workshop.title}`,
 			`${clientName} — ${nbParticipants} place(s) (réservé par vous)`,
-			{ bookingId: booking.id, workshopId: workshop.id },
+			{ bookingId: booking.id, workshopId: workshop.id }
 		)
 
 		return response.created({

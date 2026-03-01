@@ -11,6 +11,7 @@ interface PatissierProfile {
 	logoUrl: string | null
 	description: string | null
 	plan: 'starter' | 'pro' | 'premium'
+	customDomain: string | null
 	stripeOnboardingComplete: boolean
 }
 

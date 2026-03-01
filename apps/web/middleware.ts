@@ -96,6 +96,23 @@ export default function middleware(request: NextRequest) {
 		if (slug && slug !== 'www') {
 			const locale = detectLocale(pathname)
 			const cleanPath = stripLocale(pathname)
+			const firstSegment = cleanPath.split('/').filter(Boolean)[0]
+
+			// Auth pages: pass through to intlMiddleware
+			if (firstSegment && CUSTOM_DOMAIN_AUTH_PATHS.has(firstSegment)) {
+				return intlMiddleware(request)
+			}
+
+			// Dashboard routes: /dashboard/workshops → /[locale]/workshops
+			if (firstSegment === 'dashboard') {
+				const rest = cleanPath.split('/').filter(Boolean).slice(1).join('/')
+				const newPath = rest ? `/${rest}` : '/dashboard'
+				const url = request.nextUrl.clone()
+				url.pathname = `/${locale}${newPath}`
+				return NextResponse.rewrite(url)
+			}
+
+			// Public site
 			const url = request.nextUrl.clone()
 			url.pathname = `/${locale}/site/${slug}${cleanPath === '/' ? '' : cleanPath}`
 			return NextResponse.rewrite(url)
@@ -142,6 +159,23 @@ export default function middleware(request: NextRequest) {
 		const slug = hostParts[0]
 		const locale = detectLocale(pathname)
 		const cleanPath = stripLocale(pathname)
+		const firstSegment = cleanPath.split('/').filter(Boolean)[0]
+
+		// Auth pages: pass through to intlMiddleware
+		if (firstSegment && CUSTOM_DOMAIN_AUTH_PATHS.has(firstSegment)) {
+			return intlMiddleware(request)
+		}
+
+		// Dashboard routes: /dashboard/workshops → /[locale]/workshops
+		if (firstSegment === 'dashboard') {
+			const rest = cleanPath.split('/').filter(Boolean).slice(1).join('/')
+			const newPath = rest ? `/${rest}` : '/dashboard'
+			const url = request.nextUrl.clone()
+			url.pathname = `/${locale}${newPath}`
+			return NextResponse.rewrite(url)
+		}
+
+		// Public site
 		const url = request.nextUrl.clone()
 		url.pathname = `/${locale}/site/${slug}${cleanPath === '/' ? '' : cleanPath}`
 		return NextResponse.rewrite(url)
