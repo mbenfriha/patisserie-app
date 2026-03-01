@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 import { useEffect, useState } from 'react'
-import { DashboardCalendar } from '@/components/dashboard/calendar'
+import { CalendarUpgradeBanner, DashboardCalendar } from '@/components/dashboard/calendar'
 import { api } from '@/lib/api/client'
 import { useAuth } from '@/lib/providers/auth-provider'
 
@@ -79,7 +79,11 @@ export default function DashboardPage() {
 				</div>
 			</div>
 
-			<DashboardCalendar />
+			{user?.profile?.plan === 'pro' || user?.profile?.plan === 'premium' ? (
+				<DashboardCalendar />
+			) : (
+				<CalendarUpgradeBanner />
+			)}
 		</div>
 	)
 }

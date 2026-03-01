@@ -1,6 +1,6 @@
 import router from '@adonisjs/core/services/router'
-import { middleware } from '#start/kernel'
 import { throttle } from '#middleware/throttle_middleware'
+import { middleware } from '#start/kernel'
 
 // Health check
 router.get('/', async ({ response }) => {
@@ -13,7 +13,9 @@ router.get('/health', async ({ response }) => {
 // Auth routes
 router
 	.group(() => {
-		router.post('/register', '#controllers/auth/auth_controller.register').use(throttle('authStrict'))
+		router
+			.post('/register', '#controllers/auth/auth_controller.register')
+			.use(throttle('authStrict'))
 		router.post('/login', '#controllers/auth/auth_controller.login').use(throttle('authStrict'))
 		router.post('/logout', '#controllers/auth/auth_controller.logout').use(middleware.auth())
 		router.get('/me', '#controllers/auth/auth_controller.me').use(middleware.auth())
@@ -46,7 +48,10 @@ router
 		router.post('/favicon', '#controllers/patissier/profile_controller.uploadFavicon')
 		router.delete('/favicon', '#controllers/patissier/profile_controller.deleteFavicon')
 		router.post('/page-hero/:page', '#controllers/patissier/profile_controller.uploadPageHeroImage')
-		router.delete('/page-hero/:page', '#controllers/patissier/profile_controller.deletePageHeroImage')
+		router.delete(
+			'/page-hero/:page',
+			'#controllers/patissier/profile_controller.deletePageHeroImage'
+		)
 
 		// Categories
 		router.get('/categories', '#controllers/patissier/categories_controller.index')
@@ -62,9 +67,15 @@ router
 		router.put('/creations/:id', '#controllers/patissier/creations_controller.update')
 		router.delete('/creations/:id', '#controllers/patissier/creations_controller.destroy')
 		router.post('/creations/:id/images', '#controllers/patissier/creations_controller.addImage')
-		router.put('/creations/:id/images/:idx', '#controllers/patissier/creations_controller.replaceImage')
+		router.put(
+			'/creations/:id/images/:idx',
+			'#controllers/patissier/creations_controller.replaceImage'
+		)
 		router.put('/creations/:id/cover/:idx', '#controllers/patissier/creations_controller.setCover')
-		router.delete('/creations/:id/images/:idx', '#controllers/patissier/creations_controller.removeImage')
+		router.delete(
+			'/creations/:id/images/:idx',
+			'#controllers/patissier/creations_controller.removeImage'
+		)
 
 		// Products (Pro+)
 		router
@@ -74,8 +85,14 @@ router
 				router.get('/:id', '#controllers/patissier/products_controller.show')
 				router.put('/:id', '#controllers/patissier/products_controller.update')
 				router.delete('/:id', '#controllers/patissier/products_controller.destroy')
-				router.post('/:id/illustration', '#controllers/patissier/products_controller.uploadIllustration')
-				router.delete('/:id/illustration', '#controllers/patissier/products_controller.deleteIllustration')
+				router.post(
+					'/:id/illustration',
+					'#controllers/patissier/products_controller.uploadIllustration'
+				)
+				router.delete(
+					'/:id/illustration',
+					'#controllers/patissier/products_controller.deleteIllustration'
+				)
 			})
 			.prefix('/products')
 			.use(middleware.planGuard({ minPlan: 'pro' }))
@@ -89,8 +106,14 @@ router
 				router.put('/:id', '#controllers/patissier/workshops_controller.update')
 				router.delete('/:id', '#controllers/patissier/workshops_controller.destroy')
 				router.put('/:id/status', '#controllers/patissier/workshops_controller.updateStatus')
-				router.post('/:id/illustration', '#controllers/patissier/workshops_controller.uploadIllustration')
-				router.delete('/:id/illustration', '#controllers/patissier/workshops_controller.deleteIllustration')
+				router.post(
+					'/:id/illustration',
+					'#controllers/patissier/workshops_controller.uploadIllustration'
+				)
+				router.delete(
+					'/:id/illustration',
+					'#controllers/patissier/workshops_controller.deleteIllustration'
+				)
 				router.get('/:id/bookings', '#controllers/patissier/workshops_controller.bookings')
 				router.post('/:id/bookings', '#controllers/patissier/workshops_controller.createBooking')
 				router.put(
@@ -127,16 +150,33 @@ router
 		router.get('/domain/verify', '#controllers/patissier/domain_controller.verifyDomain')
 
 		// Stripe Connect
-		router.post('/integrations/stripe/connect', '#controllers/patissier/integrations_controller.stripeConnect')
-		router.get('/integrations/stripe/callback', '#controllers/patissier/integrations_controller.stripeCallback')
-		router.get('/integrations/stripe/dashboard', '#controllers/patissier/integrations_controller.stripeDashboard')
-		router.get('/integrations/stripe/balance', '#controllers/patissier/integrations_controller.stripeBalance')
+		router.post(
+			'/integrations/stripe/connect',
+			'#controllers/patissier/integrations_controller.stripeConnect'
+		)
+		router.get(
+			'/integrations/stripe/callback',
+			'#controllers/patissier/integrations_controller.stripeCallback'
+		)
+		router.get(
+			'/integrations/stripe/dashboard',
+			'#controllers/patissier/integrations_controller.stripeDashboard'
+		)
+		router.get(
+			'/integrations/stripe/balance',
+			'#controllers/patissier/integrations_controller.stripeBalance'
+		)
 
 		// Stats
 		router.get('/stats', '#controllers/patissier/stats_controller.index')
 
-		// Calendar
-		router.get('/calendar', '#controllers/patissier/calendar_controller.index')
+		// Calendar (Pro+)
+		router
+			.group(() => {
+				router.get('/', '#controllers/patissier/calendar_controller.index')
+			})
+			.prefix('/calendar')
+			.use(middleware.planGuard({ minPlan: 'pro' }))
 	})
 	.prefix('/patissier')
 	.use([throttle('api'), middleware.auth(), middleware.patissier()])
@@ -161,7 +201,10 @@ router
 		router.post('/orders', '#controllers/client/orders_controller.store')
 		router.get('/orders/:orderNumber', '#controllers/client/orders_controller.show')
 		router.get('/orders/:orderNumber/messages', '#controllers/client/orders_controller.messages')
-		router.post('/orders/:orderNumber/messages', '#controllers/client/orders_controller.sendMessage')
+		router.post(
+			'/orders/:orderNumber/messages',
+			'#controllers/client/orders_controller.sendMessage'
+		)
 		router.post('/workshops/:id/book', '#controllers/client/bookings_controller.store')
 		router.get('/bookings/:id', '#controllers/client/bookings_controller.show')
 		router.put('/bookings/:id/cancel', '#controllers/client/bookings_controller.cancel')

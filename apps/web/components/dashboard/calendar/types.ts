@@ -1,5 +1,7 @@
 export type CalendarEventKind = 'order' | 'devis' | 'workshop'
 
+export type ViewMode = 'month' | 'week'
+
 export interface CalendarEvent {
 	id: string
 	kind: CalendarEventKind

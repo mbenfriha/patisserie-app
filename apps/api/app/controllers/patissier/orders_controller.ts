@@ -1,8 +1,8 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import { DateTime } from 'luxon'
-import PatissierProfile from '#models/patissier_profile'
 import Order from '#models/order'
 import OrderMessage from '#models/order_message'
+import PatissierProfile from '#models/patissier_profile'
 import EmailService from '#services/email_service'
 import StripeService from '#services/stripe_service'
 import env from '#start/env'
@@ -17,9 +17,7 @@ export default class OrdersController {
 		const status = request.input('status')
 		const type = request.input('type')
 
-		const query = Order.query()
-			.where('patissierId', profile.id)
-			.orderBy('createdAt', 'desc')
+		const query = Order.query().where('patissierId', profile.id).orderBy('createdAt', 'desc')
 
 		if (status) {
 			query.where('status', status)
@@ -127,10 +125,11 @@ export default class OrdersController {
 			})
 		}
 
-		const { quotedPrice, responseMessage, depositPercent } = request.only([
+		const { quotedPrice, responseMessage, depositPercent, confirmedDate } = request.only([
 			'quotedPrice',
 			'responseMessage',
 			'depositPercent',
+			'confirmedDate',
 		])
 
 		if (quotedPrice === undefined || quotedPrice === null) {
@@ -145,6 +144,10 @@ export default class OrdersController {
 
 		if (responseMessage) {
 			order.responseMessage = responseMessage
+		}
+
+		if (confirmedDate) {
+			order.confirmedDate = confirmedDate
 		}
 
 		await order.save()
@@ -197,7 +200,10 @@ export default class OrdersController {
 				title: `Devis reçu : ${formattedPrice} €`,
 				body,
 				...(checkoutUrl
-					? { actionUrl: checkoutUrl, actionLabel: `Payer ${effectiveDepositPercent < 100 ? "l'acompte" : ''} ${formattedDeposit} €` }
+					? {
+							actionUrl: checkoutUrl,
+							actionLabel: `Payer ${effectiveDepositPercent < 100 ? "l'acompte" : ''} ${formattedDeposit} €`,
+						}
 					: {}),
 			})
 		} catch (err) {
@@ -206,9 +212,13 @@ export default class OrdersController {
 
 		const warnings: string[] = []
 		if (!profile.stripeAccountId || !profile.stripeOnboardingComplete) {
-			warnings.push('Stripe Connect non configuré : le lien de paiement n\'a pas été inclus dans l\'email. Configurez Stripe dans Intégrations pour activer le paiement en ligne.')
+			warnings.push(
+				"Stripe Connect non configuré : le lien de paiement n'a pas été inclus dans l'email. Configurez Stripe dans Intégrations pour activer le paiement en ligne."
+			)
 		} else if (!checkoutUrl) {
-			warnings.push(`La génération du lien de paiement Stripe a échoué${stripeError ? ` : ${stripeError}` : ''}. Le devis a été envoyé sans lien de paiement.`)
+			warnings.push(
+				`La génération du lien de paiement Stripe a échoué${stripeError ? ` : ${stripeError}` : ''}. Le devis a été envoyé sans lien de paiement.`
+			)
 		}
 
 		return response.ok({
@@ -223,10 +233,7 @@ export default class OrdersController {
 		const profile = await PatissierProfile.findByOrFail('userId', user.id)
 
 		// Ensure order belongs to this patissier
-		await Order.query()
-			.where('id', params.id)
-			.where('patissierId', profile.id)
-			.firstOrFail()
+		await Order.query().where('id', params.id).where('patissierId', profile.id).firstOrFail()
 
 		const page = request.input('page', 1)
 		const limit = request.input('limit', 50)

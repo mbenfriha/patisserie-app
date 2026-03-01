@@ -1,9 +1,30 @@
 import type { CalendarEventKind } from './types'
 
-export const KIND_COLORS: Record<CalendarEventKind, { dot: string; label: string }> = {
-	order: { dot: 'bg-blue-500', label: 'Commandes' },
-	devis: { dot: 'bg-amber-500', label: 'Devis' },
-	workshop: { dot: 'bg-violet-500', label: 'Ateliers' },
+export const KIND_COLORS: Record<
+	CalendarEventKind,
+	{ dot: string; label: string; bg: string; border: string; text: string }
+> = {
+	order: {
+		dot: 'bg-blue-500',
+		label: 'Commandes',
+		bg: 'bg-blue-50',
+		border: 'border-blue-400',
+		text: 'text-blue-700',
+	},
+	devis: {
+		dot: 'bg-amber-500',
+		label: 'Devis',
+		bg: 'bg-amber-50',
+		border: 'border-amber-400',
+		text: 'text-amber-700',
+	},
+	workshop: {
+		dot: 'bg-violet-500',
+		label: 'Ateliers',
+		bg: 'bg-violet-50',
+		border: 'border-violet-400',
+		text: 'text-violet-700',
+	},
 }
 
 const ORDER_STATUS_COLORS: Record<string, string> = {

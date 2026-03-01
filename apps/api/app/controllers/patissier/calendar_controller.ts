@@ -44,9 +44,10 @@ export default class CalendarController {
 		for (const order of orders) {
 			let date: string
 			if (order.type === 'custom') {
-				date = order.customDateSouhaitee || order.createdAt.toFormat('yyyy-MM-dd')
+				date =
+					order.confirmedDate || order.customDateSouhaitee || order.createdAt.toFormat('yyyy-MM-dd')
 			} else {
-				date = order.requestedDate || order.confirmedDate || order.createdAt.toFormat('yyyy-MM-dd')
+				date = order.confirmedDate || order.requestedDate || order.createdAt.toFormat('yyyy-MM-dd')
 			}
 
 			// Only include if the resolved date falls in range
