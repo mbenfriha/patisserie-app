@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
+import Script from 'next/script'
 import type React from 'react'
 import { SiteProvider } from './site-provider'
 import { getImageUrl } from '@/lib/utils/image-url'
@@ -96,6 +97,14 @@ export default async function SiteLayout({ children, params }: Props) {
 
 	return (
 		<SiteProvider profile={profile} slug={profile.slug}>
+			{profile.plausibleSiteId && (
+				<Script
+					defer
+					data-domain={profile.plausibleSiteId}
+					src="https://plausible.io/js/script.js"
+					strategy="afterInteractive"
+				/>
+			)}
 			{children}
 		</SiteProvider>
 	)

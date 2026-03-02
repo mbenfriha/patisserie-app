@@ -43,7 +43,14 @@
     "totalOrders": "Total commandes",
     "totalRevenue": "Revenu total",
     "activeWorkshops": "Ateliers actifs",
-    "pendingOrders": "Commandes en attente"
+    "pendingOrders": "Commandes en attente",
+    "analytics": "Analytics",
+    "visitors30d": "Visiteurs (30j)",
+    "pageviews30d": "Pages vues (30j)",
+    "bounceRate": "Taux de rebond",
+    "avgDuration": "Durée moy.",
+    "realtimeVisitors": "en ligne",
+    "analyticsUnavailable": "Analytics non disponible"
   },
   "home": {
     "title": "Votre vitrine pâtissière en ligne",

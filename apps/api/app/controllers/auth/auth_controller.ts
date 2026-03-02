@@ -4,10 +4,12 @@ import hash from '@adonisjs/core/services/hash'
 import PatissierProfile from '#models/patissier_profile'
 import User from '#models/user'
 import EmailService from '#services/email_service'
+import PlausibleService from '#services/plausible_service'
 import env from '#start/env'
 
 export default class AuthController {
 	private emailService = new EmailService()
+	private plausible = new PlausibleService()
 
 	async register({ request, response }: HttpContext) {
 		const { email, password, fullName, role, slug, businessName } = request.only([
@@ -45,11 +47,22 @@ export default class AuthController {
 				return response.conflict({ success: false, message: 'Slug already taken' })
 			}
 
-			await PatissierProfile.create({
+			const profile = await PatissierProfile.create({
 				userId: user.id,
 				slug,
 				businessName,
 			})
+
+			// Fire-and-forget: provision Plausible site
+			if (this.plausible.isConfigured) {
+				const siteId = `${slug}.patissio.com`
+				this.plausible.createSite(siteId).then(async (result) => {
+					if (result.success) {
+						profile.plausibleSiteId = siteId
+						await profile.save()
+					}
+				})
+			}
 		}
 
 		const token = await User.accessTokens.create(user)

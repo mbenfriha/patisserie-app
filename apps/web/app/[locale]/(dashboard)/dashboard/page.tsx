@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 import { useEffect, useState } from 'react'
+import { AnalyticsStats } from '@/components/dashboard/analytics-stats'
 import { CalendarUpgradeBanner, DashboardCalendar } from '@/components/dashboard/calendar'
 import { api } from '@/lib/api/client'
 import { useAuth } from '@/lib/providers/auth-provider'
@@ -78,6 +79,8 @@ export default function DashboardPage() {
 					</p>
 				</div>
 			</div>
+
+			<AnalyticsStats />
 
 			{user?.profile?.plan === 'pro' || user?.profile?.plan === 'premium' ? (
 				<DashboardCalendar />

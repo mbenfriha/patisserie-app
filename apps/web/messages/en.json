@@ -43,7 +43,14 @@
     "totalOrders": "Total orders",
     "totalRevenue": "Total revenue",
     "activeWorkshops": "Active workshops",
-    "pendingOrders": "Pending orders"
+    "pendingOrders": "Pending orders",
+    "analytics": "Analytics",
+    "visitors30d": "Visitors (30d)",
+    "pageviews30d": "Pageviews (30d)",
+    "bounceRate": "Bounce rate",
+    "avgDuration": "Avg. duration",
+    "realtimeVisitors": "online",
+    "analyticsUnavailable": "Analytics unavailable"
   },
   "home": {
     "title": "Your online pastry showcase",

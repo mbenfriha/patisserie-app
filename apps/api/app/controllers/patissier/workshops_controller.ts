@@ -337,6 +337,56 @@ export default class WorkshopsController {
 		booking.status = status
 		await booking.save()
 
+		// When patissier manually sets pending_payment, create Stripe Checkout and email client
+		if (
+			status === 'pending_payment' &&
+			booking.depositAmount > 0 &&
+			profile.stripeAccountId &&
+			profile.stripeOnboardingComplete
+		) {
+			try {
+				const stripe = new StripeService()
+				const frontendUrl = env.get('FRONTEND_URL')
+				const checkoutUrl = await stripe.createWorkshopDepositCheckout(
+					Math.round(Number(booking.depositAmount)),
+					workshop.title,
+					booking.id,
+					booking.clientEmail,
+					profile.stripeAccountId,
+					`${frontendUrl}/site/${profile.slug}/workshops/${workshop.slug}?payment=success`,
+					`${frontendUrl}/site/${profile.slug}/workshops/${workshop.slug}?payment=cancelled`
+				)
+
+				if (checkoutUrl) {
+					booking.stripeCheckoutSessionId = booking.id
+					await booking.save()
+
+					const dateFormatted = new Date(workshop.date).toLocaleDateString('fr-FR', {
+						weekday: 'long',
+						day: 'numeric',
+						month: 'long',
+						year: 'numeric',
+					})
+
+					const emailService = new EmailService()
+					await emailService.sendStatusUpdate({
+						email: booking.clientEmail,
+						recipientName: booking.clientName,
+						subject: `Réservation en attente de paiement — ${workshop.title}`,
+						title: 'Finalisez votre réservation',
+						body: `Votre réservation pour <strong>${workshop.title}</strong> le ${dateFormatted} (${booking.nbParticipants} place${booking.nbParticipants > 1 ? 's' : ''}) est en attente de paiement.<br><br>Montant de l'acompte : <strong>${booking.depositAmount} €</strong><br><br>Veuillez procéder au paiement pour confirmer votre place.`,
+						actionUrl: checkoutUrl,
+						actionLabel: 'Régler maintenant',
+					})
+				}
+			} catch (err: any) {
+				console.error(
+					`[Workshop] Failed to create checkout for booking ${booking.id}:`,
+					err.message
+				)
+			}
+		}
+
 		return response.ok({
 			success: true,
 			data: booking.serialize(),

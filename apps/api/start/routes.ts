@@ -170,6 +170,7 @@ router
 
 		// Stats
 		router.get('/stats', '#controllers/patissier/stats_controller.index')
+		router.get('/stats/analytics', '#controllers/patissier/stats_controller.analytics')
 
 		// Calendar (Pro+)
 		router

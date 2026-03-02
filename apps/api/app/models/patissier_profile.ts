@@ -173,6 +173,9 @@ export default class PatissierProfile extends BaseModel {
 	@column()
 	declare instagramUserId: string | null
 
+	@column()
+	declare plausibleSiteId: string | null
+
 	@column.dateTime({ autoCreate: true })
 	declare createdAt: DateTime
 
