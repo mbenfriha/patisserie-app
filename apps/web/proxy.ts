@@ -65,7 +65,7 @@ function stripLocale(pathname: string): string {
 	return pathname
 }
 
-export default function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
 	const hostname = request.headers.get('host') || ''
 	const hostWithoutPort = hostname.split(':')[0]
 	const isLocalhost =
