@@ -103,12 +103,29 @@ export default class BookingsController {
 
 		await booking.load('workshop')
 
-		// Only send emails & notifications if no online payment is required.
-		// When payment IS required, emails are sent by the Stripe webhook
-		// after successful payment (checkout.session.completed).
-		if (!canAcceptOnlinePayment) {
+		const emailService = new EmailService()
+
+		if (canAcceptOnlinePayment && checkoutUrl) {
+			// Payment required: send pending payment email with checkout link
+			const dateFormatted = new Date(workshop.date).toLocaleDateString('fr-FR', {
+				weekday: 'long',
+				day: 'numeric',
+				month: 'long',
+				year: 'numeric',
+			})
+
+			await emailService.sendStatusUpdate({
+				email: booking.clientEmail,
+				recipientName: booking.clientName,
+				subject: `Réservation en attente de paiement — ${workshop.title}`,
+				title: 'Finalisez votre réservation',
+				body: `Votre réservation pour <strong>${workshop.title}</strong> le ${dateFormatted} (${booking.nbParticipants} place${booking.nbParticipants > 1 ? 's' : ''}) est en attente de paiement.<br><br>Montant de l'acompte : <strong>${depositAmount / 100 > 0 ? depositAmount : depositAmount} €</strong><br><br>Veuillez procéder au paiement dans les 30 minutes pour confirmer votre place. Passé ce délai, votre réservation sera automatiquement annulée.`,
+				actionUrl: checkoutUrl,
+				actionLabel: 'Régler maintenant',
+			})
+		} else if (!canAcceptOnlinePayment) {
+			// No payment required: send confirmation emails immediately
 			const patissierUser = await User.findOrFail(profile.userId)
-			const emailService = new EmailService()
 
 			// 1. Email client: booking confirmation
 			await emailService.sendBookingConfirmation({
