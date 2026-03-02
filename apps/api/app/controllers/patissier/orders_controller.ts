@@ -74,6 +74,7 @@ export default class OrdersController {
 		const customMessage = request.input('customMessage')
 		const manualTotal = request.input('total')
 		const manualPaymentStatus = request.input('paymentStatus')
+		const depositPercent = request.input('depositPercent')
 
 		// Generate order number
 		const now = DateTime.now()
@@ -131,6 +132,7 @@ export default class OrdersController {
 			status: 'pending',
 			paymentStatus: effectivePaymentStatus,
 			paidAt: effectivePaidAt,
+			depositPercent: depositPercent != null ? Number(depositPercent) : null,
 			customType: type === 'custom' ? customType || null : null,
 			customNbPersonnes: type === 'custom' ? customNbPersonnes || null : null,
 			customDateSouhaitee: type === 'custom' ? customDateSouhaitee || null : null,
@@ -298,6 +300,8 @@ export default class OrdersController {
 		if (confirmedDate) {
 			order.confirmedDate = confirmedDate
 		}
+
+		order.depositPercent = depositPercent ?? 100
 
 		await order.save()
 

@@ -27,19 +27,28 @@ export default class VercelService {
 		}
 	}
 
-	async addDomain(domain: string): Promise<{ success: boolean; error?: string }> {
+	async addDomain(
+		domain: string,
+		options?: { redirect?: string; redirectStatusCode?: number }
+	): Promise<{ success: boolean; error?: string }> {
 		if (!this.isConfigured) {
 			logger.warn('Vercel service not configured, skipping addDomain')
 			return { success: false, error: 'Vercel not configured' }
 		}
 
 		try {
+			const body: Record<string, unknown> = { name: domain }
+			if (options?.redirect) {
+				body.redirect = options.redirect
+				body.redirectStatusCode = options.redirectStatusCode ?? 301
+			}
+
 			const res = await fetch(
 				`https://api.vercel.com/v10/projects/${this.projectId}/domains${this.queryParams}`,
 				{
 					method: 'POST',
 					headers: this.headers,
-					body: JSON.stringify({ name: domain }),
+					body: JSON.stringify(body),
 				}
 			)
 

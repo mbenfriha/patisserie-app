@@ -62,6 +62,7 @@ export default class DomainController {
 			})
 		}
 
+		// Add apex domain
 		const result = await this.vercel.addDomain(domain)
 		if (!result.success) {
 			return response.badRequest({
@@ -69,6 +70,15 @@ export default class DomainController {
 				message: 'Failed to add domain to hosting provider',
 				detail: result.error,
 			})
+		}
+
+		// Add www subdomain with redirect to apex
+		const wwwResult = await this.vercel.addDomain(`www.${domain}`, {
+			redirect: domain,
+			redirectStatusCode: 301,
+		})
+		if (!wwwResult.success) {
+			logger.warn({ domain, error: wwwResult.error }, 'Failed to add www redirect, continuing without it')
 		}
 
 		profile.customDomain = domain
@@ -83,11 +93,18 @@ export default class DomainController {
 			data: {
 				domain,
 				verified: false,
-				dns: {
-					type: 'CNAME',
-					name: domain,
-					value: 'cname.vercel-dns.com',
-				},
+				dns: [
+					{
+						type: 'A',
+						name: domain,
+						value: '76.76.21.21',
+					},
+					{
+						type: 'CNAME',
+						name: `www.${domain}`,
+						value: 'cname.vercel-dns.com',
+					},
+				],
 			},
 		})
 	}
@@ -102,6 +119,7 @@ export default class DomainController {
 
 		const domain = profile.customDomain
 		await this.vercel.removeDomain(domain)
+		await this.vercel.removeDomain(`www.${domain}`)
 
 		profile.customDomain = null
 		profile.customDomainVerified = false
@@ -131,6 +149,13 @@ export default class DomainController {
 		}
 
 		const domain = profile.customDomain
+
+		// Ensure www redirect exists (handles domains added before this feature)
+		await this.vercel.addDomain(`www.${domain}`, {
+			redirect: domain,
+			redirectStatusCode: 301,
+		})
+
 		const config = await this.vercel.getDomainConfig(domain)
 
 		if (!config) {

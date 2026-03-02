@@ -90,6 +90,9 @@ export default class Order extends BaseModel {
 	@column()
 	declare paymentStatus: 'pending' | 'paid' | 'refunded'
 
+	@column()
+	declare depositPercent: number | null
+
 	@column.dateTime()
 	declare paidAt: DateTime | null
 
