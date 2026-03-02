@@ -127,6 +127,7 @@ router
 		// Orders (Pro+)
 		router
 			.group(() => {
+				router.post('/', '#controllers/patissier/orders_controller.store')
 				router.get('/', '#controllers/patissier/orders_controller.index')
 				router.get('/:id', '#controllers/patissier/orders_controller.show')
 				router.put('/:id/status', '#controllers/patissier/orders_controller.updateStatus')

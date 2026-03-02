@@ -1,6 +1,7 @@
 import { BaseModel, belongsTo, column, hasMany } from '@adonisjs/lucid/orm'
 import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations'
 import type { DateTime } from 'luxon'
+import { consumeDateColumn } from '#helpers/date_column'
 import Category from '#models/category'
 import PatissierProfile from '#models/patissier_profile'
 import WorkshopBooking from '#models/workshop_booking'
@@ -46,7 +47,7 @@ export default class Workshop extends BaseModel {
 	@column()
 	declare location: string | null
 
-	@column()
+	@column({ consume: consumeDateColumn })
 	declare date: string
 
 	@column()

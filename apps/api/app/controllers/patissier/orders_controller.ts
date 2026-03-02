@@ -1,8 +1,10 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import { DateTime } from 'luxon'
 import Order from '#models/order'
+import OrderItem from '#models/order_item'
 import OrderMessage from '#models/order_message'
 import PatissierProfile from '#models/patissier_profile'
+import Product from '#models/product'
 import EmailService from '#services/email_service'
 import StripeService from '#services/stripe_service'
 import env from '#start/env'
@@ -32,6 +34,121 @@ export default class OrdersController {
 		return response.ok({
 			success: true,
 			data: orders.serialize(),
+		})
+	}
+
+	async store({ auth, request, response }: HttpContext) {
+		const user = auth.user!
+		const profile = await PatissierProfile.findByOrFail('userId', user.id)
+
+		const type = request.input('type')
+		const clientName = request.input('clientName')
+		const clientEmail = request.input('clientEmail')
+
+		if (!clientName || !clientEmail) {
+			return response.badRequest({
+				success: false,
+				message: 'Le nom et l\'email du client sont requis.',
+			})
+		}
+
+		if (!type || !['catalogue', 'custom'].includes(type)) {
+			return response.badRequest({
+				success: false,
+				message: 'Le type de commande est requis (catalogue ou custom).',
+			})
+		}
+
+		const clientPhone = request.input('clientPhone')
+		const deliveryMethod = request.input('deliveryMethod')
+		const requestedDate = request.input('requestedDate')
+		const deliveryAddress = request.input('deliveryAddress')
+		const deliveryNotes = request.input('deliveryNotes')
+		const patissierNotes = request.input('patissierNotes')
+		const items = request.input('items')
+		const customType = request.input('customType')
+		const customNbPersonnes = request.input('customNbPersonnes')
+		const customDateSouhaitee = request.input('customDateSouhaitee')
+		const customTheme = request.input('customTheme')
+		const customAllergies = request.input('customAllergies')
+		const customMessage = request.input('customMessage')
+
+		// Generate order number
+		const now = DateTime.now()
+		const datePart = now.toFormat('yyyyMMdd')
+		const randomPart = String(Math.floor(Math.random() * 1000)).padStart(3, '0')
+		const orderNumber = `PAT-${datePart}-${randomPart}`
+
+		let subtotal = 0
+
+		// Validate catalogue items
+		if (type === 'catalogue') {
+			if (!items || !Array.isArray(items) || items.length === 0) {
+				return response.badRequest({
+					success: false,
+					message: 'Au moins un article est requis pour une commande catalogue.',
+				})
+			}
+
+			for (const item of items) {
+				const product = await Product.find(item.product_id)
+				if (!product || product.patissierId !== profile.id) {
+					return response.notFound({
+						success: false,
+						message: `Produit ${item.product_id} introuvable.`,
+					})
+				}
+				subtotal += product.price * item.quantity
+			}
+		}
+
+		const order = await Order.create({
+			orderNumber,
+			patissierId: profile.id,
+			type,
+			clientName,
+			clientEmail,
+			clientPhone: clientPhone || null,
+			deliveryMethod: deliveryMethod || 'pickup',
+			requestedDate: requestedDate || null,
+			deliveryAddress: deliveryAddress || null,
+			deliveryNotes: deliveryNotes || null,
+			patissierNotes: patissierNotes || null,
+			subtotal: type === 'catalogue' ? subtotal : null,
+			total: type === 'catalogue' ? subtotal : null,
+			status: 'pending',
+			paymentStatus: 'pending',
+			customType: type === 'custom' ? customType || null : null,
+			customNbPersonnes: type === 'custom' ? customNbPersonnes || null : null,
+			customDateSouhaitee: type === 'custom' ? customDateSouhaitee || null : null,
+			customTheme: type === 'custom' ? customTheme || null : null,
+			customAllergies: type === 'custom' ? customAllergies || null : null,
+			customMessage: type === 'custom' ? customMessage || null : null,
+		})
+
+		// Create order items for catalogue orders
+		if (type === 'catalogue' && items) {
+			for (const item of items) {
+				const product = await Product.find(item.product_id)
+				if (product) {
+					await OrderItem.create({
+						orderId: order.id,
+						productId: product.id,
+						productName: product.name,
+						unitPrice: product.price,
+						quantity: item.quantity,
+						total: product.price * item.quantity,
+						specialInstructions: item.special_instructions || null,
+					})
+				}
+			}
+		}
+
+		await order.load('items')
+
+		return response.created({
+			success: true,
+			data: order.serialize(),
 		})
 	}
 

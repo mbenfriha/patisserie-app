@@ -1,6 +1,7 @@
 import { BaseModel, belongsTo, column, hasMany } from '@adonisjs/lucid/orm'
 import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations'
 import type { DateTime } from 'luxon'
+import { consumeDateColumn } from '#helpers/date_column'
 import OrderItem from '#models/order_item'
 import OrderMessage from '#models/order_message'
 import PatissierProfile from '#models/patissier_profile'
@@ -37,7 +38,7 @@ export default class Order extends BaseModel {
 	@column()
 	declare customNbPersonnes: number | null
 
-	@column()
+	@column({ consume: consumeDateColumn })
 	declare customDateSouhaitee: string | null
 
 	@column()
@@ -71,10 +72,10 @@ export default class Order extends BaseModel {
 	@column()
 	declare deliveryMethod: 'pickup' | 'delivery'
 
-	@column()
+	@column({ consume: consumeDateColumn })
 	declare requestedDate: string | null
 
-	@column()
+	@column({ consume: consumeDateColumn })
 	declare confirmedDate: string | null
 
 	@column()
