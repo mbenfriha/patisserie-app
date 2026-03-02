@@ -90,16 +90,6 @@ export default class StatsController {
 		const profile = await PatissierProfile.findByOrFail('userId', user.id)
 		const period = (request.qs().period as string) || '30d'
 
-		// Lazy-provision: if plausibleSiteId is null, create it now (backfill)
-		if (!profile.plausibleSiteId && this.plausible.isConfigured) {
-			const siteId = `${profile.slug}.patissio.com`
-			const result = await this.plausible.createSite(siteId)
-			if (result.success) {
-				profile.plausibleSiteId = siteId
-				await profile.save()
-			}
-		}
-
 		if (!profile.plausibleSiteId) {
 			return response.ok({
 				success: true,
