@@ -14,7 +14,10 @@ import env from '#start/env'
 function toDateTime(value: any): DateTime {
 	if (!value) return DateTime.now()
 	if (typeof value === 'number') return DateTime.fromSeconds(value)
-	if (typeof value === 'string') return DateTime.fromISO(value).isValid ? DateTime.fromISO(value) : DateTime.fromSeconds(Number(value))
+	if (typeof value === 'string')
+		return DateTime.fromISO(value).isValid
+			? DateTime.fromISO(value)
+			: DateTime.fromSeconds(Number(value))
 	return DateTime.now()
 }
 
@@ -38,7 +41,10 @@ export default class StripeController {
 			event = this.stripeService.constructWebhookEvent(rawBody!, signature, webhookSecret)
 		} catch (err: any) {
 			console.error('[Stripe Webhook] Signature verification failed:', err.message)
-			return response.badRequest({ success: false, message: `Webhook signature verification failed: ${err.message}` })
+			return response.badRequest({
+				success: false,
+				message: `Webhook signature verification failed: ${err.message}`,
+			})
 		}
 
 		console.log(`[Stripe Webhook] ← ${event.type}`)
@@ -88,7 +94,9 @@ export default class StripeController {
 			return
 		}
 
-		const stripeSubscription = await this.stripeService.getSubscription(session.subscription) as any
+		const stripeSubscription = (await this.stripeService.getSubscription(
+			session.subscription
+		)) as any
 		const priceId = stripeSubscription.items.data[0]?.price?.id
 		if (!priceId) {
 			console.error('[Stripe Webhook] No priceId found on subscription')
@@ -146,7 +154,9 @@ export default class StripeController {
 			await this.syncVercelSubdomain(profile, oldPlan, planInfo.plan)
 		}
 
-		console.log(`[Stripe Webhook] Subscription activated for user ${userId}: ${planInfo.plan} (${planInfo.interval})`)
+		console.log(
+			`[Stripe Webhook] Subscription activated for user ${userId}: ${planInfo.plan} (${planInfo.interval})`
+		)
 	}
 
 	private async handlePaymentCheckout(session: any) {
@@ -186,18 +196,20 @@ export default class StripeController {
 
 		console.log(`[Stripe Webhook] Booking ${bookingId} confirmed (payment received)`)
 
-		// Send payment confirmation email with workshop recap
-		try {
-			const workshop = await Workshop.query()
-				.where('id', booking.workshopId)
-				.preload('patissier')
-				.firstOrFail()
+		const workshop = await Workshop.query()
+			.where('id', booking.workshopId)
+			.preload('patissier')
+			.firstOrFail()
 
+		const profile = workshop.patissier
+
+		// Send payment confirmation email to client
+		try {
 			await this.emailService.sendPaymentConfirmation({
 				clientEmail: booking.clientEmail,
 				clientName: booking.clientName,
 				workshopTitle: workshop.title,
-				patissierName: workshop.patissier.businessName,
+				patissierName: profile.businessName,
 				date: workshop.date,
 				startTime: workshop.startTime,
 				location: workshop.location,
@@ -208,15 +220,69 @@ export default class StripeController {
 				remainingAmount: Number(booking.remainingAmount),
 			})
 		} catch (err: any) {
-			console.error(`[Stripe Webhook] Failed to send payment confirmation email for booking ${bookingId}:`, err.message)
+			console.error(
+				`[Stripe Webhook] Failed to send payment confirmation email for booking ${bookingId}:`,
+				err.message
+			)
+		}
+
+		// Send booking confirmation email to client
+		try {
+			await this.emailService.sendBookingConfirmation({
+				clientEmail: booking.clientEmail,
+				clientName: booking.clientName,
+				workshopTitle: workshop.title,
+				patissierName: profile.businessName,
+				date: workshop.date,
+				startTime: workshop.startTime,
+				nbParticipants: booking.nbParticipants,
+				totalPrice: booking.totalPrice,
+				depositAmount: booking.depositAmount,
+			})
+		} catch (err: any) {
+			console.error(
+				`[Stripe Webhook] Failed to send booking confirmation email for booking ${bookingId}:`,
+				err.message
+			)
+		}
+
+		// Send new booking notification email to patissier
+		try {
+			const User = (await import('#models/user')).default
+			const patissierUser = await User.findOrFail(profile.userId)
+
+			await this.emailService.sendNewBookingNotification({
+				patissierEmail: patissierUser.email,
+				patissierName: profile.businessName,
+				clientName: booking.clientName,
+				clientEmail: booking.clientEmail,
+				workshopTitle: workshop.title,
+				date: workshop.date,
+				startTime: workshop.startTime,
+				nbParticipants: booking.nbParticipants,
+				depositAmount: booking.depositAmount,
+			})
+
+			// In-app notification to patissier
+			const NotificationService = (await import('#services/notification_service')).default
+			const notificationService = new NotificationService()
+			await notificationService.create(
+				patissierUser.id,
+				'new_booking',
+				`Nouvelle réservation : ${workshop.title}`,
+				`${booking.clientName} a réservé ${booking.nbParticipants} place(s)`,
+				{ bookingId: booking.id, workshopId: workshop.id }
+			)
+		} catch (err: any) {
+			console.error(
+				`[Stripe Webhook] Failed to send patissier notifications for booking ${bookingId}:`,
+				err.message
+			)
 		}
 	}
 
 	private async handleOrderPayment(session: any, orderId: string) {
-		const order = await Order.query()
-			.where('id', orderId)
-			.preload('patissier')
-			.first()
+		const order = await Order.query().where('id', orderId).preload('patissier').first()
 
 		if (!order) {
 			console.error('[Stripe Webhook] Order not found:', orderId)
@@ -244,14 +310,16 @@ export default class StripeController {
 		let amountPaid: number
 		try {
 			const fullSession = await this.stripeService.retrieveCheckoutSession(session.id)
-			amountPaid = fullSession.amount_total ? (fullSession.amount_total / 100) : Number(order.quotedPrice)
+			amountPaid = fullSession.amount_total
+				? fullSession.amount_total / 100
+				: Number(order.quotedPrice)
 		} catch {
-			amountPaid = session.amount_total ? (session.amount_total / 100) : Number(order.quotedPrice)
+			amountPaid = session.amount_total ? session.amount_total / 100 : Number(order.quotedPrice)
 		}
 
 		const totalPrice = Number(order.quotedPrice)
 		const isDeposit = amountPaid < totalPrice
-		const remainingAmount = isDeposit ? (totalPrice - amountPaid) : 0
+		const remainingAmount = isDeposit ? totalPrice - amountPaid : 0
 
 		// Send payment confirmation email to client
 		try {
@@ -267,12 +335,17 @@ export default class StripeController {
 				body: `Votre ${isDeposit ? 'acompte' : 'paiement'} de <strong>${amountPaid.toFixed(2)} €</strong> pour la commande #${order.orderNumber} a bien été reçu. ${order.patissier.businessName} va prendre en charge votre commande.${depositInfo}`,
 			})
 		} catch (err: any) {
-			console.error(`[Stripe Webhook] Failed to send payment confirmation to client for order ${orderId}:`, err.message)
+			console.error(
+				`[Stripe Webhook] Failed to send payment confirmation to client for order ${orderId}:`,
+				err.message
+			)
 		}
 
 		// Send notification email to patissier
 		try {
-			const patissierUser = await import('#models/user').then((m) => m.default.find(order.patissier.userId))
+			const patissierUser = await import('#models/user').then((m) =>
+				m.default.find(order.patissier.userId)
+			)
 			if (patissierUser) {
 				await this.emailService.sendStatusUpdate({
 					email: patissierUser.email,
@@ -285,7 +358,10 @@ export default class StripeController {
 				})
 			}
 		} catch (err: any) {
-			console.error(`[Stripe Webhook] Failed to send payment notification to patissier for order ${orderId}:`, err.message)
+			console.error(
+				`[Stripe Webhook] Failed to send payment notification to patissier for order ${orderId}:`,
+				err.message
+			)
 		}
 	}
 
@@ -348,7 +424,10 @@ export default class StripeController {
 				await this.vercel.removeDomain(profile.customDomain)
 				profile.customDomain = null
 				profile.customDomainVerified = false
-				logger.info({ domain: profile.customDomain, profileId: profile.id }, 'Custom domain removed on downgrade')
+				logger.info(
+					{ domain: profile.customDomain, profileId: profile.id },
+					'Custom domain removed on downgrade'
+				)
 			}
 
 			await profile.save()
@@ -357,7 +436,9 @@ export default class StripeController {
 			await this.syncVercelSubdomain(profile, oldPlan, 'starter')
 		}
 
-		console.log(`[Stripe Webhook] Subscription ${subscription.id} deleted, user ${sub.userId} downgraded to starter`)
+		console.log(
+			`[Stripe Webhook] Subscription ${subscription.id} deleted, user ${sub.userId} downgraded to starter`
+		)
 	}
 
 	private async handleInvoicePaid(invoice: any) {
@@ -399,7 +480,9 @@ export default class StripeController {
 		if (account.charges_enabled && account.details_submitted && transfersActive) {
 			profile.stripeOnboardingComplete = true
 			await profile.save()
-			console.log(`[Stripe Webhook] Connect account ${account.id} onboarding complete (transfers active)`)
+			console.log(
+				`[Stripe Webhook] Connect account ${account.id} onboarding complete (transfers active)`
+			)
 		}
 	}
 
@@ -407,11 +490,7 @@ export default class StripeController {
 	 * Add or remove a Vercel subdomain (slug.patissio.com)
 	 * when a patissier's plan changes.
 	 */
-	private async syncVercelSubdomain(
-		profile: PatissierProfile,
-		oldPlan: string,
-		newPlan: string
-	) {
+	private async syncVercelSubdomain(profile: PatissierProfile, oldPlan: string, newPlan: string) {
 		if (!this.vercel.isConfigured) return
 
 		const needsSubdomain = newPlan === 'pro' || newPlan === 'premium'

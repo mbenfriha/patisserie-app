@@ -1,4 +1,5 @@
 import type { HttpContext } from '@adonisjs/core/http'
+import { DateTime } from 'luxon'
 import PatissierProfile from '#models/patissier_profile'
 import User from '#models/user'
 import Workshop from '#models/workshop'
@@ -36,6 +37,14 @@ export default class BookingsController {
 			})
 		}
 
+		// Expire stale pending_payment bookings (older than 30 minutes)
+		const expirationCutoff = DateTime.now().minus({ minutes: 30 }).toSQL()
+		await WorkshopBooking.query()
+			.where('workshopId', workshop.id)
+			.where('status', 'pending_payment')
+			.where('createdAt', '<', expirationCutoff!)
+			.update({ status: 'cancelled', cancellationReason: 'payment_expired' })
+
 		const existingBookings = await WorkshopBooking.query()
 			.where('workshopId', workshop.id)
 			.whereNot('status', 'cancelled')
@@ -54,9 +63,8 @@ export default class BookingsController {
 		const remainingAmount = totalPrice - depositAmount
 
 		const profile = await PatissierProfile.findOrFail(workshop.patissierId)
-		const canAcceptOnlinePayment = depositAmount > 0
-			&& profile.stripeAccountId
-			&& profile.stripeOnboardingComplete
+		const canAcceptOnlinePayment =
+			depositAmount > 0 && profile.stripeAccountId && profile.stripeOnboardingComplete
 
 		const booking = await WorkshopBooking.create({
 			workshopId: workshop.id,
@@ -85,52 +93,59 @@ export default class BookingsController {
 				clientEmail,
 				profile.stripeAccountId!,
 				`${frontendUrl}/site/${profile.slug}/workshops/${workshop.slug}?payment=success`,
-				`${frontendUrl}/site/${profile.slug}/workshops/${workshop.slug}?payment=cancelled`,
+				`${frontendUrl}/site/${profile.slug}/workshops/${workshop.slug}?payment=cancelled`
 			)
-			booking.stripeCheckoutSessionId = checkoutUrl ? booking.id : null
+			if (checkoutUrl) {
+				booking.stripeCheckoutSessionId = booking.id
+				await booking.save()
+			}
 		}
 
 		await booking.load('workshop')
 
-		// Send emails & notification
-		const patissierUser = await User.findOrFail(profile.userId)
-		const emailService = new EmailService()
+		// Only send emails & notifications if no online payment is required.
+		// When payment IS required, emails are sent by the Stripe webhook
+		// after successful payment (checkout.session.completed).
+		if (!canAcceptOnlinePayment) {
+			const patissierUser = await User.findOrFail(profile.userId)
+			const emailService = new EmailService()
 
-		// 1. Email client: booking confirmation
-		await emailService.sendBookingConfirmation({
-			clientEmail: booking.clientEmail,
-			clientName: booking.clientName,
-			workshopTitle: workshop.title,
-			patissierName: profile.businessName,
-			date: workshop.date,
-			startTime: workshop.startTime,
-			nbParticipants: booking.nbParticipants,
-			totalPrice: booking.totalPrice,
-			depositAmount: booking.depositAmount,
-		})
+			// 1. Email client: booking confirmation
+			await emailService.sendBookingConfirmation({
+				clientEmail: booking.clientEmail,
+				clientName: booking.clientName,
+				workshopTitle: workshop.title,
+				patissierName: profile.businessName,
+				date: workshop.date,
+				startTime: workshop.startTime,
+				nbParticipants: booking.nbParticipants,
+				totalPrice: booking.totalPrice,
+				depositAmount: booking.depositAmount,
+			})
 
-		// 2. Email patissier: new booking notification
-		await emailService.sendNewBookingNotification({
-			patissierEmail: patissierUser.email,
-			patissierName: profile.businessName,
-			clientName: booking.clientName,
-			clientEmail: booking.clientEmail,
-			workshopTitle: workshop.title,
-			date: workshop.date,
-			startTime: workshop.startTime,
-			nbParticipants: booking.nbParticipants,
-			depositAmount: booking.depositAmount,
-		})
+			// 2. Email patissier: new booking notification
+			await emailService.sendNewBookingNotification({
+				patissierEmail: patissierUser.email,
+				patissierName: profile.businessName,
+				clientName: booking.clientName,
+				clientEmail: booking.clientEmail,
+				workshopTitle: workshop.title,
+				date: workshop.date,
+				startTime: workshop.startTime,
+				nbParticipants: booking.nbParticipants,
+				depositAmount: booking.depositAmount,
+			})
 
-		// 3. In-app notification to patissier
-		const notificationService = new NotificationService()
-		await notificationService.create(
-			patissierUser.id,
-			'new_booking',
-			`Nouvelle réservation : ${workshop.title}`,
-			`${booking.clientName} a réservé ${booking.nbParticipants} place(s)`,
-			{ bookingId: booking.id, workshopId: workshop.id },
-		)
+			// 3. In-app notification to patissier
+			const notificationService = new NotificationService()
+			await notificationService.create(
+				patissierUser.id,
+				'new_booking',
+				`Nouvelle réservation : ${workshop.title}`,
+				`${booking.clientName} a réservé ${booking.nbParticipants} place(s)`,
+				{ bookingId: booking.id, workshopId: workshop.id }
+			)
+		}
 
 		return response.created({
 			success: true,
@@ -142,10 +157,7 @@ export default class BookingsController {
 	}
 
 	async show({ params, response }: HttpContext) {
-		const booking = await WorkshopBooking.query()
-			.where('id', params.id)
-			.preload('workshop')
-			.first()
+		const booking = await WorkshopBooking.query().where('id', params.id).preload('workshop').first()
 
 		if (!booking) {
 			return response.notFound({ success: false, message: 'Booking not found' })
@@ -158,10 +170,7 @@ export default class BookingsController {
 	}
 
 	async cancel({ params, request, response }: HttpContext) {
-		const booking = await WorkshopBooking.query()
-			.where('id', params.id)
-			.preload('workshop')
-			.first()
+		const booking = await WorkshopBooking.query().where('id', params.id).preload('workshop').first()
 
 		if (!booking) {
 			return response.notFound({ success: false, message: 'Booking not found' })
