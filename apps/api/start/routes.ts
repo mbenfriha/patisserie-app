@@ -132,6 +132,7 @@ router
 				router.get('/:id', '#controllers/patissier/orders_controller.show')
 				router.put('/:id/status', '#controllers/patissier/orders_controller.updateStatus')
 				router.put('/:id/quote', '#controllers/patissier/orders_controller.quote')
+			router.put('/:id/payment', '#controllers/patissier/orders_controller.markPaid')
 				router.get('/:id/messages', '#controllers/patissier/orders_controller.messages')
 				router.post('/:id/messages', '#controllers/patissier/orders_controller.sendMessage')
 			})

@@ -78,6 +78,18 @@ const statusLabels: Record<string, string> = {
 	cancelled: 'Annulee',
 }
 
+const paymentStatusColors: Record<string, string> = {
+	paid: 'bg-green-100 text-green-800',
+	pending: 'bg-yellow-100 text-yellow-800',
+	refunded: 'bg-red-100 text-red-800',
+}
+
+const paymentStatusLabels: Record<string, string> = {
+	paid: 'Payé',
+	pending: 'En attente',
+	refunded: 'Remboursé',
+}
+
 const allStatuses = [
 	'pending',
 	'confirmed',
@@ -110,6 +122,9 @@ export default function PatissierOrderDetailPage() {
 	const [isSubmittingQuote, setIsSubmittingQuote] = useState(false)
 	const [quoteError, setQuoteError] = useState('')
 	const [quoteSuccess, setQuoteSuccess] = useState('')
+
+	// Mark as paid
+	const [isMarkingPaid, setIsMarkingPaid] = useState(false)
 
 	// Messages
 	const [newMessage, setNewMessage] = useState('')
@@ -188,6 +203,19 @@ export default function PatissierOrderDetailPage() {
 			setQuoteError(err.message || "Erreur lors de l'envoi du devis")
 		} finally {
 			setIsSubmittingQuote(false)
+		}
+	}
+
+	const handleMarkPaid = async () => {
+		if (!order) return
+		setIsMarkingPaid(true)
+		try {
+			const res = await api.put(`/patissier/orders/${orderId}/payment`)
+			setOrder({ ...order, ...res.data.data })
+		} catch (err: any) {
+			setError(err.message || 'Erreur lors du marquage du paiement')
+		} finally {
+			setIsMarkingPaid(false)
 		}
 	}
 
@@ -386,7 +414,23 @@ export default function PatissierOrderDetailPage() {
 						)}
 						<div>
 							<p className="text-sm text-muted-foreground">Paiement</p>
-							<p className="text-sm font-medium capitalize">{order.paymentStatus}</p>
+							<div className="mt-1 flex items-center gap-2">
+								<span
+									className={`rounded-full px-2 py-0.5 text-xs font-medium ${paymentStatusColors[order.paymentStatus] || 'bg-gray-100'}`}
+								>
+									{paymentStatusLabels[order.paymentStatus] || order.paymentStatus}
+								</span>
+								{order.paymentStatus === 'pending' && (
+									<button
+										type="button"
+										onClick={handleMarkPaid}
+										disabled={isMarkingPaid}
+										className="rounded-md border border-green-300 bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 hover:bg-green-100 disabled:opacity-50"
+									>
+										{isMarkingPaid ? 'Mise à jour...' : 'Marquer comme payé'}
+									</button>
+								)}
+							</div>
 						</div>
 					</div>
 				</div>

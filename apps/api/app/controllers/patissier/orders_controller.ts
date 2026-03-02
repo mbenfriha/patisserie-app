@@ -72,6 +72,8 @@ export default class OrdersController {
 		const customTheme = request.input('customTheme')
 		const customAllergies = request.input('customAllergies')
 		const customMessage = request.input('customMessage')
+		const manualTotal = request.input('total')
+		const manualPaymentStatus = request.input('paymentStatus')
 
 		// Generate order number
 		const now = DateTime.now()
@@ -102,6 +104,16 @@ export default class OrdersController {
 			}
 		}
 
+		// Determine total: manual total overrides, then catalogue subtotal, then null
+		const computedTotal = manualTotal != null ? Number(manualTotal) : type === 'catalogue' ? subtotal : null
+
+		// Determine payment status and paidAt
+		const effectivePaymentStatus =
+			manualPaymentStatus && ['pending', 'paid'].includes(manualPaymentStatus)
+				? manualPaymentStatus
+				: 'pending'
+		const effectivePaidAt = effectivePaymentStatus === 'paid' ? DateTime.now() : null
+
 		const order = await Order.create({
 			orderNumber,
 			patissierId: profile.id,
@@ -114,10 +126,11 @@ export default class OrdersController {
 			deliveryAddress: deliveryAddress || null,
 			deliveryNotes: deliveryNotes || null,
 			patissierNotes: patissierNotes || null,
-			subtotal: type === 'catalogue' ? subtotal : null,
-			total: type === 'catalogue' ? subtotal : null,
+			subtotal: type === 'catalogue' ? subtotal : computedTotal,
+			total: computedTotal,
 			status: 'pending',
-			paymentStatus: 'pending',
+			paymentStatus: effectivePaymentStatus,
+			paidAt: effectivePaidAt,
 			customType: type === 'custom' ? customType || null : null,
 			customNbPersonnes: type === 'custom' ? customNbPersonnes || null : null,
 			customDateSouhaitee: type === 'custom' ? customDateSouhaitee || null : null,
@@ -218,6 +231,25 @@ export default class OrdersController {
 			}
 		}
 
+		await order.save()
+
+		return response.ok({
+			success: true,
+			data: order.serialize(),
+		})
+	}
+
+	async markPaid({ auth, params, response }: HttpContext) {
+		const user = auth.user!
+		const profile = await PatissierProfile.findByOrFail('userId', user.id)
+
+		const order = await Order.query()
+			.where('id', params.id)
+			.where('patissierId', profile.id)
+			.firstOrFail()
+
+		order.paymentStatus = 'paid'
+		order.paidAt = DateTime.now()
 		await order.save()
 
 		return response.ok({

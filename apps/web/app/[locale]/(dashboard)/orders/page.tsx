@@ -14,6 +14,8 @@ interface Order {
 	type: 'catalogue' | 'custom'
 	status: string
 	total: number | null
+	requestedDate: string | null
+	paymentStatus: 'pending' | 'paid' | 'refunded'
 	createdAt: string
 }
 
@@ -40,6 +42,9 @@ interface CreateForm {
 	deliveryAddress: string
 	deliveryNotes: string
 	patissierNotes: string
+	total: string
+	depositPercent: string
+	depositPaid: boolean
 	// Devis fields
 	customType: string
 	customNbPersonnes: string
@@ -59,6 +64,9 @@ const emptyForm: CreateForm = {
 	deliveryAddress: '',
 	deliveryNotes: '',
 	patissierNotes: '',
+	total: '',
+	depositPercent: '100',
+	depositPaid: false,
 	customType: '',
 	customNbPersonnes: '',
 	customDateSouhaitee: '',
@@ -85,6 +93,18 @@ const statusLabels: Record<string, string> = {
 	delivered: 'Livrée',
 	picked_up: 'Récupérée',
 	cancelled: 'Annulée',
+}
+
+const paymentStatusColors: Record<string, string> = {
+	paid: 'bg-green-100 text-green-800',
+	pending: 'bg-yellow-100 text-yellow-800',
+	refunded: 'bg-red-100 text-red-800',
+}
+
+const paymentStatusLabels: Record<string, string> = {
+	paid: 'Payé',
+	pending: 'En attente',
+	refunded: 'Remboursé',
 }
 
 const typeLabels: Record<string, string> = {
@@ -247,6 +267,9 @@ export default function OrdersPage() {
 				requestedDate: form.requestedDate || undefined,
 				deliveryMethod: form.deliveryMethod,
 				patissierNotes: form.patissierNotes || undefined,
+				...(form.total ? { total: Number(form.total) } : {}),
+				...(form.total ? { depositPercent: Number(form.depositPercent) } : {}),
+				...(form.depositPaid ? { paymentStatus: 'paid' } : {}),
 			}
 
 			if (form.deliveryMethod === 'delivery') {
@@ -427,8 +450,19 @@ export default function OrdersPage() {
 										</span>
 									</div>
 									<div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
-										<span>{typeLabels[order.type] || order.type}</span>
-										<span>{new Date(order.createdAt).toLocaleDateString('fr-FR')}</span>
+										<span className="flex items-center gap-2">
+											{typeLabels[order.type] || order.type}
+											<span
+												className={`rounded-full px-1.5 py-0.5 text-xs font-medium ${paymentStatusColors[order.paymentStatus] || 'bg-gray-100'}`}
+											>
+												{paymentStatusLabels[order.paymentStatus] || order.paymentStatus}
+											</span>
+										</span>
+										<span>
+											{order.requestedDate
+												? new Date(order.requestedDate).toLocaleDateString('fr-FR')
+												: '-'}
+										</span>
 									</div>
 								</Link>
 							))}
@@ -444,7 +478,10 @@ export default function OrdersPage() {
 										<th className="px-4 py-3 text-left text-sm font-medium">Type</th>
 										<th className="px-4 py-3 text-left text-sm font-medium">Statut</th>
 										<th className="hidden px-4 py-3 text-left text-sm font-medium md:table-cell">
-											Date
+											Paiement
+										</th>
+										<th className="hidden px-4 py-3 text-left text-sm font-medium md:table-cell">
+											Date souhaitée
 										</th>
 										<th className="px-4 py-3 text-right text-sm font-medium">Total</th>
 									</tr>
@@ -472,8 +509,17 @@ export default function OrdersPage() {
 													{statusLabels[order.status] || order.status}
 												</span>
 											</td>
+											<td className="hidden px-4 py-3 md:table-cell">
+												<span
+													className={`rounded-full px-2 py-1 text-xs font-medium ${paymentStatusColors[order.paymentStatus] || 'bg-gray-100'}`}
+												>
+													{paymentStatusLabels[order.paymentStatus] || order.paymentStatus}
+												</span>
+											</td>
 											<td className="hidden px-4 py-3 text-sm text-muted-foreground md:table-cell">
-												{new Date(order.createdAt).toLocaleDateString('fr-FR')}
+												{order.requestedDate
+													? new Date(order.requestedDate).toLocaleDateString('fr-FR')
+													: '-'}
 											</td>
 											<td className="px-4 py-3 text-right text-sm">
 												{order.total != null ? `${order.total} €` : '-'}
@@ -623,6 +669,63 @@ export default function OrdersPage() {
 										rows={2}
 										placeholder="Notes visibles uniquement par vous..."
 									/>
+								</div>
+
+								{/* Total + acompte */}
+								<div className="space-y-3 rounded-lg border bg-muted/30 p-3">
+									<label className="block text-sm font-medium">Paiement</label>
+									<div className="grid gap-4 sm:grid-cols-2">
+										<div>
+											<label className="mb-1 block text-xs text-muted-foreground">
+												Montant total (€)
+											</label>
+											<input
+												type="number"
+												step="0.01"
+												min="0"
+												value={form.total}
+												onChange={(e) => setForm((f) => ({ ...f, total: e.target.value }))}
+												className="w-full rounded border px-3 py-2 text-sm"
+												placeholder="0.00"
+											/>
+										</div>
+										<div>
+											<label className="mb-1 block text-xs text-muted-foreground">
+												Acompte demandé (%)
+											</label>
+											<select
+												value={form.depositPercent}
+												onChange={(e) =>
+													setForm((f) => ({ ...f, depositPercent: e.target.value }))
+												}
+												className="w-full rounded border px-3 py-2 text-sm"
+											>
+												<option value="30">30%</option>
+												<option value="50">50%</option>
+												<option value="70">70%</option>
+												<option value="100">100% (paiement intégral)</option>
+											</select>
+										</div>
+									</div>
+									{form.total && (
+										<p className="text-xs text-muted-foreground">
+											Acompte :{' '}
+											<strong>
+												{((Number(form.total) * Number(form.depositPercent)) / 100).toFixed(2)} €
+											</strong>
+										</p>
+									)}
+									<label className="flex items-center gap-2 text-sm">
+										<input
+											type="checkbox"
+											checked={form.depositPaid}
+											onChange={(e) =>
+												setForm((f) => ({ ...f, depositPaid: e.target.checked }))
+											}
+											className="h-4 w-4 rounded border"
+										/>
+										Acompte déjà payé (paiement en boutique, espèces...)
+									</label>
 								</div>
 
 								{/* Catalogue-specific fields */}
