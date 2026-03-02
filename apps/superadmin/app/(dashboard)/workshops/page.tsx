@@ -7,11 +7,13 @@ import { api, ApiError } from '@/lib/api/client'
 interface WorkshopData {
 	id: string
 	title: string
-	patissierName: string
 	date: string
 	capacity: number
-	bookingsCount: number
 	status: string
+	patissier: {
+		businessName: string
+	}
+	bookings: unknown[]
 }
 
 export default function WorkshopsPage() {
@@ -112,7 +114,7 @@ export default function WorkshopsPage() {
 											{workshop.title}
 										</td>
 										<td className="px-6 py-4 text-sm text-foreground">
-											{workshop.patissierName}
+											{workshop.patissier?.businessName || '-'}
 										</td>
 										<td className="px-6 py-4 text-sm text-foreground">
 											{new Date(workshop.date).toLocaleDateString('fr-FR', {
@@ -128,11 +130,11 @@ export default function WorkshopsPage() {
 										</td>
 										<td className="px-6 py-4 text-sm text-foreground">
 											<span className={`font-medium ${
-												workshop.bookingsCount >= workshop.capacity
+												(workshop.bookings?.length ?? 0) >= workshop.capacity
 													? 'text-destructive'
 													: 'text-foreground'
 											}`}>
-												{workshop.bookingsCount}
+												{workshop.bookings?.length ?? 0}
 											</span>
 											<span className="text-muted-foreground"> / {workshop.capacity}</span>
 										</td>

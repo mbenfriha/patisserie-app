@@ -7,12 +7,14 @@ import { api, ApiError } from '@/lib/api/client'
 interface OrderData {
 	id: string
 	orderNumber: string
-	patissierName: string
 	clientName: string
 	type: string
 	status: string
-	total: number
+	total: string | null
 	createdAt: string
+	patissier: {
+		businessName: string
+	}
 }
 
 export default function OrdersPage() {
@@ -114,7 +116,7 @@ export default function OrdersPage() {
 											{order.orderNumber}
 										</td>
 										<td className="px-6 py-4 text-sm text-foreground">
-											{order.patissierName}
+											{order.patissier?.businessName || '-'}
 										</td>
 										<td className="px-6 py-4 text-sm text-foreground">
 											{order.clientName}
@@ -130,7 +132,7 @@ export default function OrdersPage() {
 											</span>
 										</td>
 										<td className="px-6 py-4 text-sm font-medium text-foreground">
-											{order.total.toFixed(2)} EUR
+											{order.total ? `${Number.parseFloat(order.total).toFixed(2)} €` : '-'}
 										</td>
 										<td className="px-6 py-4 text-sm text-muted-foreground">
 											{new Date(order.createdAt).toLocaleDateString('fr-FR')}

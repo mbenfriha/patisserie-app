@@ -6,11 +6,13 @@ import { api, ApiError } from '@/lib/api/client'
 
 interface SubscriptionData {
 	id: string
-	userEmail: string
 	plan: string
-	interval: string
+	billingInterval: string
 	status: string
 	currentPeriodEnd: string
+	user: {
+		email: string
+	}
 }
 
 export default function SubscriptionsPage() {
@@ -108,7 +110,7 @@ export default function SubscriptionsPage() {
 								{subscriptions.map((sub) => (
 									<tr key={sub.id} className="border-b border-border hover:bg-secondary/30">
 										<td className="px-6 py-4 text-sm text-foreground">
-											{sub.userEmail}
+											{sub.user?.email || '-'}
 										</td>
 										<td className="px-6 py-4">
 											<span className="px-2 py-1 text-xs font-medium rounded-full bg-primary/10 text-primary">
@@ -116,7 +118,7 @@ export default function SubscriptionsPage() {
 											</span>
 										</td>
 										<td className="px-6 py-4 text-sm text-foreground">
-											{sub.interval === 'month' ? 'Mensuel' : sub.interval === 'year' ? 'Annuel' : sub.interval}
+											{sub.billingInterval === 'month' ? 'Mensuel' : sub.billingInterval === 'year' ? 'Annuel' : sub.billingInterval}
 										</td>
 										<td className="px-6 py-4">
 											<span className={`px-2 py-1 text-xs font-medium rounded-full ${statusColor(sub.status)}`}>

@@ -6,13 +6,17 @@ import { api, ApiError } from '@/lib/api/client'
 
 interface PatissierData {
 	id: string
-	businessName: string
-	slug: string
-	plan: string
-	ordersCount: number
-	stripeAccountId: string | null
-	stripeStatus: string | null
-	createdAt: string
+	email: string
+	fullName: string | null
+	patissierProfile: {
+		id: string
+		businessName: string
+		slug: string
+		plan: string
+		stripeAccountId: string | null
+		stripeOnboardingComplete: boolean
+		createdAt: string
+	}
 }
 
 export default function PatissiersPage() {
@@ -86,48 +90,51 @@ export default function PatissiersPage() {
 									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">Nom</th>
 									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">Slug</th>
 									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">Plan</th>
-									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">Commandes</th>
+									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">Email</th>
 									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">Stripe</th>
 									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">Date</th>
 								</tr>
 							</thead>
 							<tbody>
-								{patissiers.map((patissier) => (
-									<tr key={patissier.id} className="border-b border-border hover:bg-secondary/30">
-										<td className="px-6 py-4 text-sm font-medium text-foreground">
-											{patissier.businessName}
-										</td>
-										<td className="px-6 py-4 text-sm text-muted-foreground">
-											{patissier.slug}
-										</td>
-										<td className="px-6 py-4">
-											<span className="px-2 py-1 text-xs font-medium rounded-full bg-primary/10 text-primary">
-												{patissier.plan}
-											</span>
-										</td>
-										<td className="px-6 py-4 text-sm text-foreground">
-											{patissier.ordersCount}
-										</td>
-										<td className="px-6 py-4">
-											{patissier.stripeAccountId ? (
-												<span className={`px-2 py-1 text-xs rounded-full ${
-													patissier.stripeStatus === 'active'
-														? 'bg-green-500/10 text-green-600'
-														: 'bg-yellow-500/10 text-yellow-600'
-												}`}>
-													{patissier.stripeStatus || 'connecte'}
+								{patissiers.map((patissier) => {
+									const profile = patissier.patissierProfile
+									return (
+										<tr key={patissier.id} className="border-b border-border hover:bg-secondary/30">
+											<td className="px-6 py-4 text-sm font-medium text-foreground">
+												{profile?.businessName || patissier.fullName || '-'}
+											</td>
+											<td className="px-6 py-4 text-sm text-muted-foreground">
+												{profile?.slug || '-'}
+											</td>
+											<td className="px-6 py-4">
+												<span className="px-2 py-1 text-xs font-medium rounded-full bg-primary/10 text-primary">
+													{profile?.plan || '-'}
 												</span>
-											) : (
-												<span className="px-2 py-1 text-xs rounded-full bg-secondary text-muted-foreground">
-													Non connecte
-												</span>
-											)}
-										</td>
-										<td className="px-6 py-4 text-sm text-muted-foreground">
-											{new Date(patissier.createdAt).toLocaleDateString('fr-FR')}
-										</td>
-									</tr>
-								))}
+											</td>
+											<td className="px-6 py-4 text-sm text-foreground">
+												{patissier.email}
+											</td>
+											<td className="px-6 py-4">
+												{profile?.stripeAccountId ? (
+													<span className={`px-2 py-1 text-xs rounded-full ${
+														profile.stripeOnboardingComplete
+															? 'bg-green-500/10 text-green-600'
+															: 'bg-yellow-500/10 text-yellow-600'
+													}`}>
+														{profile.stripeOnboardingComplete ? 'actif' : 'en cours'}
+													</span>
+												) : (
+													<span className="px-2 py-1 text-xs rounded-full bg-secondary text-muted-foreground">
+														Non connecte
+													</span>
+												)}
+											</td>
+											<td className="px-6 py-4 text-sm text-muted-foreground">
+												{new Date(profile?.createdAt || patissier.patissierProfile?.createdAt).toLocaleDateString('fr-FR')}
+											</td>
+										</tr>
+									)
+								})}
 							</tbody>
 						</table>
 					</div>
