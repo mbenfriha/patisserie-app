@@ -61,7 +61,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 	const refreshUser = useCallback(async () => {
 		try {
-			const token = localStorage.getItem('token')
+			const supportToken =
+				typeof sessionStorage !== 'undefined' && sessionStorage.getItem('support_token')
+			const token = supportToken || localStorage.getItem('token')
 			if (!token) {
 				setUser(null)
 				return
@@ -76,8 +78,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	}, [])
 
 	useEffect(() => {
+		const params = new URLSearchParams(window.location.search)
+		const supportToken = params.get('support_token')
+		if (supportToken) {
+			sessionStorage.setItem('support_token', supportToken)
+			params.delete('support_token')
+			const newUrl = window.location.pathname + (params.toString() ? `?${params.toString()}` : '')
+			window.history.replaceState({}, '', newUrl)
+		}
 		refreshUser().finally(() => setIsLoading(false))
-	}, [])
+	}, [refreshUser])
 
 	const register = async (data: RegisterData) => {
 		const response = await api.post('/auth/register', data)
@@ -111,6 +121,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		} catch {
 			// Ignore error
 		}
+		sessionStorage.removeItem('support_token')
 		localStorage.removeItem('token')
 		setUser(null)
 		router.push('/login')

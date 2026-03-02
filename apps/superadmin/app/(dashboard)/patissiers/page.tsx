@@ -156,19 +156,22 @@ export default function PatissiersPage() {
 											</td>
 											<td className="px-6 py-4">
 												{profile?.allowSupportAccess ? (
-													<a
-														href={
-															profile.customDomain
+													<button
+														type="button"
+														onClick={() => {
+															const match = document.cookie.match(/superadmin_token=([^;]+)/)
+															const token = match?.[1]
+															const base = profile.customDomain
 																? `https://${profile.customDomain}`
 																: `${FRONTEND_URL}/site/${profile.slug}`
-														}
-														target="_blank"
-														rel="noopener noreferrer"
+															const url = token ? `${base}?support_token=${token}` : base
+															window.open(url, '_blank')
+														}}
 														className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
 													>
 														<ExternalLink className="w-3.5 h-3.5" />
 														Acceder au site
-													</a>
+													</button>
 												) : (
 													<span className="text-xs text-muted-foreground">Acces non autorise</span>
 												)}

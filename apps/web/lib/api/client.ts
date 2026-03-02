@@ -28,7 +28,9 @@ class ApiClient {
 		}
 
 		if (typeof window !== 'undefined') {
-			const token = localStorage.getItem('token')
+			const token =
+				(typeof sessionStorage !== 'undefined' && sessionStorage.getItem('support_token')) ||
+				localStorage.getItem('token')
 			if (token) {
 				headers['Authorization'] = `Bearer ${token}`
 			}
@@ -104,7 +106,9 @@ class ApiClient {
 		const headers: HeadersInit = {}
 
 		if (typeof window !== 'undefined') {
-			const token = localStorage.getItem('token')
+			const token =
+				(typeof sessionStorage !== 'undefined' && sessionStorage.getItem('support_token')) ||
+				localStorage.getItem('token')
 			if (token) {
 				headers['Authorization'] = `Bearer ${token}`
 			}
