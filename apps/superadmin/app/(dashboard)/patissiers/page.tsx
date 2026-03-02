@@ -1,8 +1,8 @@
 'use client'
 
-import { Loader2, RefreshCw, Store } from 'lucide-react'
+import { ExternalLink, Loader2, RefreshCw, Store } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
-import { api, ApiError } from '@/lib/api/client'
+import { ApiError, api } from '@/lib/api/client'
 
 interface PatissierData {
 	id: string
@@ -15,9 +15,13 @@ interface PatissierData {
 		plan: string
 		stripeAccountId: string | null
 		stripeOnboardingComplete: boolean
+		allowSupportAccess: boolean
+		customDomain: string | null
 		createdAt: string
 	}
 }
+
+const FRONTEND_URL = process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000'
 
 export default function PatissiersPage() {
 	const [patissiers, setPatissiers] = useState<PatissierData[]>([])
@@ -30,9 +34,10 @@ export default function PatissiersPage() {
 		setIsLoading(true)
 		setError('')
 		try {
-			const res = await api.get<{ success: boolean; data: { data: PatissierData[]; meta: { lastPage: number } } }>(
-				`/superadmin/patissiers?page=${page}`
-			)
+			const res = await api.get<{
+				success: boolean
+				data: { data: PatissierData[]; meta: { lastPage: number } }
+			}>(`/superadmin/patissiers?page=${page}`)
 			setPatissiers(res.data?.data || [])
 			setTotalPages(res.data?.meta?.lastPage || 1)
 		} catch (err) {
@@ -87,12 +92,27 @@ export default function PatissiersPage() {
 						<table className="w-full">
 							<thead>
 								<tr className="border-b border-border bg-secondary/50">
-									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">Nom</th>
-									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">Slug</th>
-									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">Plan</th>
-									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">Email</th>
-									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">Stripe</th>
-									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">Date</th>
+									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">
+										Nom
+									</th>
+									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">
+										Slug
+									</th>
+									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">
+										Plan
+									</th>
+									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">
+										Email
+									</th>
+									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">
+										Stripe
+									</th>
+									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">
+										Date
+									</th>
+									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">
+										Actions
+									</th>
 								</tr>
 							</thead>
 							<tbody>
@@ -111,16 +131,16 @@ export default function PatissiersPage() {
 													{profile?.plan || '-'}
 												</span>
 											</td>
-											<td className="px-6 py-4 text-sm text-foreground">
-												{patissier.email}
-											</td>
+											<td className="px-6 py-4 text-sm text-foreground">{patissier.email}</td>
 											<td className="px-6 py-4">
 												{profile?.stripeAccountId ? (
-													<span className={`px-2 py-1 text-xs rounded-full ${
-														profile.stripeOnboardingComplete
-															? 'bg-green-500/10 text-green-600'
-															: 'bg-yellow-500/10 text-yellow-600'
-													}`}>
+													<span
+														className={`px-2 py-1 text-xs rounded-full ${
+															profile.stripeOnboardingComplete
+																? 'bg-green-500/10 text-green-600'
+																: 'bg-yellow-500/10 text-yellow-600'
+														}`}
+													>
 														{profile.stripeOnboardingComplete ? 'actif' : 'en cours'}
 													</span>
 												) : (
@@ -130,7 +150,28 @@ export default function PatissiersPage() {
 												)}
 											</td>
 											<td className="px-6 py-4 text-sm text-muted-foreground">
-												{new Date(profile?.createdAt || patissier.patissierProfile?.createdAt).toLocaleDateString('fr-FR')}
+												{new Date(
+													profile?.createdAt || patissier.patissierProfile?.createdAt
+												).toLocaleDateString('fr-FR')}
+											</td>
+											<td className="px-6 py-4">
+												{profile?.allowSupportAccess ? (
+													<a
+														href={
+															profile.customDomain
+																? `https://${profile.customDomain}`
+																: `${FRONTEND_URL}/site/${profile.slug}`
+														}
+														target="_blank"
+														rel="noopener noreferrer"
+														className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+													>
+														<ExternalLink className="w-3.5 h-3.5" />
+														Acceder au site
+													</a>
+												) : (
+													<span className="text-xs text-muted-foreground">Acces non autorise</span>
+												)}
 											</td>
 										</tr>
 									)
