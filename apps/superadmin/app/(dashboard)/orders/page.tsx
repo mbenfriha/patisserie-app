@@ -26,11 +26,11 @@ export default function OrdersPage() {
 		setIsLoading(true)
 		setError('')
 		try {
-			const data = await api.get<{ data: OrderData[]; meta: { lastPage: number } }>(
+			const res = await api.get<{ success: boolean; data: { data: OrderData[]; meta: { lastPage: number } } }>(
 				`/superadmin/orders?page=${page}`
 			)
-			setOrders(data.data || [])
-			setTotalPages(data.meta?.lastPage || 1)
+			setOrders(res.data?.data || [])
+			setTotalPages(res.data?.meta?.lastPage || 1)
 		} catch (err) {
 			if (err instanceof ApiError) {
 				setError(err.message)

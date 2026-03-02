@@ -30,11 +30,11 @@ export default function UsersPage() {
 			const params = new URLSearchParams({ page: page.toString() })
 			if (search) params.append('search', search)
 
-			const data = await api.get<{ data: UserData[]; meta: { lastPage: number } }>(
+			const res = await api.get<{ success: boolean; data: { data: UserData[]; meta: { lastPage: number } } }>(
 				`/superadmin/users?${params.toString()}`
 			)
-			setUsers(data.data || [])
-			setTotalPages(data.meta?.lastPage || 1)
+			setUsers(res.data?.data || [])
+			setTotalPages(res.data?.meta?.lastPage || 1)
 		} catch (err) {
 			if (err instanceof ApiError) {
 				setError(err.message)

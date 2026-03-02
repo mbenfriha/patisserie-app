@@ -24,11 +24,11 @@ export default function SubscriptionsPage() {
 		setIsLoading(true)
 		setError('')
 		try {
-			const data = await api.get<{ data: SubscriptionData[]; meta: { lastPage: number } }>(
+			const res = await api.get<{ success: boolean; data: { data: SubscriptionData[]; meta: { lastPage: number } } }>(
 				`/superadmin/subscriptions?page=${page}`
 			)
-			setSubscriptions(data.data || [])
-			setTotalPages(data.meta?.lastPage || 1)
+			setSubscriptions(res.data?.data || [])
+			setTotalPages(res.data?.meta?.lastPage || 1)
 		} catch (err) {
 			if (err instanceof ApiError) {
 				setError(err.message)
