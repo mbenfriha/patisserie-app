@@ -145,7 +145,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 	}, [user?.profile])
 
 	return (
-		<RoleGuard allowedRoles={['patissier']}>
+		<RoleGuard allowedRoles={['patissier', 'superadmin']}>
 			<div className="flex min-h-screen">
 				{/* ── Desktop Sidebar ── */}
 				<aside className="hidden w-64 shrink-0 border-r bg-sidebar lg:flex lg:flex-col">

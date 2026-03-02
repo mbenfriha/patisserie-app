@@ -80,9 +80,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	useEffect(() => {
 		const params = new URLSearchParams(window.location.search)
 		const supportToken = params.get('support_token')
+		const supportSlug = params.get('support_slug')
 		if (supportToken) {
 			sessionStorage.setItem('support_token', supportToken)
+			if (supportSlug) {
+				sessionStorage.setItem('support_slug', supportSlug)
+			}
 			params.delete('support_token')
+			params.delete('support_slug')
 			const newUrl = window.location.pathname + (params.toString() ? `?${params.toString()}` : '')
 			window.history.replaceState({}, '', newUrl)
 		}
@@ -122,6 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 			// Ignore error
 		}
 		sessionStorage.removeItem('support_token')
+		sessionStorage.removeItem('support_slug')
 		localStorage.removeItem('token')
 		setUser(null)
 		router.push('/login')

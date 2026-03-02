@@ -36,8 +36,11 @@ class ApiClient {
 			}
 		}
 
-		if (this.supportSlug) {
-			headers['X-Support-Slug'] = this.supportSlug
+		const slug =
+			this.supportSlug ||
+			(typeof sessionStorage !== 'undefined' && sessionStorage.getItem('support_slug'))
+		if (slug) {
+			headers['X-Support-Slug'] = slug
 		}
 
 		return headers
@@ -114,8 +117,11 @@ class ApiClient {
 			}
 		}
 
-		if (this.supportSlug) {
-			headers['X-Support-Slug'] = this.supportSlug
+		const slug =
+			this.supportSlug ||
+			(typeof sessionStorage !== 'undefined' && sessionStorage.getItem('support_slug'))
+		if (slug) {
+			headers['X-Support-Slug'] = slug
 		}
 
 		const response = await fetch(url, {

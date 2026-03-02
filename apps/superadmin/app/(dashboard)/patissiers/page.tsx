@@ -164,7 +164,9 @@ export default function PatissiersPage() {
 															const base = profile.customDomain
 																? `https://${profile.customDomain}`
 																: `${FRONTEND_URL}/site/${profile.slug}`
-															const url = token ? `${base}?support_token=${token}` : base
+															const url = token
+																? `${base}?support_token=${token}&support_slug=${profile.slug}`
+																: base
 															window.open(url, '_blank')
 														}}
 														className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
