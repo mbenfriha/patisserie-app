@@ -24,12 +24,24 @@ export default function StatsPage() {
 		setIsLoading(true)
 		setError('')
 		try {
-			const [revenueData, growthData] = await Promise.all([
-				api.get<RevenueStats>('/superadmin/stats/revenue'),
-				api.get<UserGrowthStats>('/superadmin/stats/user-growth'),
+			const [revenueRes, growthRes] = await Promise.all([
+				api.get<{ data: any }>('/superadmin/stats/revenue'),
+				api.get<{ data: any }>('/superadmin/stats/user-growth'),
 			])
-			setRevenue(revenueData)
-			setUserGrowth(growthData)
+			const rd = revenueRes.data ?? revenueRes
+			setRevenue({
+				totalRevenue: rd.totalRevenue ?? 0,
+				monthlyRevenue: Array.isArray(rd.monthlyRevenue) ? rd.monthlyRevenue : [],
+			})
+			const gd = growthRes.data ?? growthRes
+			setUserGrowth({
+				totalUsers: gd.totalUsers ?? 0,
+				monthlyGrowth: Array.isArray(gd.monthlyGrowth)
+					? gd.monthlyGrowth
+					: Array.isArray(gd.growth)
+						? gd.growth
+						: [],
+			})
 		} catch (err) {
 			if (err instanceof ApiError) {
 				setError(err.message)
@@ -95,7 +107,10 @@ export default function StatsPage() {
 					{revenue?.monthlyRevenue && revenue.monthlyRevenue.length > 0 ? (
 						<div className="space-y-3">
 							{revenue.monthlyRevenue.map((item) => (
-								<div key={item.month} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+								<div
+									key={item.month}
+									className="flex items-center justify-between py-2 border-b border-border last:border-0"
+								>
 									<span className="text-sm text-foreground">{item.month}</span>
 									<span className="text-sm font-medium text-foreground">
 										{item.revenue.toFixed(2)} EUR
@@ -127,7 +142,10 @@ export default function StatsPage() {
 					{userGrowth?.monthlyGrowth && userGrowth.monthlyGrowth.length > 0 ? (
 						<div className="space-y-3">
 							{userGrowth.monthlyGrowth.map((item) => (
-								<div key={item.month} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+								<div
+									key={item.month}
+									className="flex items-center justify-between py-2 border-b border-border last:border-0"
+								>
 									<span className="text-sm text-foreground">{item.month}</span>
 									<span className="text-sm font-medium text-foreground">
 										+{item.users} utilisateurs
