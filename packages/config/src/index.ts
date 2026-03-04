@@ -33,6 +33,7 @@ export const PLANS = {
       'Commandes en ligne',
       'Ateliers',
       'Domaine personnalisé (www.votre-site.com)',
+      'Statistiques de visites',
       'Support prioritaire',
     ],
   },

@@ -10,14 +10,28 @@ export default class AuthController {
 	private emailService = new EmailService()
 
 	async register({ request, response }: HttpContext) {
-		const { email, password, fullName, role, slug, businessName } = request.only([
+		const { email, password, fullName, slug, businessName } = request.only([
 			'email',
 			'password',
 			'fullName',
-			'role',
 			'slug',
 			'businessName',
 		])
+
+		// Password validation
+		if (!password || typeof password !== 'string' || password.length < 8) {
+			return response.badRequest({
+				success: false,
+				message: 'Le mot de passe doit contenir au moins 8 caractères',
+			})
+		}
+
+		if (password.length > 128) {
+			return response.badRequest({
+				success: false,
+				message: 'Le mot de passe ne peut pas dépasser 128 caractères',
+			})
+		}
 
 		const existingUser = await User.findBy('email', email)
 		if (existingUser) {
@@ -28,7 +42,7 @@ export default class AuthController {
 			email,
 			password,
 			fullName,
-			role: role || 'patissier',
+			role: 'patissier',
 		})
 
 		// Create patissier profile if role is patissier
@@ -146,6 +160,21 @@ export default class AuthController {
 	async resetPassword({ request, response }: HttpContext) {
 		const { token, password } = request.only(['token', 'password'])
 
+		// Password validation
+		if (!password || typeof password !== 'string' || password.length < 8) {
+			return response.badRequest({
+				success: false,
+				message: 'Le mot de passe doit contenir au moins 8 caractères',
+			})
+		}
+
+		if (password.length > 128) {
+			return response.badRequest({
+				success: false,
+				message: 'Le mot de passe ne peut pas dépasser 128 caractères',
+			})
+		}
+
 		let accessToken
 		try {
 			accessToken = await User.accessTokens.verify(new Secret(token))
@@ -182,8 +211,9 @@ export default class AuthController {
 		user.password = password
 		await user.save()
 
-		// Delete the reset token
-		await User.accessTokens.delete(user, accessToken.identifier)
+		// Revoke ALL tokens (reset token + any active sessions)
+		const allTokens = await User.accessTokens.all(user)
+		await Promise.all(allTokens.map((t) => User.accessTokens.delete(user, t.identifier)))
 
 		return response.ok({
 			success: true,
@@ -194,6 +224,21 @@ export default class AuthController {
 	async changePassword({ auth, request, response }: HttpContext) {
 		const user = auth.user!
 		const { currentPassword, newPassword } = request.only(['currentPassword', 'newPassword'])
+
+		// Password validation
+		if (!newPassword || typeof newPassword !== 'string' || newPassword.length < 8) {
+			return response.badRequest({
+				success: false,
+				message: 'Le nouveau mot de passe doit contenir au moins 8 caractères',
+			})
+		}
+
+		if (newPassword.length > 128) {
+			return response.badRequest({
+				success: false,
+				message: 'Le mot de passe ne peut pas dépasser 128 caractères',
+			})
+		}
 
 		// Verify current password
 		if (!user.password) {

@@ -15,7 +15,7 @@ export default class OrdersController {
 		const profile = await PatissierProfile.findByOrFail('userId', user.id)
 
 		const page = request.input('page', 1)
-		const limit = request.input('limit', 20)
+		const limit = Math.min(Number(request.input('limit', 20)) || 20, 100)
 		const status = request.input('status')
 		const type = request.input('type')
 
@@ -389,7 +389,7 @@ export default class OrdersController {
 		await Order.query().where('id', params.id).where('patissierId', profile.id).firstOrFail()
 
 		const page = request.input('page', 1)
-		const limit = request.input('limit', 50)
+		const limit = Math.min(Number(request.input('limit', 50)) || 50, 100)
 
 		const messages = await OrderMessage.query()
 			.where('orderId', params.id)

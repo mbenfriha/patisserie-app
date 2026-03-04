@@ -9,7 +9,7 @@ export default class ProductsController {
 		const profile = await PatissierProfile.findByOrFail('userId', user.id)
 
 		const page = request.input('page', 1)
-		const limit = request.input('limit', 20)
+		const limit = Math.min(Number(request.input('limit', 20)) || 20, 100)
 		const categoryId = request.input('category_id')
 
 		const query = Product.query()

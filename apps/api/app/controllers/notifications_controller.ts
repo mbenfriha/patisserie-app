@@ -6,7 +6,7 @@ export default class NotificationsController {
 	async index({ auth, request, response }: HttpContext) {
 		const user = auth.user!
 		const page = request.input('page', 1)
-		const limit = request.input('limit', 20)
+		const limit = Math.min(Number(request.input('limit', 20)) || 20, 100)
 
 		const notifications = await Notification.query()
 			.where('userId', user.id)

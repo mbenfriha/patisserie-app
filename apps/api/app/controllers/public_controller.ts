@@ -5,6 +5,25 @@ import PatissierProfile from '#models/patissier_profile'
 import Product from '#models/product'
 import Workshop from '#models/workshop'
 
+const SENSITIVE_FIELDS = [
+	'userId',
+	'stripeAccountId',
+	'stripeOnboardingComplete',
+	'allowSupportAccess',
+	'plausibleSiteId',
+	'defaultDepositPercent',
+	'instagramAccessToken',
+	'instagramUserId',
+]
+
+function serializePublicProfile(profile: PatissierProfile) {
+	const data = profile.serialize()
+	for (const field of SENSITIVE_FIELDS) {
+		delete data[field]
+	}
+	return data
+}
+
 export default class PublicController {
 	async checkSlug({ params, response }: HttpContext) {
 		const slug = params.slug?.toLowerCase().trim()
@@ -37,7 +56,7 @@ export default class PublicController {
 
 		return response.ok({
 			success: true,
-			data: profile.serialize(),
+			data: serializePublicProfile(profile),
 		})
 	}
 
@@ -55,7 +74,7 @@ export default class PublicController {
 
 		return response.ok({
 			success: true,
-			data: profile.serialize(),
+			data: serializePublicProfile(profile),
 		})
 	}
 
@@ -101,7 +120,7 @@ export default class PublicController {
 		}
 
 		if (limit) {
-			query.limit(Number(limit))
+			query.limit(Math.min(Number(limit) || 20, 100))
 		}
 
 		const creations = await query
@@ -224,6 +243,8 @@ export default class PublicController {
 		const workshop = await Workshop.query()
 			.where('slug', params.workshopSlug)
 			.where('patissierId', profile.id)
+			.where('status', 'published')
+			.where('isVisible', true)
 			.preload('category')
 			.preload('bookings', (query) => {
 				query.whereNot('status', 'cancelled').select('id', 'nbParticipants')

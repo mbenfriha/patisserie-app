@@ -72,7 +72,7 @@ export default class InstagramController {
 			if (!tokenResponse.ok) {
 				const errText = await tokenResponse.text()
 				logger.error({ err: errText, redirectUri, profileId: profile.id }, 'Instagram token exchange failed')
-				return response.badRequest({ success: false, message: 'Failed to exchange code', detail: errText })
+				return response.badRequest({ success: false, message: 'Failed to exchange code' })
 			}
 
 			const tokenData: any = await tokenResponse.json()

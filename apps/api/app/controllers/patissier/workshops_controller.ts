@@ -38,7 +38,7 @@ export default class WorkshopsController {
 		const profile = await PatissierProfile.findByOrFail('userId', user.id)
 
 		const page = request.input('page', 1)
-		const limit = request.input('limit', 20)
+		const limit = Math.min(Number(request.input('limit', 20)) || 20, 100)
 		const status = request.input('status')
 
 		const query = Workshop.query()
@@ -246,7 +246,7 @@ export default class WorkshopsController {
 		await Workshop.query().where('id', params.id).where('patissierId', profile.id).firstOrFail()
 
 		const page = request.input('page', 1)
-		const limit = request.input('limit', 20)
+		const limit = Math.min(Number(request.input('limit', 20)) || 20, 100)
 		const status = request.input('status')
 
 		const query = WorkshopBooking.query()

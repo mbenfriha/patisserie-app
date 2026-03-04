@@ -1,11 +1,13 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import logger from '@adonisjs/core/services/logger'
 import PatissierProfile from '#models/patissier_profile'
+import TurnstileService from '#services/turnstile_service'
 import VercelService from '#services/vercel_service'
 import { getActiveProfile } from '#helpers/get_active_profile'
 
 export default class DomainController {
 	private vercel = new VercelService()
+	private turnstile = new TurnstileService()
 
 	async setDomain(ctx: HttpContext) {
 		const { request, response } = ctx
@@ -120,6 +122,7 @@ export default class DomainController {
 		const domain = profile.customDomain
 		await this.vercel.removeDomain(domain)
 		await this.vercel.removeDomain(`www.${domain}`)
+		await this.turnstile.removeHostname(domain)
 
 		profile.customDomain = null
 		profile.customDomainVerified = false
@@ -167,6 +170,11 @@ export default class DomainController {
 
 		profile.customDomainVerified = config.verified && config.configured
 		await profile.save()
+
+		// Add domain to Turnstile when verified
+		if (config.verified && config.configured) {
+			await this.turnstile.addHostname(domain)
+		}
 
 		let status: 'verified' | 'misconfigured' | 'pending' = 'pending'
 		if (config.verified && config.configured) {

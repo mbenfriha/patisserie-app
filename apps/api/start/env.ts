@@ -63,6 +63,9 @@ export default await Env.create(new URL('../', import.meta.url), {
 
 	// Cloudflare Turnstile
 	TURNSTILE_SECRET_KEY: Env.schema.string.optional(),
+	TURNSTILE_SITE_KEY: Env.schema.string.optional(),
+	CLOUDFLARE_ACCOUNT_ID: Env.schema.string.optional(),
+	CLOUDFLARE_API_TOKEN: Env.schema.string.optional(),
 
 	// Frontend URLs
 	FRONTEND_URL: Env.schema.string(),

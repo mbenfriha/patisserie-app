@@ -4,7 +4,7 @@ import Order from '#models/order'
 export default class OrdersController {
 	async index({ request, response }: HttpContext) {
 		const page = request.input('page', 1)
-		const limit = request.input('limit', 20)
+		const limit = Math.min(Number(request.input('limit', 20)) || 20, 100)
 
 		const orders = await Order.query()
 			.preload('items')

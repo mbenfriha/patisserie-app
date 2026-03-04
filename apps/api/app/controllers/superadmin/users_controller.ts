@@ -5,7 +5,7 @@ import User from '#models/user'
 export default class UsersController {
 	async index({ request, response }: HttpContext) {
 		const page = request.input('page', 1)
-		const limit = request.input('limit', 20)
+		const limit = Math.min(Number(request.input('limit', 20)) || 20, 100)
 
 		const users = await User.query()
 			.orderBy('createdAt', 'desc')
@@ -36,7 +36,7 @@ export default class UsersController {
 
 	async patissiers({ request, response }: HttpContext) {
 		const page = request.input('page', 1)
-		const limit = request.input('limit', 20)
+		const limit = Math.min(Number(request.input('limit', 20)) || 20, 100)
 
 		const users = await User.query()
 			.where('role', 'patissier')

@@ -122,6 +122,7 @@ export default function ClientOrderTrackingPage() {
 			await api.post(`/client/orders/${orderNumber}/messages`, {
 				message: newMessage.trim(),
 				senderName: order.clientName,
+				clientEmail: email,
 			})
 			setNewMessage('')
 			fetchMessages(email)

@@ -8,6 +8,7 @@ import Workshop from '#models/workshop'
 import Order from '#models/order'
 import EmailService from '#services/email_service'
 import StripeService from '#services/stripe_service'
+import TurnstileService from '#services/turnstile_service'
 import VercelService from '#services/vercel_service'
 import env from '#start/env'
 
@@ -25,6 +26,7 @@ export default class StripeController {
 	private stripeService = new StripeService()
 	private emailService = new EmailService()
 	private vercel = new VercelService()
+	private turnstile = new TurnstileService()
 
 	async handle({ request, response }: HttpContext) {
 		const signature = request.header('stripe-signature')
@@ -40,10 +42,10 @@ export default class StripeController {
 			const rawBody = request.raw()
 			event = this.stripeService.constructWebhookEvent(rawBody!, signature, webhookSecret)
 		} catch (err: any) {
-			console.error('[Stripe Webhook] Signature verification failed:', err.message)
+			logger.error({ err }, '[Stripe Webhook] Signature verification failed')
 			return response.badRequest({
 				success: false,
-				message: `Webhook signature verification failed: ${err.message}`,
+				message: 'Webhook signature verification failed',
 			})
 		}
 
@@ -421,11 +423,13 @@ export default class StripeController {
 
 			// Remove custom domain if downgrading from premium
 			if (oldPlan === 'premium' && profile.customDomain) {
-				await this.vercel.removeDomain(profile.customDomain)
+				const domain = profile.customDomain
+				await this.vercel.removeDomain(domain)
+				await this.turnstile.removeHostname(domain)
 				profile.customDomain = null
 				profile.customDomainVerified = false
 				logger.info(
-					{ domain: profile.customDomain, profileId: profile.id },
+					{ domain, profileId: profile.id },
 					'Custom domain removed on downgrade'
 				)
 			}

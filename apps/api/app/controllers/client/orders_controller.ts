@@ -14,9 +14,9 @@ import env from '#start/env'
 export default class OrdersController {
 	private async verifyTurnstile(token: string | null): Promise<boolean> {
 		const secret = env.get('TURNSTILE_SECRET_KEY')
-		if (!secret) return true // Skip if not configured
+		if (!secret) return true // Skip if not configured in dev
 
-		if (!token) return true // No token = widget didn't render (e.g. custom domain)
+		if (!token) return false // Reject if no token provided
 
 		try {
 			const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
@@ -76,7 +76,7 @@ export default class OrdersController {
 
 		const now = DateTime.now()
 		const datePart = now.toFormat('yyyyMMdd')
-		const randomPart = String(Math.floor(Math.random() * 1000)).padStart(3, '0')
+		const randomPart = String(Math.floor(Math.random() * 1000000)).padStart(6, '0')
 		const orderNumber = `PAT-${datePart}-${randomPart}`
 
 		let subtotal = 0
@@ -149,13 +149,16 @@ export default class OrdersController {
 		const { orderNumber } = params
 		const email = request.input('email')
 
-		const query = Order.query().where('orderNumber', orderNumber)
-
-		if (email) {
-			query.where('clientEmail', email)
+		if (!email) {
+			return response.badRequest({ success: false, message: 'Email is required' })
 		}
 
-		const order = await query.preload('items').preload('patissier').first()
+		const order = await Order.query()
+			.where('orderNumber', orderNumber)
+			.where('clientEmail', email)
+			.preload('items')
+			.preload('patissier')
+			.first()
 
 		if (!order) {
 			return response.notFound({ success: false, message: 'Order not found' })
@@ -167,10 +170,18 @@ export default class OrdersController {
 		})
 	}
 
-	async messages({ params, response }: HttpContext) {
+	async messages({ params, request, response }: HttpContext) {
 		const { orderNumber } = params
+		const email = request.input('email')
 
-		const order = await Order.findBy('orderNumber', orderNumber)
+		if (!email) {
+			return response.badRequest({ success: false, message: 'Email is required' })
+		}
+
+		const order = await Order.query()
+			.where('orderNumber', orderNumber)
+			.where('clientEmail', email)
+			.first()
 		if (!order) {
 			return response.notFound({ success: false, message: 'Order not found' })
 		}
@@ -187,9 +198,16 @@ export default class OrdersController {
 
 	async sendMessage({ params, request, response }: HttpContext) {
 		const { orderNumber } = params
-		const { message, senderName } = request.only(['message', 'senderName'])
+		const { message, senderName, clientEmail } = request.only(['message', 'senderName', 'clientEmail'])
 
-		const order = await Order.findBy('orderNumber', orderNumber)
+		if (!clientEmail) {
+			return response.badRequest({ success: false, message: 'Email is required' })
+		}
+
+		const order = await Order.query()
+			.where('orderNumber', orderNumber)
+			.where('clientEmail', clientEmail)
+			.first()
 		if (!order) {
 			return response.notFound({ success: false, message: 'Order not found' })
 		}
