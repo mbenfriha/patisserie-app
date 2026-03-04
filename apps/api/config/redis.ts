@@ -10,6 +10,7 @@ const redisConfig = defineConfig({
 			password: env.get('REDIS_PASSWORD') || undefined,
 			db: 0,
 			keyPrefix: 'patisserie:',
+			tls: env.get('REDIS_HOST')?.includes('upstash.io') ? {} : undefined,
 		},
 	},
 })
