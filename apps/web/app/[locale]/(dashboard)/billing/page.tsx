@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { PLANS } from '@patissio/config'
+import { PLANS, PLATFORM_FEE_PERCENT } from '@patissio/config'
 import { api } from '@/lib/api/client'
 
 type PlanKey = keyof typeof PLANS
@@ -224,6 +224,15 @@ export default function BillingPage() {
 						</div>
 					)
 				})}
+			</div>
+
+			{/* Platform fee notice */}
+			<div className="rounded-lg border border-dashed border-muted-foreground/30 bg-muted/50 p-4 text-center">
+				<p className="text-sm text-muted-foreground">
+					Une commission de <span className="font-medium text-foreground">{PLATFORM_FEE_PERCENT}%</span> est
+					prélevée sur chaque paiement reçu via la plateforme (commandes et ateliers). Le détail est visible
+					sur chaque commande.
+				</p>
 			</div>
 		</div>
 	)

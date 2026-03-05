@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { PLANS } from '@patissio/config'
+import { PLANS, PLATFORM_FEE_PERCENT } from '@patissio/config'
 
 function CheckIcon() {
 	return (
@@ -564,6 +564,10 @@ export function HomeContent() {
 							)
 						})}
 					</div>
+					<p className="mt-8 text-center text-sm text-muted-foreground">
+						Une commission de {PLATFORM_FEE_PERCENT}% est appliquée sur les paiements reçus via la
+						plateforme (commandes et ateliers).
+					</p>
 				</div>
 			</section>
 
