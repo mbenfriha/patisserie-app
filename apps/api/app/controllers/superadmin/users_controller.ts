@@ -1,6 +1,8 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import { DateTime } from 'luxon'
+import PatissierProfile from '#models/patissier_profile'
 import User from '#models/user'
+import TurnstileService from '#services/turnstile_service'
 
 export default class UsersController {
 	async index({ request, response }: HttpContext) {
@@ -91,6 +93,44 @@ export default class UsersController {
 		return response.ok({
 			success: true,
 			data: user.serialize(),
+		})
+	}
+
+	async syncTurnstile({ params, response }: HttpContext) {
+		const profile = await PatissierProfile.find(params.profileId)
+
+		if (!profile) {
+			return response.notFound({ success: false, message: 'Profile not found' })
+		}
+
+		if (!profile.customDomain || !profile.customDomainVerified) {
+			return response.badRequest({
+				success: false,
+				message: 'No verified custom domain on this profile',
+			})
+		}
+
+		const turnstile = new TurnstileService()
+
+		if (!turnstile.isConfigured) {
+			return response.serviceUnavailable({
+				success: false,
+				message: 'Turnstile API not configured',
+			})
+		}
+
+		const success = await turnstile.addHostname(profile.customDomain)
+
+		if (!success) {
+			return response.internalServerError({
+				success: false,
+				message: 'Failed to add domain to Turnstile',
+			})
+		}
+
+		return response.ok({
+			success: true,
+			message: `Domain ${profile.customDomain} added to Turnstile`,
 		})
 	}
 }

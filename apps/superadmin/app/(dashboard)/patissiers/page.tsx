@@ -1,6 +1,6 @@
 'use client'
 
-import { ExternalLink, Loader2, RefreshCw, Store } from 'lucide-react'
+import { ExternalLink, Loader2, RefreshCw, Shield, Store } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { ApiError, api } from '@/lib/api/client'
 
@@ -155,28 +155,48 @@ export default function PatissiersPage() {
 												).toLocaleDateString('fr-FR')}
 											</td>
 											<td className="px-6 py-4">
-												{profile?.allowSupportAccess ? (
-													<button
-														type="button"
-														onClick={() => {
-															const match = document.cookie.match(/superadmin_token=([^;]+)/)
-															const token = match?.[1]
-															const base = profile.customDomain
-																? `https://${profile.customDomain}`
-																: `${FRONTEND_URL}/site/${profile.slug}`
-															const url = token
-																? `${base}?support_token=${token}&support_slug=${profile.slug}`
-																: base
-															window.open(url, '_blank')
-														}}
-														className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
-													>
-														<ExternalLink className="w-3.5 h-3.5" />
-														Acceder au site
-													</button>
-												) : (
-													<span className="text-xs text-muted-foreground">Acces non autorise</span>
-												)}
+												<div className="flex items-center gap-2">
+													{profile?.allowSupportAccess ? (
+														<button
+															type="button"
+															onClick={() => {
+																const match = document.cookie.match(/superadmin_token=([^;]+)/)
+																const token = match?.[1]
+																const base = profile.customDomain
+																	? `https://${profile.customDomain}`
+																	: `${FRONTEND_URL}/site/${profile.slug}`
+																const url = token
+																	? `${base}?support_token=${token}&support_slug=${profile.slug}`
+																	: base
+																window.open(url, '_blank')
+															}}
+															className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+														>
+															<ExternalLink className="w-3.5 h-3.5" />
+															Acceder au site
+														</button>
+													) : (
+														<span className="text-xs text-muted-foreground">Acces non autorise</span>
+													)}
+													{profile?.customDomain && profile?.plan === 'premium' && (
+														<button
+															type="button"
+															onClick={async () => {
+																try {
+																	await api.post(`/superadmin/patissiers/${profile.id}/sync-turnstile`)
+																	alert(`Turnstile synchronise pour ${profile.customDomain}`)
+																} catch (err) {
+																	alert(err instanceof ApiError ? err.message : 'Erreur lors de la synchronisation Turnstile')
+																}
+															}}
+															className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-green-500/10 text-green-600 hover:bg-green-500/20 transition-colors"
+															title={`Sync Turnstile pour ${profile.customDomain}`}
+														>
+															<Shield className="w-3.5 h-3.5" />
+															Turnstile
+														</button>
+													)}
+												</div>
 											</td>
 										</tr>
 									)

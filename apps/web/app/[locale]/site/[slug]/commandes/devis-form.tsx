@@ -11,8 +11,7 @@ const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
 
 function isTurnstileDomain() {
 	if (typeof window === 'undefined') return false
-	const host = window.location.hostname
-	return host === 'localhost' || host.endsWith('patissio.com') || host === 'patissio.com'
+	return true // Turnstile enabled on all domains (including custom domains)
 }
 
 interface DevisFormProps {

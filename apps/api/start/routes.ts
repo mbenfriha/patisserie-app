@@ -246,6 +246,10 @@ router
 		router.get('/orders', '#controllers/superadmin/orders_controller.index')
 		router.get('/workshops', '#controllers/superadmin/workshops_controller.index')
 		router.get('/subscriptions', '#controllers/superadmin/subscriptions_controller.index')
+		router.post(
+			'/patissiers/:profileId/sync-turnstile',
+			'#controllers/superadmin/users_controller.syncTurnstile'
+		)
 	})
 	.prefix('/superadmin')
 	.use([throttle('api'), middleware.auth(), middleware.superadmin()])
