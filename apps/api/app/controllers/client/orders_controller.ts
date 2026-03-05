@@ -32,12 +32,43 @@ export default class OrdersController {
 		}
 	}
 
+	/**
+	 * Check if the request originates from a verified custom domain.
+	 * If so, Turnstile may not be loaded yet (hostname not added to widget),
+	 * so we allow the request through.
+	 */
+	private async isFromVerifiedCustomDomain(request: HttpContext['request']): Promise<boolean> {
+		const origin = request.header('origin') || request.header('referer') || ''
+		if (!origin) return false
+
+		try {
+			const url = new URL(origin)
+			const hostname = url.hostname.replace(/^www\./, '')
+
+			// Not a custom domain if it's patissio.com or localhost
+			if (hostname.endsWith('patissio.com') || hostname === 'localhost') return false
+
+			const profile = await PatissierProfile.query()
+				.where('customDomain', hostname)
+				.where('customDomainVerified', true)
+				.first()
+
+			return !!profile
+		} catch {
+			return false
+		}
+	}
+
 	async store({ request, response }: HttpContext) {
 		// Turnstile anti-spam verification
 		const turnstileToken = request.input('cf-turnstile-response')
 		const turnstileValid = await this.verifyTurnstile(turnstileToken)
 		if (!turnstileValid) {
-			return response.forbidden({ success: false, message: 'Vérification de sécurité échouée. Veuillez réessayer.' })
+			// Allow verified custom domains where Turnstile widget may not be configured yet
+			const isCustomDomain = await this.isFromVerifiedCustomDomain(request)
+			if (!isCustomDomain) {
+				return response.forbidden({ success: false, message: 'Vérification de sécurité échouée. Veuillez réessayer.' })
+			}
 		}
 
 		const slug = request.input('slug')
