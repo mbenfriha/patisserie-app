@@ -41,7 +41,7 @@ export const PLANS = {
 
 // ─── Platform fee ────────────────────────────────────────────────────────────
 
-export const PLATFORM_FEE_PERCENT = 5
+export const PLATFORM_FEE_PERCENT = 3
 
 // ─── Statuses ────────────────────────────────────────────────────────────────
 

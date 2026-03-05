@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { PlanGate } from '@/components/auth/plan-gate'
 import { api } from '@/lib/api/client'
+import { PLATFORM_FEE_PERCENT } from '@patissio/config'
 
 interface OrderItem {
 	id: string
@@ -485,10 +486,26 @@ export default function PatissierOrderDetailPage() {
 									</div>
 								)}
 								{order.total != null && (
-									<div className="mt-1 flex justify-between gap-8">
-										<p className="text-sm font-medium">Total</p>
-										<p className="text-lg font-bold">{order.total} &euro;</p>
-									</div>
+									<>
+										<div className="mt-1 flex justify-between gap-8">
+											<p className="text-sm font-medium">Total client</p>
+											<p className="text-sm font-medium">{order.total} &euro;</p>
+										</div>
+										<div className="mt-1 flex justify-between gap-8">
+											<p className="text-sm text-muted-foreground">
+												Frais plateforme ({PLATFORM_FEE_PERCENT}%)
+											</p>
+											<p className="text-sm text-red-600">
+												-{((order.total * PLATFORM_FEE_PERCENT) / 100).toFixed(2)} &euro;
+											</p>
+										</div>
+										<div className="mt-1 flex justify-between gap-8 border-t pt-2">
+											<p className="text-sm font-semibold">Vous recevez</p>
+											<p className="text-lg font-bold text-green-600">
+												{(order.total - (order.total * PLATFORM_FEE_PERCENT) / 100).toFixed(2)} &euro;
+											</p>
+										</div>
+									</>
 								)}
 							</div>
 						</div>
@@ -648,10 +665,24 @@ export default function PatissierOrderDetailPage() {
 
 						{/* Total display */}
 						{order.total != null && (
-							<div className="mt-4 border-t pt-4">
+							<div className="mt-4 border-t pt-4 space-y-1">
 								<div className="flex items-center justify-between">
-									<p className="text-sm font-medium">Total</p>
-									<p className="text-xl font-bold">{order.total} &euro;</p>
+									<p className="text-sm font-medium">Total client</p>
+									<p className="text-sm font-medium">{order.total} &euro;</p>
+								</div>
+								<div className="flex items-center justify-between">
+									<p className="text-sm text-muted-foreground">
+										Frais plateforme ({PLATFORM_FEE_PERCENT}%)
+									</p>
+									<p className="text-sm text-red-600">
+										-{((order.total * PLATFORM_FEE_PERCENT) / 100).toFixed(2)} &euro;
+									</p>
+								</div>
+								<div className="flex items-center justify-between border-t pt-2">
+									<p className="text-sm font-semibold">Vous recevez</p>
+									<p className="text-xl font-bold text-green-600">
+										{(order.total - (order.total * PLATFORM_FEE_PERCENT) / 100).toFixed(2)} &euro;
+									</p>
 								</div>
 							</div>
 						)}

@@ -3,7 +3,7 @@ import type PatissierProfile from '#models/patissier_profile'
 import type User from '#models/user'
 import env from '#start/env'
 
-const PLATFORM_FEE_PERCENT = env.get('STRIPE_PLATFORM_FEE_PERCENT', 5)
+const PLATFORM_FEE_PERCENT = env.get('STRIPE_PLATFORM_FEE_PERCENT', 3)
 
 export default class StripeService {
 	private stripe: Stripe
