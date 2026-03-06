@@ -137,6 +137,16 @@ export default function OrdersPage() {
 	const [selectedQuantity, setSelectedQuantity] = useState(1)
 	const [saving, setSaving] = useState(false)
 	const [toast, setToast] = useState<string | null>(null)
+	const [menuOpen, setMenuOpen] = useState<string | null>(null)
+	const [deleteTarget, setDeleteTarget] = useState<Order | null>(null)
+	const [deleting, setDeleting] = useState(false)
+
+	useEffect(() => {
+		if (!menuOpen) return
+		const close = () => setMenuOpen(null)
+		document.addEventListener('click', close)
+		return () => document.removeEventListener('click', close)
+	}, [menuOpen])
 
 	const devisUrl = useMemo(() => {
 		if (!user?.profile) return null
@@ -305,6 +315,24 @@ export default function OrdersPage() {
 		}
 	}
 
+	const handleDelete = async () => {
+		if (!deleteTarget) return
+		setDeleting(true)
+		try {
+			await api.delete(`/patissier/orders/${deleteTarget.id}`)
+			setDeleteTarget(null)
+			fetchOrders()
+			setToast('Commande supprimée avec succès')
+			setTimeout(() => setToast(null), 3000)
+		} catch (err) {
+			console.error(err)
+			setToast('Erreur lors de la suppression')
+			setTimeout(() => setToast(null), 3000)
+		} finally {
+			setDeleting(false)
+		}
+	}
+
 	return (
 		<PlanGate minPlan="pro">
 			<div className="space-y-6">
@@ -428,43 +456,75 @@ export default function OrdersPage() {
 						{/* Mobile: card list */}
 						<div className="space-y-3 sm:hidden">
 							{orders.map((order) => (
-								<Link
-									key={order.id}
-									href={`${dashboardPrefix}/orders/${order.id}`}
-									className="block rounded-lg border p-4 transition-colors hover:bg-muted/30"
-								>
-									<div className="flex items-center justify-between">
-										<span className="font-mono text-sm font-medium text-primary">
-											{order.orderNumber}
-										</span>
-										<span
-											className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[order.status] || 'bg-gray-100'}`}
-										>
-											{statusLabels[order.status] || order.status}
-										</span>
-									</div>
-									<div className="mt-2 flex items-center justify-between text-sm">
-										<span className="text-foreground">{order.clientName}</span>
-										<span className="font-medium">
-											{order.total != null ? `${order.total} €` : '-'}
-										</span>
-									</div>
-									<div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
-										<span className="flex items-center gap-2">
-											{typeLabels[order.type] || order.type}
-											<span
-												className={`rounded-full px-1.5 py-0.5 text-xs font-medium ${paymentStatusColors[order.paymentStatus] || 'bg-gray-100'}`}
-											>
-												{paymentStatusLabels[order.paymentStatus] || order.paymentStatus}
+								<div key={order.id} className="relative rounded-lg border p-4 transition-colors hover:bg-muted/30">
+									<Link href={`${dashboardPrefix}/orders/${order.id}`} className="block">
+										<div className="flex items-center justify-between pr-8">
+											<span className="font-mono text-sm font-medium text-primary">
+												{order.orderNumber}
 											</span>
-										</span>
-										<span>
-											{order.requestedDate
-												? new Date(order.requestedDate).toLocaleDateString('fr-FR')
-												: '-'}
-										</span>
+											<span
+												className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[order.status] || 'bg-gray-100'}`}
+											>
+												{statusLabels[order.status] || order.status}
+											</span>
+										</div>
+										<div className="mt-2 flex items-center justify-between text-sm">
+											<span className="text-foreground">{order.clientName}</span>
+											<span className="font-medium">
+												{order.total != null ? `${order.total} €` : '-'}
+											</span>
+										</div>
+										<div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
+											<span className="flex items-center gap-2">
+												{typeLabels[order.type] || order.type}
+												<span
+													className={`rounded-full px-1.5 py-0.5 text-xs font-medium ${paymentStatusColors[order.paymentStatus] || 'bg-gray-100'}`}
+												>
+													{paymentStatusLabels[order.paymentStatus] || order.paymentStatus}
+												</span>
+											</span>
+											<span>
+												{order.requestedDate
+													? new Date(order.requestedDate).toLocaleDateString('fr-FR')
+													: '-'}
+											</span>
+										</div>
+									</Link>
+									<div className="absolute right-3 top-3">
+										<button
+											type="button"
+											onClick={() => setMenuOpen(menuOpen === order.id ? null : order.id)}
+											className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+										>
+											<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+												<circle cx="12" cy="5" r="2" />
+												<circle cx="12" cy="12" r="2" />
+												<circle cx="12" cy="19" r="2" />
+											</svg>
+										</button>
+										{menuOpen === order.id && (
+											<div className="absolute right-0 z-10 mt-1 w-40 rounded-md border bg-white py-1 shadow-lg dark:bg-gray-900">
+												<Link
+													href={`${dashboardPrefix}/orders/${order.id}`}
+													className="block px-4 py-2 text-sm hover:bg-muted"
+													onClick={() => setMenuOpen(null)}
+												>
+													Voir la commande
+												</Link>
+												<button
+													type="button"
+													onClick={() => {
+														setMenuOpen(null)
+														setDeleteTarget(order)
+													}}
+													className="block w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-muted"
+												>
+													Supprimer
+												</button>
+											</div>
+										)}
 									</div>
-								</Link>
+								</div>
 							))}
 						</div>
 
@@ -484,6 +544,7 @@ export default function OrdersPage() {
 											Date souhaitée
 										</th>
 										<th className="px-4 py-3 text-right text-sm font-medium">Total</th>
+										<th className="w-10 px-2 py-3"></th>
 									</tr>
 								</thead>
 								<tbody>
@@ -524,12 +585,78 @@ export default function OrdersPage() {
 											<td className="px-4 py-3 text-right text-sm">
 												{order.total != null ? `${order.total} €` : '-'}
 											</td>
+											<td className="relative px-2 py-3 text-right">
+												<button
+													type="button"
+													onClick={() => setMenuOpen(menuOpen === order.id ? null : order.id)}
+													className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+												>
+													<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+														<circle cx="12" cy="5" r="2" />
+														<circle cx="12" cy="12" r="2" />
+														<circle cx="12" cy="19" r="2" />
+													</svg>
+												</button>
+												{menuOpen === order.id && (
+													<div className="absolute right-2 z-10 mt-1 w-40 rounded-md border bg-white py-1 shadow-lg dark:bg-gray-900">
+														<Link
+															href={`${dashboardPrefix}/orders/${order.id}`}
+															className="block px-4 py-2 text-sm hover:bg-muted"
+															onClick={() => setMenuOpen(null)}
+														>
+															Voir la commande
+														</Link>
+														<button
+															type="button"
+															onClick={() => {
+																setMenuOpen(null)
+																setDeleteTarget(order)
+															}}
+															className="block w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-muted"
+														>
+															Supprimer
+														</button>
+													</div>
+												)}
+											</td>
 										</tr>
 									))}
 								</tbody>
 							</table>
 						</div>
 					</>
+				)}
+
+				{/* Delete confirmation modal */}
+				{deleteTarget && (
+					<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+						<div className="w-full max-w-sm rounded-lg bg-white p-6 shadow-xl dark:bg-gray-900">
+							<h3 className="text-lg font-semibold">Supprimer la commande</h3>
+							<p className="mt-2 text-sm text-muted-foreground">
+								Vous êtes sur le point de supprimer la commande{' '}
+								<strong>{deleteTarget.orderNumber}</strong> de{' '}
+								<strong>{deleteTarget.clientName}</strong>. Cette action est irréversible.
+							</p>
+							<div className="mt-6 flex justify-end gap-3">
+								<button
+									type="button"
+									onClick={() => setDeleteTarget(null)}
+									className="rounded border px-4 py-2 text-sm hover:bg-muted"
+									disabled={deleting}
+								>
+									Annuler
+								</button>
+								<button
+									type="button"
+									onClick={handleDelete}
+									disabled={deleting}
+									className="rounded bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+								>
+									{deleting ? 'Suppression...' : 'Supprimer'}
+								</button>
+							</div>
+						</div>
+					</div>
 				)}
 
 				{/* Create order modal */}
