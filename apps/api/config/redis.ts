@@ -17,6 +17,7 @@ const redisConfig = defineConfig({
 			password,
 			db: 0,
 			keyPrefix: 'patisserie:',
+			family: 4,
 			tls: useTls ? {} : undefined,
 		},
 	},
