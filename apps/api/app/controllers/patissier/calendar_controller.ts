@@ -57,12 +57,17 @@ export default class CalendarController {
 			if (date < start || date > end) continue
 
 			const isDevis = order.type === 'custom'
+			const isAcceptedDevis = isDevis && order.status !== 'pending'
 
 			events.push({
 				id: order.id,
 				kind: isDevis ? 'devis' : 'order',
 				date,
-				title: isDevis ? `Devis #${order.orderNumber}` : `Commande #${order.orderNumber}`,
+				title: isDevis
+					? isAcceptedDevis
+						? `Commande sur devis #${order.orderNumber}`
+						: `Devis #${order.orderNumber}`
+					: `Commande #${order.orderNumber}`,
 				status: order.status,
 				meta: {
 					orderNumber: order.orderNumber,
