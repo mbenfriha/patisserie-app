@@ -14,14 +14,14 @@ export default await Env.create(new URL('../', import.meta.url), {
 	// Database
 	DATABASE_URL: Env.schema.string(),
 
-	// Redis
-	REDIS_HOST: Env.schema.string({ format: 'host' }),
-	REDIS_PORT: Env.schema.number(),
+	// Redis (optional – app works without Redis using in-memory stores)
+	REDIS_HOST: Env.schema.string.optional({ format: 'host' }),
+	REDIS_PORT: Env.schema.number.optional(),
 	REDIS_PASSWORD: Env.schema.string.optional(),
 	REDIS_TLS: Env.schema.string.optional(),
 
 	// Session
-	SESSION_DRIVER: Env.schema.enum(['cookie', 'redis'] as const),
+	SESSION_DRIVER: Env.schema.enum.optional(['cookie', 'redis'] as const),
 
 	// Mail
 	MAIL_MAILER: Env.schema.enum.optional(['smtp', 'resend'] as const),

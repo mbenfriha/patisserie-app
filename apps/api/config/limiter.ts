@@ -1,9 +1,9 @@
 import { defineConfig, stores } from '@adonisjs/limiter'
 
 const limiterConfig = defineConfig({
-	default: 'redis',
+	default: 'memory',
 	stores: {
-		redis: stores.redis({}),
+		memory: stores.memory({}),
 	},
 })
 
