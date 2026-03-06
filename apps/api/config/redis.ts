@@ -1,16 +1,19 @@
 import { defineConfig } from '@adonisjs/redis'
 import env from '#start/env'
 
+const host = env.get('REDIS_HOST')
+const useTls = host?.includes('upstash.io') || host?.includes('render.com')
+
 const redisConfig = defineConfig({
 	connection: 'main',
 	connections: {
 		main: {
-			host: env.get('REDIS_HOST'),
+			host,
 			port: env.get('REDIS_PORT'),
 			password: env.get('REDIS_PASSWORD') || undefined,
 			db: 0,
 			keyPrefix: 'patisserie:',
-			tls: env.get('REDIS_HOST')?.includes('upstash.io') ? {} : undefined,
+			tls: useTls ? {} : undefined,
 		},
 	},
 })
