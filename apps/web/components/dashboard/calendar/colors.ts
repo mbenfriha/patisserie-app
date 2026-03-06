@@ -13,7 +13,7 @@ export const KIND_COLORS: Record<
 	},
 	devis: {
 		dot: 'bg-amber-500',
-		label: 'Devis',
+		label: 'Commandes sur devis',
 		bg: 'bg-amber-50 dark:bg-amber-950/40',
 		border: 'border-amber-400 dark:border-amber-500/50',
 		text: 'text-amber-700 dark:text-amber-300',
