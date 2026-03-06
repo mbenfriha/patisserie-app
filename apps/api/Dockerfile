@@ -65,4 +65,4 @@ ARG PORT=3333
 ENV PORT=${PORT}
 EXPOSE ${PORT}
 
-CMD ["node", "./build/bin/server.js"]
+CMD ["sh", "-c", "node build/ace migration:run --force && node build/bin/server.js"]

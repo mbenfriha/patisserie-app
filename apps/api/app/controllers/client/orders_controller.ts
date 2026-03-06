@@ -187,6 +187,7 @@ export default class OrdersController {
 		const order = await Order.query()
 			.where('orderNumber', orderNumber)
 			.where('clientEmail', email)
+			.whereNull('deletedAt')
 			.preload('items')
 			.preload('patissier')
 			.first()
@@ -212,6 +213,7 @@ export default class OrdersController {
 		const order = await Order.query()
 			.where('orderNumber', orderNumber)
 			.where('clientEmail', email)
+			.whereNull('deletedAt')
 			.first()
 		if (!order) {
 			return response.notFound({ success: false, message: 'Order not found' })
@@ -238,6 +240,7 @@ export default class OrdersController {
 		const order = await Order.query()
 			.where('orderNumber', orderNumber)
 			.where('clientEmail', clientEmail)
+			.whereNull('deletedAt')
 			.first()
 		if (!order) {
 			return response.notFound({ success: false, message: 'Order not found' })

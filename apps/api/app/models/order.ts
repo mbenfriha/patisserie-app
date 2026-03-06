@@ -117,6 +117,9 @@ export default class Order extends BaseModel {
 	@column()
 	declare cancellationReason: string | null
 
+	@column.dateTime()
+	declare deletedAt: DateTime | null
+
 	@column.dateTime({ autoCreate: true })
 	declare createdAt: DateTime
 

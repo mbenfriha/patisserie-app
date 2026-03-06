@@ -135,6 +135,7 @@ router
 			router.put('/:id/payment', '#controllers/patissier/orders_controller.markPaid')
 				router.get('/:id/messages', '#controllers/patissier/orders_controller.messages')
 				router.post('/:id/messages', '#controllers/patissier/orders_controller.sendMessage')
+				router.delete('/:id', '#controllers/patissier/orders_controller.destroy')
 			})
 			.prefix('/orders')
 			.use(middleware.planGuard({ minPlan: 'pro' }))

@@ -19,7 +19,7 @@ export default class OrdersController {
 		const status = request.input('status')
 		const type = request.input('type')
 
-		const query = Order.query().where('patissierId', profile.id).orderBy('createdAt', 'desc')
+		const query = Order.query().where('patissierId', profile.id).whereNull('deletedAt').orderBy('createdAt', 'desc')
 
 		if (status) {
 			query.where('status', status)
@@ -174,6 +174,7 @@ export default class OrdersController {
 		const order = await Order.query()
 			.where('id', params.id)
 			.where('patissierId', profile.id)
+			.whereNull('deletedAt')
 			.preload('items')
 			.preload('messages', (q) => q.orderBy('createdAt', 'asc'))
 			.firstOrFail()
@@ -191,6 +192,7 @@ export default class OrdersController {
 		const order = await Order.query()
 			.where('id', params.id)
 			.where('patissierId', profile.id)
+			.whereNull('deletedAt')
 			.firstOrFail()
 
 		const { status, cancellationReason } = request.only(['status', 'cancellationReason'])
@@ -248,6 +250,7 @@ export default class OrdersController {
 		const order = await Order.query()
 			.where('id', params.id)
 			.where('patissierId', profile.id)
+			.whereNull('deletedAt')
 			.firstOrFail()
 
 		order.paymentStatus = 'paid'
@@ -267,6 +270,7 @@ export default class OrdersController {
 		const order = await Order.query()
 			.where('id', params.id)
 			.where('patissierId', profile.id)
+			.whereNull('deletedAt')
 			.firstOrFail()
 
 		if (order.type !== 'custom') {
@@ -386,7 +390,7 @@ export default class OrdersController {
 		const profile = await PatissierProfile.findByOrFail('userId', user.id)
 
 		// Ensure order belongs to this patissier
-		await Order.query().where('id', params.id).where('patissierId', profile.id).firstOrFail()
+		await Order.query().where('id', params.id).where('patissierId', profile.id).whereNull('deletedAt').firstOrFail()
 
 		const page = request.input('page', 1)
 		const limit = Math.min(Number(request.input('limit', 50)) || 50, 100)
@@ -410,6 +414,7 @@ export default class OrdersController {
 		const order = await Order.query()
 			.where('id', params.id)
 			.where('patissierId', profile.id)
+			.whereNull('deletedAt')
 			.firstOrFail()
 
 		const { message, attachments } = request.only(['message', 'attachments'])
@@ -446,6 +451,25 @@ export default class OrdersController {
 		return response.created({
 			success: true,
 			data: orderMessage.serialize(),
+		})
+	}
+
+	async destroy({ auth, params, response }: HttpContext) {
+		const user = auth.user!
+		const profile = await PatissierProfile.findByOrFail('userId', user.id)
+
+		const order = await Order.query()
+			.where('id', params.id)
+			.where('patissierId', profile.id)
+			.whereNull('deletedAt')
+			.firstOrFail()
+
+		order.deletedAt = DateTime.now()
+		await order.save()
+
+		return response.ok({
+			success: true,
+			message: 'Commande supprimée avec succès.',
 		})
 	}
 }
