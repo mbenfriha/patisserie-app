@@ -110,8 +110,19 @@
 	}
 }
 
+@keyframes ringPulse {
+	0%, 100% {
+		opacity: 0.3;
+		transform: translate(-50%, -50%) scale(1);
+	}
+	50% {
+		opacity: 0.6;
+		transform: translate(-50%, -50%) scale(1.03);
+	}
+}
+
 .animate-hero {
-	animation: fadeInUp 1s ease-out 0.2s forwards;
+	animation: fadeInUp 1s ease-out 0.3s forwards;
 	opacity: 0;
 }
 
@@ -120,5 +131,20 @@
 }
 
 .animate-on-scroll.is-visible {
-	animation: fadeInUp 0.8s ease-out forwards;
+	animation: fadeInUp 0.7s ease-out forwards;
+}
+
+.hero-ring {
+	animation: ringPulse 6s ease-in-out infinite;
+}
+
+.hero-ring-delayed {
+	animation: ringPulse 6s ease-in-out 3s infinite;
+}
+
+.landing-gradient-text {
+	background: linear-gradient(135deg, #D4816A 0%, #E29B85 40%, #D9A84E 100%);
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
 }
