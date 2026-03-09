@@ -137,6 +137,8 @@ export default function OrdersPage() {
 	const [selectedQuantity, setSelectedQuantity] = useState(1)
 	const [saving, setSaving] = useState(false)
 	const [toast, setToast] = useState<string | null>(null)
+	const [photoFile, setPhotoFile] = useState<File | null>(null)
+	const [photoPreview, setPhotoPreview] = useState<string | null>(null)
 	const [menuOpen, setMenuOpen] = useState<string | null>(null)
 	const [deleteTarget, setDeleteTarget] = useState<Order | null>(null)
 	const [deleting, setDeleting] = useState(false)
@@ -200,6 +202,8 @@ export default function OrdersPage() {
 		setCartItems([])
 		setSelectedProductId('')
 		setSelectedQuantity(1)
+		setPhotoFile(null)
+		setPhotoPreview(null)
 		setShowCreateModal(true)
 	}
 
@@ -269,39 +273,46 @@ export default function OrdersPage() {
 				}
 			}
 
-			const payload: Record<string, unknown> = {
-				type: form.type,
-				clientName: form.clientName,
-				clientEmail: form.clientEmail,
-				clientPhone: form.clientPhone || undefined,
-				requestedDate: form.requestedDate || undefined,
-				deliveryMethod: form.deliveryMethod,
-				patissierNotes: form.patissierNotes || undefined,
-				...(form.total ? { total: Number(form.total) } : {}),
-				...(form.total ? { depositPercent: Number(form.depositPercent) } : {}),
-				...(form.depositPaid ? { paymentStatus: 'paid' } : {}),
+			const formData = new FormData()
+			formData.append('type', form.type)
+			formData.append('clientName', form.clientName)
+			formData.append('clientEmail', form.clientEmail)
+			if (form.clientPhone) formData.append('clientPhone', form.clientPhone)
+			if (form.requestedDate) formData.append('requestedDate', form.requestedDate)
+			formData.append('deliveryMethod', form.deliveryMethod)
+			if (form.patissierNotes) formData.append('patissierNotes', form.patissierNotes)
+			if (form.total) {
+				formData.append('total', form.total)
+				formData.append('depositPercent', form.depositPercent)
 			}
+			if (form.depositPaid) formData.append('paymentStatus', 'paid')
 
 			if (form.deliveryMethod === 'delivery') {
-				payload.deliveryAddress = form.deliveryAddress || undefined
-				payload.deliveryNotes = form.deliveryNotes || undefined
+				if (form.deliveryAddress) formData.append('deliveryAddress', form.deliveryAddress)
+				if (form.deliveryNotes) formData.append('deliveryNotes', form.deliveryNotes)
 			}
 
 			if (form.type === 'catalogue') {
-				payload.items = finalCartItems.map((i) => ({
-					product_id: i.product_id,
-					quantity: i.quantity,
-				}))
+				formData.append(
+					'items',
+					JSON.stringify(
+						finalCartItems.map((i) => ({
+							product_id: i.product_id,
+							quantity: i.quantity,
+						}))
+					)
+				)
 			} else {
-				payload.customType = form.customType || undefined
-				payload.customNbPersonnes = form.customNbPersonnes || undefined
-				payload.customDateSouhaitee = form.customDateSouhaitee || undefined
-				payload.customTheme = form.customTheme || undefined
-				payload.customAllergies = form.customAllergies || undefined
-				payload.customMessage = form.customMessage || undefined
+				if (form.customType) formData.append('customType', form.customType)
+				if (form.customNbPersonnes) formData.append('customNbPersonnes', form.customNbPersonnes)
+				if (form.customDateSouhaitee) formData.append('customDateSouhaitee', form.customDateSouhaitee)
+				if (form.customTheme) formData.append('customTheme', form.customTheme)
+				if (form.customAllergies) formData.append('customAllergies', form.customAllergies)
+				if (form.customMessage) formData.append('customMessage', form.customMessage)
+				if (photoFile) formData.append('customPhotoInspiration', photoFile)
 			}
 
-			await api.post('/patissier/orders', payload)
+			await api.upload('/patissier/orders', formData)
 			setShowCreateModal(false)
 			fetchOrders()
 			setToast('Commande créée avec succès')
@@ -1000,6 +1011,51 @@ export default function OrdersPage() {
 												rows={3}
 												placeholder="Décrivez la commande souhaitée..."
 											/>
+										</div>
+										<div>
+											<label className="mb-1 block text-xs text-muted-foreground">
+												Photo d&apos;inspiration
+											</label>
+											{photoPreview ? (
+												<div className="relative inline-block">
+													<img
+														src={photoPreview}
+														alt="Aperçu"
+														className="h-24 w-24 rounded-lg border object-cover"
+													/>
+													<button
+														type="button"
+														onClick={() => {
+															setPhotoFile(null)
+															setPhotoPreview(null)
+														}}
+														className="absolute -right-2 -top-2 rounded-full bg-red-500 p-0.5 text-white hover:bg-red-600"
+													>
+														<svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+															<path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+														</svg>
+													</button>
+												</div>
+											) : (
+												<label className="flex cursor-pointer items-center gap-2 rounded border border-dashed px-3 py-3 text-sm text-muted-foreground hover:border-primary hover:text-foreground">
+													<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+														<path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+													</svg>
+													Ajouter une photo
+													<input
+														type="file"
+														accept="image/jpeg,image/png,image/webp,image/avif"
+														className="hidden"
+														onChange={(e) => {
+															const file = e.target.files?.[0]
+															if (file) {
+																setPhotoFile(file)
+																setPhotoPreview(URL.createObjectURL(file))
+															}
+														}}
+													/>
+												</label>
+											)}
 										</div>
 									</div>
 								)}

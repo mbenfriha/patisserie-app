@@ -6,6 +6,7 @@ import OrderMessage from '#models/order_message'
 import PatissierProfile from '#models/patissier_profile'
 import Product from '#models/product'
 import EmailService from '#services/email_service'
+import StorageService from '#services/storage_service'
 import StripeService from '#services/stripe_service'
 import env from '#start/env'
 
@@ -65,7 +66,8 @@ export default class OrdersController {
 		const deliveryAddress = request.input('deliveryAddress')
 		const deliveryNotes = request.input('deliveryNotes')
 		const patissierNotes = request.input('patissierNotes')
-		const items = request.input('items')
+		const rawItems = request.input('items')
+		const items = typeof rawItems === 'string' ? JSON.parse(rawItems) : rawItems
 		const customType = request.input('customType')
 		const customNbPersonnes = request.input('customNbPersonnes')
 		const customDateSouhaitee = request.input('customDateSouhaitee')
@@ -75,6 +77,18 @@ export default class OrdersController {
 		const manualTotal = request.input('total')
 		const manualPaymentStatus = request.input('paymentStatus')
 		const depositPercent = request.input('depositPercent')
+
+		// Handle photo upload if present
+		let customPhotoInspirationUrl: string | null = null
+		const photoFile = request.file('customPhotoInspiration', {
+			size: '5mb',
+			extnames: ['jpg', 'jpeg', 'png', 'webp', 'avif'],
+		})
+		if (photoFile) {
+			const storageService = new StorageService()
+			const key = await storageService.uploadImage(photoFile, 'orders/inspirations')
+			customPhotoInspirationUrl = storageService.getPublicUrl(key)
+		}
 
 		// Generate order number
 		const now = DateTime.now()
@@ -139,6 +153,7 @@ export default class OrdersController {
 			customTheme: type === 'custom' ? customTheme || null : null,
 			customAllergies: type === 'custom' ? customAllergies || null : null,
 			customMessage: type === 'custom' ? customMessage || null : null,
+			customPhotoInspirationUrl: type === 'custom' ? customPhotoInspirationUrl : null,
 		})
 
 		// Create order items for catalogue orders
