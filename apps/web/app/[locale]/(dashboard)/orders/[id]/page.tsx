@@ -1,10 +1,10 @@
 'use client'
 
+import { PLATFORM_FEE_PERCENT, STRIPE_FEE_FIXED, STRIPE_FEE_PERCENT } from '@patissio/config'
 import { useParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { PlanGate } from '@/components/auth/plan-gate'
 import { api } from '@/lib/api/client'
-import { PLATFORM_FEE_PERCENT } from '@patissio/config'
 
 interface OrderItem {
 	id: string
@@ -130,6 +130,107 @@ export default function PatissierOrderDetailPage() {
 	// Messages
 	const [newMessage, setNewMessage] = useState('')
 	const [isSending, setIsSending] = useState(false)
+
+	// Edit mode
+	const [isEditing, setIsEditing] = useState(false)
+	const [isSaving, setIsSaving] = useState(false)
+	const [editError, setEditError] = useState('')
+	const [editForm, setEditForm] = useState({
+		clientName: '',
+		clientEmail: '',
+		clientPhone: '',
+		deliveryMethod: 'pickup' as 'pickup' | 'delivery',
+		deliveryAddress: '',
+		deliveryNotes: '',
+		requestedDate: '',
+		patissierNotes: '',
+		total: '',
+		customType: '',
+		customNbPersonnes: '',
+		customDateSouhaitee: '',
+		customTheme: '',
+		customAllergies: '',
+		customMessage: '',
+	})
+	const [editPhotoFile, setEditPhotoFile] = useState<File | null>(null)
+	const [editPhotoPreview, setEditPhotoPreview] = useState<string | null>(null)
+	const [removePhoto, setRemovePhoto] = useState(false)
+
+	const startEditing = () => {
+		if (!order) return
+		setEditForm({
+			clientName: order.clientName || '',
+			clientEmail: order.clientEmail || '',
+			clientPhone: order.clientPhone || '',
+			deliveryMethod: order.deliveryMethod || 'pickup',
+			deliveryAddress: order.deliveryAddress || '',
+			deliveryNotes: order.deliveryNotes || '',
+			requestedDate: order.requestedDate ? order.requestedDate.split('T')[0] : '',
+			patissierNotes: order.patissierNotes || '',
+			total: order.total != null ? String(order.total) : '',
+			customType: order.customType || '',
+			customNbPersonnes: order.customNbPersonnes != null ? String(order.customNbPersonnes) : '',
+			customDateSouhaitee: order.customDateSouhaitee ? order.customDateSouhaitee.split('T')[0] : '',
+			customTheme: order.customTheme || '',
+			customAllergies: order.customAllergies || '',
+			customMessage: order.customMessage || '',
+		})
+		setEditPhotoFile(null)
+		setEditPhotoPreview(null)
+		setRemovePhoto(false)
+		setEditError('')
+		setIsEditing(true)
+	}
+
+	const cancelEditing = () => {
+		setIsEditing(false)
+		setEditError('')
+		setEditPhotoFile(null)
+		setEditPhotoPreview(null)
+		setRemovePhoto(false)
+	}
+
+	const handleSaveEdit = async () => {
+		if (!order) return
+		setIsSaving(true)
+		setEditError('')
+		try {
+			const formData = new FormData()
+			formData.append('clientName', editForm.clientName)
+			formData.append('clientEmail', editForm.clientEmail)
+			formData.append('clientPhone', editForm.clientPhone)
+			formData.append('deliveryMethod', editForm.deliveryMethod)
+			formData.append('deliveryAddress', editForm.deliveryAddress)
+			formData.append('deliveryNotes', editForm.deliveryNotes)
+			formData.append('requestedDate', editForm.requestedDate)
+			formData.append('patissierNotes', editForm.patissierNotes)
+			if (editForm.total) {
+				formData.append('total', editForm.total)
+			}
+			if (order.type === 'custom') {
+				formData.append('customType', editForm.customType)
+				formData.append('customNbPersonnes', editForm.customNbPersonnes)
+				formData.append('customDateSouhaitee', editForm.customDateSouhaitee)
+				formData.append('customTheme', editForm.customTheme)
+				formData.append('customAllergies', editForm.customAllergies)
+				formData.append('customMessage', editForm.customMessage)
+				if (editPhotoFile) {
+					formData.append('customPhotoInspiration', editPhotoFile)
+				}
+				if (removePhoto) {
+					formData.append('removePhoto', 'true')
+				}
+			}
+			const res = await api.upload(`/patissier/orders/${orderId}`, formData, 'PUT')
+			setOrder(res.data.data)
+			setIsEditing(false)
+		} catch (err: unknown) {
+			const message = err instanceof Error ? err.message : 'Erreur lors de la sauvegarde'
+			setEditError(message)
+		} finally {
+			setIsSaving(false)
+		}
+	}
 
 	const fetchOrder = () => {
 		api
@@ -267,12 +368,46 @@ export default function PatissierOrderDetailPage() {
 							{new Date(order.createdAt).toLocaleDateString('fr-FR')}
 						</p>
 					</div>
-					<span
-						className={`rounded-full px-3 py-1 text-sm font-medium ${statusColors[order.status] || 'bg-gray-100'}`}
-					>
-						{statusLabels[order.status] || order.status}
-					</span>
+					<div className="flex items-center gap-3">
+						{!isEditing ? (
+							<button
+								type="button"
+								onClick={startEditing}
+								className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted"
+							>
+								Modifier
+							</button>
+						) : (
+							<>
+								<button
+									type="button"
+									onClick={cancelEditing}
+									className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted"
+								>
+									Annuler
+								</button>
+								<button
+									type="button"
+									onClick={handleSaveEdit}
+									disabled={isSaving}
+									className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+								>
+									{isSaving ? 'Sauvegarde...' : 'Sauvegarder'}
+								</button>
+							</>
+						)}
+						<span
+							className={`rounded-full px-3 py-1 text-sm font-medium ${statusColors[order.status] || 'bg-gray-100'}`}
+						>
+							{statusLabels[order.status] || order.status}
+						</span>
+					</div>
 				</div>
+				{editError && (
+					<div className="rounded-lg border border-red-200 bg-red-50 p-4">
+						<p className="text-sm text-red-600">{editError}</p>
+					</div>
+				)}
 
 				{/* Status update */}
 				<div className="rounded-lg border bg-card p-6">
@@ -327,40 +462,125 @@ export default function PatissierOrderDetailPage() {
 				{/* Client info */}
 				<div className="rounded-lg border bg-card p-6">
 					<h2 className="text-lg font-semibold">Informations client</h2>
-					<div className="mt-4 grid gap-4 sm:grid-cols-2">
-						<div>
-							<p className="text-sm text-muted-foreground">Nom</p>
-							<p className="text-sm font-medium">{order.clientName}</p>
-						</div>
-						<div>
-							<p className="text-sm text-muted-foreground">Email</p>
-							<p className="text-sm font-medium">{order.clientEmail}</p>
-						</div>
-						{order.clientPhone && (
+					{isEditing ? (
+						<div className="mt-4 grid gap-4 sm:grid-cols-2">
 							<div>
-								<p className="text-sm text-muted-foreground">Telephone</p>
-								<p className="text-sm font-medium">{order.clientPhone}</p>
+								<label className="block text-sm font-medium text-muted-foreground">Nom</label>
+								<input
+									type="text"
+									value={editForm.clientName}
+									onChange={(e) => setEditForm({ ...editForm, clientName: e.target.value })}
+									className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+								/>
 							</div>
-						)}
-						<div>
-							<p className="text-sm text-muted-foreground">Mode de livraison</p>
-							<p className="text-sm font-medium">
-								{order.deliveryMethod === 'pickup' ? 'Retrait' : 'Livraison'}
-							</p>
+							<div>
+								<label className="block text-sm font-medium text-muted-foreground">Email</label>
+								<input
+									type="email"
+									value={editForm.clientEmail}
+									onChange={(e) => setEditForm({ ...editForm, clientEmail: e.target.value })}
+									className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+								/>
+							</div>
+							<div>
+								<label className="block text-sm font-medium text-muted-foreground">Telephone</label>
+								<input
+									type="tel"
+									value={editForm.clientPhone}
+									onChange={(e) => setEditForm({ ...editForm, clientPhone: e.target.value })}
+									className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+								/>
+							</div>
+							<div>
+								<label className="block text-sm font-medium text-muted-foreground">
+									Mode de livraison
+								</label>
+								<select
+									value={editForm.deliveryMethod}
+									onChange={(e) =>
+										setEditForm({
+											...editForm,
+											deliveryMethod: e.target.value as 'pickup' | 'delivery',
+										})
+									}
+									className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+								>
+									<option value="pickup">Retrait</option>
+									<option value="delivery">Livraison</option>
+								</select>
+							</div>
+							{editForm.deliveryMethod === 'delivery' && (
+								<div className="sm:col-span-2">
+									<label className="block text-sm font-medium text-muted-foreground">
+										Adresse de livraison
+									</label>
+									<input
+										type="text"
+										value={editForm.deliveryAddress}
+										onChange={(e) => setEditForm({ ...editForm, deliveryAddress: e.target.value })}
+										className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+									/>
+								</div>
+							)}
+							<div className="sm:col-span-2">
+								<label className="block text-sm font-medium text-muted-foreground">
+									Notes de livraison
+								</label>
+								<textarea
+									value={editForm.deliveryNotes}
+									onChange={(e) => setEditForm({ ...editForm, deliveryNotes: e.target.value })}
+									rows={2}
+									className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+								/>
+							</div>
+							<div>
+								<label className="block text-sm font-medium text-muted-foreground">
+									Date souhaitee
+								</label>
+								<input
+									type="date"
+									value={editForm.requestedDate}
+									onChange={(e) => setEditForm({ ...editForm, requestedDate: e.target.value })}
+									className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+								/>
+							</div>
 						</div>
-						{order.deliveryAddress && (
+					) : (
+						<div className="mt-4 grid gap-4 sm:grid-cols-2">
 							<div>
-								<p className="text-sm text-muted-foreground">Adresse de livraison</p>
-								<p className="text-sm font-medium">{order.deliveryAddress}</p>
+								<p className="text-sm text-muted-foreground">Nom</p>
+								<p className="text-sm font-medium">{order.clientName}</p>
 							</div>
-						)}
-						{order.deliveryNotes && (
 							<div>
-								<p className="text-sm text-muted-foreground">Notes de livraison</p>
-								<p className="text-sm font-medium">{order.deliveryNotes}</p>
+								<p className="text-sm text-muted-foreground">Email</p>
+								<p className="text-sm font-medium">{order.clientEmail}</p>
 							</div>
-						)}
-					</div>
+							{order.clientPhone && (
+								<div>
+									<p className="text-sm text-muted-foreground">Telephone</p>
+									<p className="text-sm font-medium">{order.clientPhone}</p>
+								</div>
+							)}
+							<div>
+								<p className="text-sm text-muted-foreground">Mode de livraison</p>
+								<p className="text-sm font-medium">
+									{order.deliveryMethod === 'pickup' ? 'Retrait' : 'Livraison'}
+								</p>
+							</div>
+							{order.deliveryAddress && (
+								<div>
+									<p className="text-sm text-muted-foreground">Adresse de livraison</p>
+									<p className="text-sm font-medium">{order.deliveryAddress}</p>
+								</div>
+							)}
+							{order.deliveryNotes && (
+								<div>
+									<p className="text-sm text-muted-foreground">Notes de livraison</p>
+									<p className="text-sm font-medium">{order.deliveryNotes}</p>
+								</div>
+							)}
+						</div>
+					)}
 				</div>
 
 				{/* Dates */}
@@ -485,28 +705,39 @@ export default function PatissierOrderDetailPage() {
 										<p className="text-sm">{order.subtotal} &euro;</p>
 									</div>
 								)}
-								{order.total != null && (
-									<>
-										<div className="mt-1 flex justify-between gap-8">
-											<p className="text-sm font-medium">Total client</p>
-											<p className="text-sm font-medium">{order.total} &euro;</p>
-										</div>
-										<div className="mt-1 flex justify-between gap-8">
-											<p className="text-sm text-muted-foreground">
-												Frais plateforme ({PLATFORM_FEE_PERCENT}%)
-											</p>
-											<p className="text-sm text-red-600">
-												-{((order.total * PLATFORM_FEE_PERCENT) / 100).toFixed(2)} &euro;
-											</p>
-										</div>
-										<div className="mt-1 flex justify-between gap-8 border-t pt-2">
-											<p className="text-sm font-semibold">Vous recevez</p>
-											<p className="text-lg font-bold text-green-600">
-												{(order.total - (order.total * PLATFORM_FEE_PERCENT) / 100).toFixed(2)} &euro;
-											</p>
-										</div>
-									</>
-								)}
+								{order.total != null &&
+									(() => {
+										const platformFee = (order.total * PLATFORM_FEE_PERCENT) / 100
+										const stripeFee = (order.total * STRIPE_FEE_PERCENT) / 100 + STRIPE_FEE_FIXED
+										const totalFees = platformFee + stripeFee
+										return (
+											<>
+												<div className="mt-1 flex justify-between gap-8">
+													<p className="text-sm font-medium">Total client</p>
+													<p className="text-sm font-medium">{order.total.toFixed(2)} &euro;</p>
+												</div>
+												<div className="mt-1 flex justify-between gap-8">
+													<p className="text-sm text-muted-foreground">
+														Frais Patissio ({PLATFORM_FEE_PERCENT}%)
+													</p>
+													<p className="text-sm text-red-600">-{platformFee.toFixed(2)} &euro;</p>
+												</div>
+												<div className="mt-1 flex justify-between gap-8">
+													<p className="text-sm text-muted-foreground">
+														Frais Stripe ({STRIPE_FEE_PERCENT}% + {STRIPE_FEE_FIXED.toFixed(2)}{' '}
+														&euro;)
+													</p>
+													<p className="text-sm text-red-600">-{stripeFee.toFixed(2)} &euro;</p>
+												</div>
+												<div className="mt-1 flex justify-between gap-8 border-t pt-2">
+													<p className="text-sm font-semibold">Vous recevez</p>
+													<p className="text-lg font-bold text-green-600">
+														{(order.total - totalFees).toFixed(2)} &euro;
+													</p>
+												</div>
+											</>
+										)
+									})()}
 							</div>
 						</div>
 					</div>
@@ -516,59 +747,198 @@ export default function PatissierOrderDetailPage() {
 				{order.type === 'custom' && (
 					<div className="rounded-lg border bg-card p-6">
 						<h2 className="text-lg font-semibold">Details de la demande sur mesure</h2>
-						<div className="mt-4 grid gap-4 sm:grid-cols-2">
-							{order.customType && (
+						{isEditing ? (
+							<div className="mt-4 grid gap-4 sm:grid-cols-2">
 								<div>
-									<p className="text-sm text-muted-foreground">Type de patisserie</p>
-									<p className="text-sm font-medium">{order.customType}</p>
+									<label className="block text-sm font-medium text-muted-foreground">
+										Type de patisserie
+									</label>
+									<input
+										type="text"
+										value={editForm.customType}
+										onChange={(e) => setEditForm({ ...editForm, customType: e.target.value })}
+										className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+									/>
 								</div>
-							)}
-							{order.customNbPersonnes && (
 								<div>
-									<p className="text-sm text-muted-foreground">Nombre de personnes</p>
-									<p className="text-sm font-medium">{order.customNbPersonnes}</p>
+									<label className="block text-sm font-medium text-muted-foreground">
+										Nombre de personnes
+									</label>
+									<input
+										type="number"
+										value={editForm.customNbPersonnes}
+										onChange={(e) =>
+											setEditForm({ ...editForm, customNbPersonnes: e.target.value })
+										}
+										className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+									/>
 								</div>
-							)}
-							{order.customDateSouhaitee && (
 								<div>
-									<p className="text-sm text-muted-foreground">Date souhaitee</p>
-									<p className="text-sm font-medium">
-										{new Date(order.customDateSouhaitee).toLocaleDateString('fr-FR')}
-									</p>
+									<label className="block text-sm font-medium text-muted-foreground">
+										Date souhaitee
+									</label>
+									<input
+										type="date"
+										value={editForm.customDateSouhaitee}
+										onChange={(e) =>
+											setEditForm({ ...editForm, customDateSouhaitee: e.target.value })
+										}
+										className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+									/>
 								</div>
-							)}
-							{order.customTheme && (
 								<div>
-									<p className="text-sm text-muted-foreground">Theme</p>
-									<p className="text-sm font-medium">{order.customTheme}</p>
+									<label className="block text-sm font-medium text-muted-foreground">Theme</label>
+									<input
+										type="text"
+										value={editForm.customTheme}
+										onChange={(e) => setEditForm({ ...editForm, customTheme: e.target.value })}
+										className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+									/>
 								</div>
-							)}
-							{order.customAllergies && (
 								<div>
-									<p className="text-sm text-muted-foreground">Allergies</p>
-									<p className="text-sm font-medium">{order.customAllergies}</p>
+									<label className="block text-sm font-medium text-muted-foreground">
+										Allergies
+									</label>
+									<input
+										type="text"
+										value={editForm.customAllergies}
+										onChange={(e) => setEditForm({ ...editForm, customAllergies: e.target.value })}
+										className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+									/>
 								</div>
-							)}
-							{order.customPhotoInspirationUrl && (
 								<div className="sm:col-span-2">
-									<p className="text-sm text-muted-foreground">Photo d&apos;inspiration</p>
-									<a
-										href={order.customPhotoInspirationUrl}
-										target="_blank"
-										rel="noopener noreferrer"
-										className="text-sm font-medium text-primary underline"
-									>
-										Voir la photo
-									</a>
+									<label className="block text-sm font-medium text-muted-foreground">
+										Photo d&apos;inspiration
+									</label>
+									{order.customPhotoInspirationUrl && !removePhoto && !editPhotoFile && (
+										<div className="mt-1 flex items-center gap-3">
+											<a
+												href={order.customPhotoInspirationUrl}
+												target="_blank"
+												rel="noopener noreferrer"
+												className="text-sm text-primary underline"
+											>
+												Photo actuelle
+											</a>
+											<button
+												type="button"
+												onClick={() => setRemovePhoto(true)}
+												className="text-xs text-red-600 hover:underline"
+											>
+												Supprimer
+											</button>
+										</div>
+									)}
+									{removePhoto && !editPhotoFile && (
+										<div className="mt-1 flex items-center gap-3">
+											<p className="text-sm text-muted-foreground italic">Photo supprimee</p>
+											<button
+												type="button"
+												onClick={() => setRemovePhoto(false)}
+												className="text-xs text-primary hover:underline"
+											>
+												Annuler
+											</button>
+										</div>
+									)}
+									{editPhotoPreview && (
+										<div className="mt-2">
+											<img
+												src={editPhotoPreview}
+												alt="Preview"
+												className="h-24 w-24 rounded-md object-cover"
+											/>
+											<button
+												type="button"
+												onClick={() => {
+													setEditPhotoFile(null)
+													setEditPhotoPreview(null)
+												}}
+												className="mt-1 text-xs text-red-600 hover:underline"
+											>
+												Retirer
+											</button>
+										</div>
+									)}
+									<input
+										type="file"
+										accept="image/jpeg,image/png,image/webp,image/avif"
+										onChange={(e) => {
+											const file = e.target.files?.[0]
+											if (file) {
+												setEditPhotoFile(file)
+												setEditPhotoPreview(URL.createObjectURL(file))
+												setRemovePhoto(false)
+											}
+										}}
+										className="mt-2 block w-full text-sm text-muted-foreground file:mr-4 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-primary-foreground hover:file:bg-primary/90"
+									/>
 								</div>
-							)}
-							{order.customMessage && (
 								<div className="sm:col-span-2">
-									<p className="text-sm text-muted-foreground">Message du client</p>
-									<p className="text-sm font-medium">{order.customMessage}</p>
+									<label className="block text-sm font-medium text-muted-foreground">Message</label>
+									<textarea
+										value={editForm.customMessage}
+										onChange={(e) => setEditForm({ ...editForm, customMessage: e.target.value })}
+										rows={3}
+										className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+									/>
 								</div>
-							)}
-						</div>
+							</div>
+						) : (
+							<div className="mt-4 grid gap-4 sm:grid-cols-2">
+								{order.customType && (
+									<div>
+										<p className="text-sm text-muted-foreground">Type de patisserie</p>
+										<p className="text-sm font-medium">{order.customType}</p>
+									</div>
+								)}
+								{order.customNbPersonnes && (
+									<div>
+										<p className="text-sm text-muted-foreground">Nombre de personnes</p>
+										<p className="text-sm font-medium">{order.customNbPersonnes}</p>
+									</div>
+								)}
+								{order.customDateSouhaitee && (
+									<div>
+										<p className="text-sm text-muted-foreground">Date souhaitee</p>
+										<p className="text-sm font-medium">
+											{new Date(order.customDateSouhaitee).toLocaleDateString('fr-FR')}
+										</p>
+									</div>
+								)}
+								{order.customTheme && (
+									<div>
+										<p className="text-sm text-muted-foreground">Theme</p>
+										<p className="text-sm font-medium">{order.customTheme}</p>
+									</div>
+								)}
+								{order.customAllergies && (
+									<div>
+										<p className="text-sm text-muted-foreground">Allergies</p>
+										<p className="text-sm font-medium">{order.customAllergies}</p>
+									</div>
+								)}
+								{order.customPhotoInspirationUrl && (
+									<div className="sm:col-span-2">
+										<p className="text-sm text-muted-foreground">Photo d&apos;inspiration</p>
+										<a
+											href={order.customPhotoInspirationUrl}
+											target="_blank"
+											rel="noopener noreferrer"
+											className="text-sm font-medium text-primary underline"
+										>
+											Voir la photo
+										</a>
+									</div>
+								)}
+								{order.customMessage && (
+									<div className="sm:col-span-2">
+										<p className="text-sm text-muted-foreground">Message du client</p>
+										<p className="text-sm font-medium">{order.customMessage}</p>
+									</div>
+								)}
+							</div>
+						)}
 
 						{/* Quote form */}
 						<div className="mt-6 border-t pt-6">
@@ -664,37 +1034,60 @@ export default function PatissierOrderDetailPage() {
 						</div>
 
 						{/* Total display */}
-						{order.total != null && (
-							<div className="mt-4 border-t pt-4 space-y-1">
-								<div className="flex items-center justify-between">
-									<p className="text-sm font-medium">Total client</p>
-									<p className="text-sm font-medium">{order.total} &euro;</p>
-								</div>
-								<div className="flex items-center justify-between">
-									<p className="text-sm text-muted-foreground">
-										Frais plateforme ({PLATFORM_FEE_PERCENT}%)
-									</p>
-									<p className="text-sm text-red-600">
-										-{((order.total * PLATFORM_FEE_PERCENT) / 100).toFixed(2)} &euro;
-									</p>
-								</div>
-								<div className="flex items-center justify-between border-t pt-2">
-									<p className="text-sm font-semibold">Vous recevez</p>
-									<p className="text-xl font-bold text-green-600">
-										{(order.total - (order.total * PLATFORM_FEE_PERCENT) / 100).toFixed(2)} &euro;
-									</p>
-								</div>
-							</div>
-						)}
+						{order.total != null &&
+							(() => {
+								const platformFee = (order.total * PLATFORM_FEE_PERCENT) / 100
+								const stripeFee = (order.total * STRIPE_FEE_PERCENT) / 100 + STRIPE_FEE_FIXED
+								const totalFees = platformFee + stripeFee
+								return (
+									<div className="mt-4 border-t pt-4 space-y-1">
+										<div className="flex items-center justify-between">
+											<p className="text-sm font-medium">Total client</p>
+											<p className="text-sm font-medium">{order.total.toFixed(2)} &euro;</p>
+										</div>
+										<div className="flex items-center justify-between">
+											<p className="text-sm text-muted-foreground">
+												Frais Patissio ({PLATFORM_FEE_PERCENT}%)
+											</p>
+											<p className="text-sm text-red-600">-{platformFee.toFixed(2)} &euro;</p>
+										</div>
+										<div className="flex items-center justify-between">
+											<p className="text-sm text-muted-foreground">
+												Frais Stripe ({STRIPE_FEE_PERCENT}% + {STRIPE_FEE_FIXED.toFixed(2)} &euro;)
+											</p>
+											<p className="text-sm text-red-600">-{stripeFee.toFixed(2)} &euro;</p>
+										</div>
+										<div className="flex items-center justify-between border-t pt-2">
+											<p className="text-sm font-semibold">Vous recevez</p>
+											<p className="text-xl font-bold text-green-600">
+												{(order.total - totalFees).toFixed(2)} &euro;
+											</p>
+										</div>
+									</div>
+								)
+							})()}
 					</div>
 				)}
 
 				{/* Patissier notes */}
-				{order.patissierNotes && (
+				{isEditing ? (
 					<div className="rounded-lg border border-yellow-200 bg-yellow-50 p-6">
 						<h2 className="text-lg font-semibold">Notes internes</h2>
-						<p className="mt-2 text-sm">{order.patissierNotes}</p>
+						<textarea
+							value={editForm.patissierNotes}
+							onChange={(e) => setEditForm({ ...editForm, patissierNotes: e.target.value })}
+							rows={3}
+							className="mt-2 w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+							placeholder="Notes internes (visibles uniquement par vous)..."
+						/>
 					</div>
+				) : (
+					order.patissierNotes && (
+						<div className="rounded-lg border border-yellow-200 bg-yellow-50 p-6">
+							<h2 className="text-lg font-semibold">Notes internes</h2>
+							<p className="mt-2 text-sm">{order.patissierNotes}</p>
+						</div>
+					)
 				)}
 
 				{/* Messages thread */}

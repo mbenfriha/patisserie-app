@@ -7,6 +7,7 @@ export default class OrdersController {
 		const limit = Math.min(Number(request.input('limit', 20)) || 20, 100)
 
 		const orders = await Order.query()
+			.whereNull('deletedAt')
 			.preload('items')
 			.preload('patissier')
 			.orderBy('createdAt', 'desc')

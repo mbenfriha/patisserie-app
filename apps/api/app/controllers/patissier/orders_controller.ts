@@ -20,7 +20,10 @@ export default class OrdersController {
 		const status = request.input('status')
 		const type = request.input('type')
 
-		const query = Order.query().where('patissierId', profile.id).whereNull('deletedAt').orderBy('createdAt', 'desc')
+		const query = Order.query()
+			.where('patissierId', profile.id)
+			.whereNull('deletedAt')
+			.orderBy('createdAt', 'desc')
 
 		if (status) {
 			query.where('status', status)
@@ -49,7 +52,7 @@ export default class OrdersController {
 		if (!clientName || !clientEmail) {
 			return response.badRequest({
 				success: false,
-				message: 'Le nom et l\'email du client sont requis.',
+				message: "Le nom et l'email du client sont requis.",
 			})
 		}
 
@@ -120,7 +123,8 @@ export default class OrdersController {
 		}
 
 		// Determine total: manual total overrides, then catalogue subtotal, then null
-		const computedTotal = manualTotal != null ? Number(manualTotal) : type === 'catalogue' ? subtotal : null
+		const computedTotal =
+			manualTotal != null ? Number(manualTotal) : type === 'catalogue' ? subtotal : null
 
 		// Determine payment status and paidAt
 		const effectivePaymentStatus =
@@ -405,7 +409,11 @@ export default class OrdersController {
 		const profile = await PatissierProfile.findByOrFail('userId', user.id)
 
 		// Ensure order belongs to this patissier
-		await Order.query().where('id', params.id).where('patissierId', profile.id).whereNull('deletedAt').firstOrFail()
+		await Order.query()
+			.where('id', params.id)
+			.where('patissierId', profile.id)
+			.whereNull('deletedAt')
+			.firstOrFail()
 
 		const page = request.input('page', 1)
 		const limit = Math.min(Number(request.input('limit', 50)) || 50, 100)
@@ -466,6 +474,89 @@ export default class OrdersController {
 		return response.created({
 			success: true,
 			data: orderMessage.serialize(),
+		})
+	}
+
+	async update({ auth, params, request, response }: HttpContext) {
+		const user = auth.user!
+		const profile = await PatissierProfile.findByOrFail('userId', user.id)
+
+		const order = await Order.query()
+			.where('id', params.id)
+			.where('patissierId', profile.id)
+			.whereNull('deletedAt')
+			.firstOrFail()
+
+		// Client info
+		const clientName = request.input('clientName')
+		const clientEmail = request.input('clientEmail')
+		const clientPhone = request.input('clientPhone')
+
+		if (clientName) order.clientName = clientName
+		if (clientEmail) order.clientEmail = clientEmail
+		if (clientPhone !== undefined) order.clientPhone = clientPhone || null
+
+		// Delivery info
+		const deliveryMethod = request.input('deliveryMethod')
+		const deliveryAddress = request.input('deliveryAddress')
+		const deliveryNotes = request.input('deliveryNotes')
+		const requestedDate = request.input('requestedDate')
+
+		if (deliveryMethod) order.deliveryMethod = deliveryMethod
+		if (deliveryAddress !== undefined) order.deliveryAddress = deliveryAddress || null
+		if (deliveryNotes !== undefined) order.deliveryNotes = deliveryNotes || null
+		if (requestedDate !== undefined) order.requestedDate = requestedDate || null
+
+		// Notes
+		const patissierNotes = request.input('patissierNotes')
+		if (patissierNotes !== undefined) order.patissierNotes = patissierNotes || null
+
+		// Total override
+		const manualTotal = request.input('total')
+		if (manualTotal !== undefined) {
+			order.total = manualTotal != null && manualTotal !== '' ? Number(manualTotal) : null
+		}
+
+		// Custom order fields
+		if (order.type === 'custom') {
+			const customType = request.input('customType')
+			const customNbPersonnes = request.input('customNbPersonnes')
+			const customDateSouhaitee = request.input('customDateSouhaitee')
+			const customTheme = request.input('customTheme')
+			const customAllergies = request.input('customAllergies')
+			const customMessage = request.input('customMessage')
+
+			if (customType !== undefined) order.customType = customType || null
+			if (customNbPersonnes !== undefined) order.customNbPersonnes = customNbPersonnes || null
+			if (customDateSouhaitee !== undefined) order.customDateSouhaitee = customDateSouhaitee || null
+			if (customTheme !== undefined) order.customTheme = customTheme || null
+			if (customAllergies !== undefined) order.customAllergies = customAllergies || null
+			if (customMessage !== undefined) order.customMessage = customMessage || null
+
+			// Handle photo upload
+			const photoFile = request.file('customPhotoInspiration', {
+				size: '5mb',
+				extnames: ['jpg', 'jpeg', 'png', 'webp', 'avif'],
+			})
+			if (photoFile) {
+				const storageService = new StorageService()
+				const key = await storageService.uploadImage(photoFile, 'orders/inspirations')
+				order.customPhotoInspirationUrl = storageService.getPublicUrl(key)
+			}
+			// Allow removing photo
+			const removePhoto = request.input('removePhoto')
+			if (removePhoto === 'true' || removePhoto === true) {
+				order.customPhotoInspirationUrl = null
+			}
+		}
+
+		await order.save()
+		await order.load('items')
+		await order.load('messages', (q) => q.orderBy('createdAt', 'asc'))
+
+		return response.ok({
+			success: true,
+			data: order.serialize(),
 		})
 	}
 

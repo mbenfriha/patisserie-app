@@ -15,6 +15,7 @@ export default class StatsController {
 		const ordersStats = await db
 			.from('orders')
 			.where('patissier_id', profile.id)
+			.whereNull('deleted_at')
 			.select(
 				db.raw("count(*) filter (where status != 'cancelled')::int as total"),
 				db.raw("count(*) filter (where status = 'pending')::int as pending"),
@@ -26,6 +27,7 @@ export default class StatsController {
 		const revenueResult = await db
 			.from('orders')
 			.where('patissier_id', profile.id)
+			.whereNull('deleted_at')
 			.where('payment_status', 'paid')
 			.select(db.raw('coalesce(sum(total), 0)::float as total'))
 			.first()

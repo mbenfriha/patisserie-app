@@ -11,7 +11,7 @@ export default class StatsController {
 			await Promise.all([
 				User.query().count('* as total'),
 				PatissierProfile.query().count('* as total'),
-				Order.query().count('* as total'),
+				Order.query().whereNull('deletedAt').count('* as total'),
 				Workshop.query().count('* as total'),
 				Subscription.query().where('status', 'active').count('* as total'),
 			])

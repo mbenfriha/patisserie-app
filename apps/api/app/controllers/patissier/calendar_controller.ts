@@ -18,6 +18,7 @@ export default class CalendarController {
 		// Orders (non-cancelled)
 		const orders = await Order.query()
 			.where('patissierId', profile.id)
+			.whereNull('deletedAt')
 			.whereNot('status', 'cancelled')
 			.where((q) => {
 				q.whereBetween('requestedDate', [start, end])
