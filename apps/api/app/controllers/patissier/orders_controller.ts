@@ -81,16 +81,18 @@ export default class OrdersController {
 		const manualPaymentStatus = request.input('paymentStatus')
 		const depositPercent = request.input('depositPercent')
 
-		// Handle photo upload if present
-		let customPhotoInspirationUrl: string | null = null
-		const photoFile = request.file('customPhotoInspiration', {
+		// Handle photo uploads if present
+		const customPhotoUrls: string[] = []
+		const photoFiles = request.files('customPhotos', {
 			size: '5mb',
 			extnames: ['jpg', 'jpeg', 'png', 'webp', 'avif'],
 		})
-		if (photoFile) {
+		if (photoFiles.length > 0) {
 			const storageService = new StorageService()
-			const key = await storageService.uploadImage(photoFile, 'orders/inspirations')
-			customPhotoInspirationUrl = storageService.getPublicUrl(key)
+			for (const photoFile of photoFiles) {
+				const key = await storageService.uploadImage(photoFile, 'orders/inspirations')
+				customPhotoUrls.push(storageService.getPublicUrl(key))
+			}
 		}
 
 		// Generate order number
@@ -157,7 +159,7 @@ export default class OrdersController {
 			customTheme: type === 'custom' ? customTheme || null : null,
 			customAllergies: type === 'custom' ? customAllergies || null : null,
 			customMessage: type === 'custom' ? customMessage || null : null,
-			customPhotoInspirationUrl: type === 'custom' ? customPhotoInspirationUrl : null,
+			customPhotoUrls: type === 'custom' ? customPhotoUrls : [],
 		})
 
 		// Create order items for catalogue orders
@@ -533,20 +535,28 @@ export default class OrdersController {
 			if (customAllergies !== undefined) order.customAllergies = customAllergies || null
 			if (customMessage !== undefined) order.customMessage = customMessage || null
 
-			// Handle photo upload
-			const photoFile = request.file('customPhotoInspiration', {
+			// Handle photo uploads (add new photos)
+			const photoFiles = request.files('customPhotos', {
 				size: '5mb',
 				extnames: ['jpg', 'jpeg', 'png', 'webp', 'avif'],
 			})
-			if (photoFile) {
+			if (photoFiles.length > 0) {
 				const storageService = new StorageService()
-				const key = await storageService.uploadImage(photoFile, 'orders/inspirations')
-				order.customPhotoInspirationUrl = storageService.getPublicUrl(key)
+				const newUrls = [...(order.customPhotoUrls || [])]
+				for (const photoFile of photoFiles) {
+					const key = await storageService.uploadImage(photoFile, 'orders/inspirations')
+					newUrls.push(storageService.getPublicUrl(key))
+				}
+				order.customPhotoUrls = newUrls
 			}
-			// Allow removing photo
-			const removePhoto = request.input('removePhoto')
-			if (removePhoto === 'true' || removePhoto === true) {
-				order.customPhotoInspirationUrl = null
+			// Allow removing specific photos by URL
+			const removePhotos = request.input('removePhotos')
+			if (removePhotos) {
+				const toRemove: string[] =
+					typeof removePhotos === 'string' ? JSON.parse(removePhotos) : removePhotos
+				order.customPhotoUrls = (order.customPhotoUrls || []).filter(
+					(url: string) => !toRemove.includes(url)
+				)
 			}
 		}
 

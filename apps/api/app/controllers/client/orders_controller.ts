@@ -1,6 +1,6 @@
 import type { HttpContext } from '@adonisjs/core/http'
-import { DateTime } from 'luxon'
 import logger from '@adonisjs/core/services/logger'
+import { DateTime } from 'luxon'
 import Order from '#models/order'
 import OrderItem from '#models/order_item'
 import OrderMessage from '#models/order_message'
@@ -67,7 +67,10 @@ export default class OrdersController {
 			// Allow verified custom domains where Turnstile widget may not be configured yet
 			const isCustomDomain = await this.isFromVerifiedCustomDomain(request)
 			if (!isCustomDomain) {
-				return response.forbidden({ success: false, message: 'Vérification de sécurité échouée. Veuillez réessayer.' })
+				return response.forbidden({
+					success: false,
+					message: 'Vérification de sécurité échouée. Veuillez réessayer.',
+				})
 			}
 		}
 
@@ -93,16 +96,18 @@ export default class OrdersController {
 			return response.notFound({ success: false, message: 'Patissier not found' })
 		}
 
-		// Handle photo upload if present
-		let customPhotoInspirationUrl: string | null = null
-		const photoFile = request.file('customPhotoInspiration', {
+		// Handle photo uploads if present
+		const customPhotoUrls: string[] = []
+		const photoFiles = request.files('customPhotos', {
 			size: '5mb',
 			extnames: ['jpg', 'jpeg', 'png', 'webp', 'avif'],
 		})
-		if (photoFile) {
+		if (photoFiles.length > 0) {
 			const storageService = new StorageService()
-			const key = await storageService.uploadImage(photoFile, 'orders/inspirations')
-			customPhotoInspirationUrl = storageService.getPublicUrl(key)
+			for (const photoFile of photoFiles) {
+				const key = await storageService.uploadImage(photoFile, 'orders/inspirations')
+				customPhotoUrls.push(storageService.getPublicUrl(key))
+			}
 		}
 
 		const now = DateTime.now()
@@ -146,7 +151,7 @@ export default class OrdersController {
 			customDateSouhaitee: type === 'custom' ? customDateSouhaitee : null,
 			customTheme: type === 'custom' ? customTheme : null,
 			customAllergies: type === 'custom' ? customAllergies : null,
-			customPhotoInspirationUrl: type === 'custom' ? customPhotoInspirationUrl : null,
+			customPhotoUrls: type === 'custom' ? customPhotoUrls : [],
 			customMessage: type === 'custom' ? customMessage : null,
 		})
 
@@ -231,7 +236,11 @@ export default class OrdersController {
 
 	async sendMessage({ params, request, response }: HttpContext) {
 		const { orderNumber } = params
-		const { message, senderName, clientEmail } = request.only(['message', 'senderName', 'clientEmail'])
+		const { message, senderName, clientEmail } = request.only([
+			'message',
+			'senderName',
+			'clientEmail',
+		])
 
 		if (!clientEmail) {
 			return response.badRequest({ success: false, message: 'Email is required' })

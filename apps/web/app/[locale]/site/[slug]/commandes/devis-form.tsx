@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useRef, useCallback, useEffect } from 'react'
 import Script from 'next/script'
-import { StepHeader } from './devis-form/step-header'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { FlavorsSelector } from './devis-form/flavors-selector'
 import { PhotoUpload } from './devis-form/photo-upload'
+import { StepHeader } from './devis-form/step-header'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333'
 const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
@@ -36,7 +36,7 @@ export function DevisForm({ slug, onSuccess }: DevisFormProps) {
 	// Section 2 — Cake details
 	const [nbPersonnes, setNbPersonnes] = useState('')
 	const [flavors, setFlavors] = useState<string[]>([])
-	const [photoFile, setPhotoFile] = useState<File | null>(null)
+	const [photoFiles, setPhotoFiles] = useState<File[]>([])
 	const [customMessage, setCustomMessage] = useState('')
 
 	// Section 4 — Delivery
@@ -119,8 +119,8 @@ export function DevisForm({ slug, onSuccess }: DevisFormProps) {
 			if (deliveryMethod === 'delivery' && deliveryNotes) {
 				formData.append('deliveryNotes', deliveryNotes)
 			}
-			if (photoFile) {
-				formData.append('customPhotoInspiration', photoFile)
+			for (const file of photoFiles) {
+				formData.append('customPhotos', file)
 			}
 			if (turnstileToken) {
 				formData.append('cf-turnstile-response', turnstileToken)
@@ -161,7 +161,11 @@ export function DevisForm({ slug, onSuccess }: DevisFormProps) {
 
 				<div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
 					<div>
-						<label htmlFor="dv_firstname" className={labelClassName} style={{ fontFamily: "'Josefin Sans', sans-serif" }}>
+						<label
+							htmlFor="dv_firstname"
+							className={labelClassName}
+							style={{ fontFamily: "'Josefin Sans', sans-serif" }}
+						>
 							Pr&eacute;nom
 						</label>
 						<input
@@ -175,7 +179,11 @@ export function DevisForm({ slug, onSuccess }: DevisFormProps) {
 						/>
 					</div>
 					<div>
-						<label htmlFor="dv_lastname" className={labelClassName} style={{ fontFamily: "'Josefin Sans', sans-serif" }}>
+						<label
+							htmlFor="dv_lastname"
+							className={labelClassName}
+							style={{ fontFamily: "'Josefin Sans', sans-serif" }}
+						>
 							Nom
 						</label>
 						<input
@@ -189,7 +197,11 @@ export function DevisForm({ slug, onSuccess }: DevisFormProps) {
 						/>
 					</div>
 					<div>
-						<label htmlFor="dv_email" className={labelClassName} style={{ fontFamily: "'Josefin Sans', sans-serif" }}>
+						<label
+							htmlFor="dv_email"
+							className={labelClassName}
+							style={{ fontFamily: "'Josefin Sans', sans-serif" }}
+						>
 							Email
 						</label>
 						<input
@@ -203,7 +215,11 @@ export function DevisForm({ slug, onSuccess }: DevisFormProps) {
 						/>
 					</div>
 					<div>
-						<label htmlFor="dv_phone" className={labelClassName} style={{ fontFamily: "'Josefin Sans', sans-serif" }}>
+						<label
+							htmlFor="dv_phone"
+							className={labelClassName}
+							style={{ fontFamily: "'Josefin Sans', sans-serif" }}
+						>
 							T&eacute;l&eacute;phone
 						</label>
 						<input
@@ -217,7 +233,11 @@ export function DevisForm({ slug, onSuccess }: DevisFormProps) {
 						/>
 					</div>
 					<div className="sm:col-span-2">
-						<label htmlFor="dv_eventdate" className={labelClassName} style={{ fontFamily: "'Josefin Sans', sans-serif" }}>
+						<label
+							htmlFor="dv_eventdate"
+							className={labelClassName}
+							style={{ fontFamily: "'Josefin Sans', sans-serif" }}
+						>
 							Date de l&apos;&eacute;v&eacute;nement
 						</label>
 						<input
@@ -239,7 +259,11 @@ export function DevisForm({ slug, onSuccess }: DevisFormProps) {
 
 				<div className="space-y-6">
 					<div>
-						<label htmlFor="dv_nbpersonnes" className={labelClassName} style={{ fontFamily: "'Josefin Sans', sans-serif" }}>
+						<label
+							htmlFor="dv_nbpersonnes"
+							className={labelClassName}
+							style={{ fontFamily: "'Josefin Sans', sans-serif" }}
+						>
 							Nombre de parts
 						</label>
 						<input
@@ -256,7 +280,10 @@ export function DevisForm({ slug, onSuccess }: DevisFormProps) {
 
 					<div>
 						<label className={labelClassName} style={{ fontFamily: "'Josefin Sans', sans-serif" }}>
-							Parfums <span className="normal-case tracking-normal font-normal text-[var(--dark-soft)]/50">(s&eacute;lectionnez un ou plusieurs)</span>
+							Parfums{' '}
+							<span className="normal-case tracking-normal font-normal text-[var(--dark-soft)]/50">
+								(s&eacute;lectionnez un ou plusieurs)
+							</span>
 						</label>
 						<div className="mt-3">
 							<FlavorsSelector selected={flavors} onChange={setFlavors} />
@@ -265,16 +292,26 @@ export function DevisForm({ slug, onSuccess }: DevisFormProps) {
 
 					<div>
 						<label className={labelClassName} style={{ fontFamily: "'Josefin Sans', sans-serif" }}>
-							Photo d&apos;inspiration <span className="normal-case tracking-normal font-normal text-[var(--dark-soft)]/50">(optionnel)</span>
+							Photo d&apos;inspiration{' '}
+							<span className="normal-case tracking-normal font-normal text-[var(--dark-soft)]/50">
+								(optionnel)
+							</span>
 						</label>
 						<div className="mt-3">
-							<PhotoUpload file={photoFile} onChange={setPhotoFile} />
+							<PhotoUpload files={photoFiles} onChange={setPhotoFiles} />
 						</div>
 					</div>
 
 					<div>
-						<label htmlFor="dv_message" className={labelClassName} style={{ fontFamily: "'Josefin Sans', sans-serif" }}>
-							Description / Message <span className="normal-case tracking-normal font-normal text-[var(--dark-soft)]/50">(optionnel)</span>
+						<label
+							htmlFor="dv_message"
+							className={labelClassName}
+							style={{ fontFamily: "'Josefin Sans', sans-serif" }}
+						>
+							Description / Message{' '}
+							<span className="normal-case tracking-normal font-normal text-[var(--dark-soft)]/50">
+								(optionnel)
+							</span>
 						</label>
 						<textarea
 							id="dv_message"
@@ -293,13 +330,21 @@ export function DevisForm({ slug, onSuccess }: DevisFormProps) {
 			<div className="mb-12">
 				<StepHeader number={3} title="Paiement" />
 
-				<div
-					className="rounded-xl border border-[var(--gold)]/20 bg-[var(--gold)]/5 p-6"
-				>
+				<div className="rounded-xl border border-[var(--gold)]/20 bg-[var(--gold)]/5 p-6">
 					<div className="flex items-start gap-4">
 						<div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--gold)]/10">
-							<svg className="h-4 w-4 text-[var(--gold)]" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-								<path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+							<svg
+								className="h-4 w-4 text-[var(--gold)]"
+								fill="none"
+								viewBox="0 0 24 24"
+								strokeWidth={1.5}
+								stroke="currentColor"
+							>
+								<path
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"
+								/>
 							</svg>
 						</div>
 						<div>
@@ -313,7 +358,8 @@ export function DevisForm({ slug, onSuccess }: DevisFormProps) {
 								className="mt-1 text-sm text-[var(--dark-soft)]/70"
 								style={{ fontFamily: "'Josefin Sans', sans-serif" }}
 							>
-								Un acompte de 30% sera demand&eacute; pour confirmer votre commande. Le solde sera &agrave; r&eacute;gler &agrave; la r&eacute;cup&eacute;ration.
+								Un acompte de 30% sera demand&eacute; pour confirmer votre commande. Le solde sera
+								&agrave; r&eacute;gler &agrave; la r&eacute;cup&eacute;ration.
 							</p>
 							<p
 								className="mt-3 text-sm font-medium text-[var(--gold)]"
@@ -339,7 +385,8 @@ export function DevisForm({ slug, onSuccess }: DevisFormProps) {
 							className="rounded-xl border-2 p-5 text-center transition-all duration-200"
 							style={{
 								borderColor: deliveryMethod === 'pickup' ? 'var(--gold)' : 'var(--cream-dark)',
-								backgroundColor: deliveryMethod === 'pickup' ? 'rgba(197,165,90,0.05)' : 'transparent',
+								backgroundColor:
+									deliveryMethod === 'pickup' ? 'rgba(197,165,90,0.05)' : 'transparent',
 							}}
 						>
 							<svg
@@ -350,7 +397,11 @@ export function DevisForm({ slug, onSuccess }: DevisFormProps) {
 								strokeWidth={1.5}
 								stroke="currentColor"
 							>
-								<path strokeLinecap="round" strokeLinejoin="round" d="M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349m-16.5 11.65V9.35m0 0a3.001 3.001 0 003.75-.615A2.993 2.993 0 009.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 002.25 1.016c.896 0 1.7-.393 2.25-1.016A3.001 3.001 0 0021 9.349m-18 0c0-.18.081-.353.229-.466L5.25 7.5h13.5l2.021 1.383a.6.6 0 01.229.466M6.75 7.5V4.125c0-.621.504-1.125 1.125-1.125h8.25c.621 0 1.125.504 1.125 1.125V7.5" />
+								<path
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									d="M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349m-16.5 11.65V9.35m0 0a3.001 3.001 0 003.75-.615A2.993 2.993 0 009.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 002.25 1.016c.896 0 1.7-.393 2.25-1.016A3.001 3.001 0 0021 9.349m-18 0c0-.18.081-.353.229-.466L5.25 7.5h13.5l2.021 1.383a.6.6 0 01.229.466M6.75 7.5V4.125c0-.621.504-1.125 1.125-1.125h8.25c.621 0 1.125.504 1.125 1.125V7.5"
+								/>
 							</svg>
 							<span
 								className="text-xs font-semibold uppercase tracking-[1px]"
@@ -368,18 +419,25 @@ export function DevisForm({ slug, onSuccess }: DevisFormProps) {
 							className="rounded-xl border-2 p-5 text-center transition-all duration-200"
 							style={{
 								borderColor: deliveryMethod === 'delivery' ? 'var(--gold)' : 'var(--cream-dark)',
-								backgroundColor: deliveryMethod === 'delivery' ? 'rgba(197,165,90,0.05)' : 'transparent',
+								backgroundColor:
+									deliveryMethod === 'delivery' ? 'rgba(197,165,90,0.05)' : 'transparent',
 							}}
 						>
 							<svg
 								className="mx-auto mb-2 h-6 w-6"
-								style={{ color: deliveryMethod === 'delivery' ? 'var(--gold)' : 'var(--dark-soft)' }}
+								style={{
+									color: deliveryMethod === 'delivery' ? 'var(--gold)' : 'var(--dark-soft)',
+								}}
 								fill="none"
 								viewBox="0 0 24 24"
 								strokeWidth={1.5}
 								stroke="currentColor"
 							>
-								<path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0H21M3.375 14.25h-.375a3 3 0 01-3-3V8.25m9.75 6h3.75m-3.75 0V8.25m0 6h-.375a3 3 0 01-3-3V8.25m6.75 6V8.25m0 0H6.75m7.5 0v-1.5a1.5 1.5 0 011.5-1.5h2.25a1.5 1.5 0 011.5 1.5v1.5m-6.75 0h6.75" />
+								<path
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0H21M3.375 14.25h-.375a3 3 0 01-3-3V8.25m9.75 6h3.75m-3.75 0V8.25m0 6h-.375a3 3 0 01-3-3V8.25m6.75 6V8.25m0 0H6.75m7.5 0v-1.5a1.5 1.5 0 011.5-1.5h2.25a1.5 1.5 0 011.5 1.5v1.5m-6.75 0h6.75"
+								/>
 							</svg>
 							<span
 								className="text-xs font-semibold uppercase tracking-[1px]"
@@ -397,7 +455,11 @@ export function DevisForm({ slug, onSuccess }: DevisFormProps) {
 					{deliveryMethod === 'delivery' && (
 						<div className="space-y-6" style={{ animation: 'fadeInUp 0.3s ease-out' }}>
 							<div>
-								<label htmlFor="dv_address" className={labelClassName} style={{ fontFamily: "'Josefin Sans', sans-serif" }}>
+								<label
+									htmlFor="dv_address"
+									className={labelClassName}
+									style={{ fontFamily: "'Josefin Sans', sans-serif" }}
+								>
 									Adresse de livraison
 								</label>
 								<textarea
@@ -412,8 +474,15 @@ export function DevisForm({ slug, onSuccess }: DevisFormProps) {
 								/>
 							</div>
 							<div>
-								<label htmlFor="dv_deliverynotes" className={labelClassName} style={{ fontFamily: "'Josefin Sans', sans-serif" }}>
-									Notes <span className="normal-case tracking-normal font-normal text-[var(--dark-soft)]/50">(optionnel)</span>
+								<label
+									htmlFor="dv_deliverynotes"
+									className={labelClassName}
+									style={{ fontFamily: "'Josefin Sans', sans-serif" }}
+								>
+									Notes{' '}
+									<span className="normal-case tracking-normal font-normal text-[var(--dark-soft)]/50">
+										(optionnel)
+									</span>
 								</label>
 								<input
 									type="text"
@@ -481,8 +550,19 @@ export function DevisForm({ slug, onSuccess }: DevisFormProps) {
 					{submitting ? (
 						<>
 							<svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
-								<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-								<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+								<circle
+									className="opacity-25"
+									cx="12"
+									cy="12"
+									r="10"
+									stroke="currentColor"
+									strokeWidth="4"
+								/>
+								<path
+									className="opacity-75"
+									fill="currentColor"
+									d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+								/>
 							</svg>
 							Envoi en cours...
 						</>

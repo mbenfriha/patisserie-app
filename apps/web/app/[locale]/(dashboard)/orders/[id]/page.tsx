@@ -47,7 +47,7 @@ interface Order {
 	customDateSouhaitee: string | null
 	customTheme: string | null
 	customAllergies: string | null
-	customPhotoInspirationUrl: string | null
+	customPhotoUrls: string[]
 	customMessage: string | null
 	cancellationReason: string | null
 	createdAt: string
@@ -153,9 +153,12 @@ export default function PatissierOrderDetailPage() {
 		customAllergies: '',
 		customMessage: '',
 	})
-	const [editPhotoFile, setEditPhotoFile] = useState<File | null>(null)
-	const [editPhotoPreview, setEditPhotoPreview] = useState<string | null>(null)
-	const [removePhoto, setRemovePhoto] = useState(false)
+	const [newPhotoFiles, setNewPhotoFiles] = useState<File[]>([])
+	const [newPhotoPreviews, setNewPhotoPreviews] = useState<string[]>([])
+	const [photosToRemove, setPhotosToRemove] = useState<string[]>([])
+
+	// Lightbox
+	const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
 
 	const startEditing = () => {
 		if (!order) return
@@ -176,9 +179,9 @@ export default function PatissierOrderDetailPage() {
 			customAllergies: order.customAllergies || '',
 			customMessage: order.customMessage || '',
 		})
-		setEditPhotoFile(null)
-		setEditPhotoPreview(null)
-		setRemovePhoto(false)
+		setNewPhotoFiles([])
+		setNewPhotoPreviews([])
+		setPhotosToRemove([])
 		setEditError('')
 		setIsEditing(true)
 	}
@@ -186,9 +189,20 @@ export default function PatissierOrderDetailPage() {
 	const cancelEditing = () => {
 		setIsEditing(false)
 		setEditError('')
-		setEditPhotoFile(null)
-		setEditPhotoPreview(null)
-		setRemovePhoto(false)
+		setNewPhotoFiles([])
+		setNewPhotoPreviews([])
+		setPhotosToRemove([])
+	}
+
+	const handleAddPhotos = (files: FileList) => {
+		const newFiles = Array.from(files)
+		setNewPhotoFiles((prev) => [...prev, ...newFiles])
+		setNewPhotoPreviews((prev) => [...prev, ...newFiles.map((f) => URL.createObjectURL(f))])
+	}
+
+	const handleRemoveNewPhoto = (index: number) => {
+		setNewPhotoFiles((prev) => prev.filter((_, i) => i !== index))
+		setNewPhotoPreviews((prev) => prev.filter((_, i) => i !== index))
 	}
 
 	const handleSaveEdit = async () => {
@@ -215,11 +229,11 @@ export default function PatissierOrderDetailPage() {
 				formData.append('customTheme', editForm.customTheme)
 				formData.append('customAllergies', editForm.customAllergies)
 				formData.append('customMessage', editForm.customMessage)
-				if (editPhotoFile) {
-					formData.append('customPhotoInspiration', editPhotoFile)
+				for (const file of newPhotoFiles) {
+					formData.append('customPhotos', file)
 				}
-				if (removePhoto) {
-					formData.append('removePhoto', 'true')
+				if (photosToRemove.length > 0) {
+					formData.append('removePhotos', JSON.stringify(photosToRemove))
 				}
 			}
 			const res = await api.upload(`/patissier/orders/${orderId}`, formData, 'PUT')
@@ -819,68 +833,83 @@ export default function PatissierOrderDetailPage() {
 								</div>
 								<div className="sm:col-span-2">
 									<label className="block text-sm font-medium text-muted-foreground">
-										Photo d&apos;inspiration
+										Photos d&apos;inspiration
 									</label>
-									{order.customPhotoInspirationUrl && !removePhoto && !editPhotoFile && (
-										<div className="mt-1 flex items-center gap-3">
-											<a
-												href={order.customPhotoInspirationUrl}
-												target="_blank"
-												rel="noopener noreferrer"
-												className="text-sm text-primary underline"
-											>
-												Photo actuelle
-											</a>
-											<button
-												type="button"
-												onClick={() => setRemovePhoto(true)}
-												className="text-xs text-red-600 hover:underline"
-											>
-												Supprimer
-											</button>
+									{/* Existing photos */}
+									{order.customPhotoUrls && order.customPhotoUrls.length > 0 && (
+										<div className="mt-2 flex flex-wrap gap-3">
+											{order.customPhotoUrls
+												.filter((url) => !photosToRemove.includes(url))
+												.map((url) => (
+													<div key={url} className="group relative">
+														<img
+															src={url}
+															alt="Inspiration"
+															className="h-20 w-20 cursor-pointer rounded-md object-cover ring-1 ring-border"
+															onClick={() => setLightboxUrl(url)}
+														/>
+														<button
+															type="button"
+															onClick={() => setPhotosToRemove((prev) => [...prev, url])}
+															className="absolute -right-1.5 -top-1.5 rounded-full bg-red-500 p-0.5 text-white opacity-0 transition-opacity group-hover:opacity-100"
+														>
+															<svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor">
+																<path
+																	fillRule="evenodd"
+																	d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+																	clipRule="evenodd"
+																/>
+															</svg>
+														</button>
+													</div>
+												))}
 										</div>
 									)}
-									{removePhoto && !editPhotoFile && (
-										<div className="mt-1 flex items-center gap-3">
-											<p className="text-sm text-muted-foreground italic">Photo supprimee</p>
-											<button
-												type="button"
-												onClick={() => setRemovePhoto(false)}
-												className="text-xs text-primary hover:underline"
-											>
-												Annuler
-											</button>
-										</div>
+									{photosToRemove.length > 0 && (
+										<button
+											type="button"
+											onClick={() => setPhotosToRemove([])}
+											className="mt-1 text-xs text-primary hover:underline"
+										>
+											Annuler les suppressions ({photosToRemove.length})
+										</button>
 									)}
-									{editPhotoPreview && (
-										<div className="mt-2">
-											<img
-												src={editPhotoPreview}
-												alt="Preview"
-												className="h-24 w-24 rounded-md object-cover"
-											/>
-											<button
-												type="button"
-												onClick={() => {
-													setEditPhotoFile(null)
-													setEditPhotoPreview(null)
-												}}
-												className="mt-1 text-xs text-red-600 hover:underline"
-											>
-												Retirer
-											</button>
+									{/* New photo previews */}
+									{newPhotoPreviews.length > 0 && (
+										<div className="mt-2 flex flex-wrap gap-3">
+											{newPhotoPreviews.map((preview, i) => (
+												<div key={preview} className="group relative">
+													<img
+														src={preview}
+														alt="Nouvelle photo"
+														className="h-20 w-20 rounded-md object-cover ring-1 ring-primary"
+													/>
+													<button
+														type="button"
+														onClick={() => handleRemoveNewPhoto(i)}
+														className="absolute -right-1.5 -top-1.5 rounded-full bg-red-500 p-0.5 text-white opacity-0 transition-opacity group-hover:opacity-100"
+													>
+														<svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor">
+															<path
+																fillRule="evenodd"
+																d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+																clipRule="evenodd"
+															/>
+														</svg>
+													</button>
+												</div>
+											))}
 										</div>
 									)}
 									<input
 										type="file"
+										multiple
 										accept="image/jpeg,image/png,image/webp,image/avif"
 										onChange={(e) => {
-											const file = e.target.files?.[0]
-											if (file) {
-												setEditPhotoFile(file)
-												setEditPhotoPreview(URL.createObjectURL(file))
-												setRemovePhoto(false)
+											if (e.target.files && e.target.files.length > 0) {
+												handleAddPhotos(e.target.files)
 											}
+											e.target.value = ''
 										}}
 										className="mt-2 block w-full text-sm text-muted-foreground file:mr-4 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-primary-foreground hover:file:bg-primary/90"
 									/>
@@ -929,17 +958,20 @@ export default function PatissierOrderDetailPage() {
 										<p className="text-sm font-medium">{order.customAllergies}</p>
 									</div>
 								)}
-								{order.customPhotoInspirationUrl && (
+								{order.customPhotoUrls && order.customPhotoUrls.length > 0 && (
 									<div className="sm:col-span-2">
-										<p className="text-sm text-muted-foreground">Photo d&apos;inspiration</p>
-										<a
-											href={order.customPhotoInspirationUrl}
-											target="_blank"
-											rel="noopener noreferrer"
-											className="text-sm font-medium text-primary underline"
-										>
-											Voir la photo
-										</a>
+										<p className="text-sm text-muted-foreground">Photos d&apos;inspiration</p>
+										<div className="mt-2 flex flex-wrap gap-3">
+											{order.customPhotoUrls.map((url) => (
+												<img
+													key={url}
+													src={url}
+													alt="Inspiration"
+													className="h-24 w-24 cursor-pointer rounded-md object-cover ring-1 ring-border transition-shadow hover:ring-2 hover:ring-primary"
+													onClick={() => setLightboxUrl(url)}
+												/>
+											))}
+										</div>
 									</div>
 								)}
 								{order.customMessage && (
@@ -1158,6 +1190,34 @@ export default function PatissierOrderDetailPage() {
 					</form>
 				</div>
 			</div>
+
+			{/* Lightbox */}
+			{lightboxUrl && (
+				<div
+					className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+					onClick={() => setLightboxUrl(null)}
+				>
+					<button
+						type="button"
+						onClick={() => setLightboxUrl(null)}
+						className="absolute right-4 top-4 rounded-full bg-white/20 p-2 text-white hover:bg-white/40"
+					>
+						<svg width="24" height="24" viewBox="0 0 20 20" fill="currentColor">
+							<path
+								fillRule="evenodd"
+								d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+								clipRule="evenodd"
+							/>
+						</svg>
+					</button>
+					<img
+						src={lightboxUrl}
+						alt="Photo agrandie"
+						className="max-h-[90vh] max-w-[90vw] rounded-lg object-contain"
+						onClick={(e) => e.stopPropagation()}
+					/>
+				</div>
+			)}
 		</PlanGate>
 	)
 }

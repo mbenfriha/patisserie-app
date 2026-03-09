@@ -137,8 +137,8 @@ export default function OrdersPage() {
 	const [selectedQuantity, setSelectedQuantity] = useState(1)
 	const [saving, setSaving] = useState(false)
 	const [toast, setToast] = useState<string | null>(null)
-	const [photoFile, setPhotoFile] = useState<File | null>(null)
-	const [photoPreview, setPhotoPreview] = useState<string | null>(null)
+	const [photoFiles, setPhotoFiles] = useState<File[]>([])
+	const [photoPreviews, setPhotoPreviews] = useState<string[]>([])
 	const [menuOpen, setMenuOpen] = useState<string | null>(null)
 	const [deleteTarget, setDeleteTarget] = useState<Order | null>(null)
 	const [deleting, setDeleting] = useState(false)
@@ -202,8 +202,8 @@ export default function OrdersPage() {
 		setCartItems([])
 		setSelectedProductId('')
 		setSelectedQuantity(1)
-		setPhotoFile(null)
-		setPhotoPreview(null)
+		setPhotoFiles([])
+		setPhotoPreviews([])
 		setShowCreateModal(true)
 	}
 
@@ -310,7 +310,9 @@ export default function OrdersPage() {
 				if (form.customTheme) formData.append('customTheme', form.customTheme)
 				if (form.customAllergies) formData.append('customAllergies', form.customAllergies)
 				if (form.customMessage) formData.append('customMessage', form.customMessage)
-				if (photoFile) formData.append('customPhotoInspiration', photoFile)
+				for (const file of photoFiles) {
+					formData.append('customPhotos', file)
+				}
 			}
 
 			await api.upload('/patissier/orders', formData)
@@ -1028,66 +1030,70 @@ export default function OrdersPage() {
 										</div>
 										<div>
 											<label className="mb-1 block text-xs text-muted-foreground">
-												Photo d&apos;inspiration
+												Photos d&apos;inspiration
 											</label>
-											{photoPreview ? (
-												<div className="relative inline-block">
-													<img
-														src={photoPreview}
-														alt="Aperçu"
-														className="h-24 w-24 rounded-lg border object-cover"
-													/>
-													<button
-														type="button"
-														onClick={() => {
-															setPhotoFile(null)
-															setPhotoPreview(null)
-														}}
-														className="absolute -right-2 -top-2 rounded-full bg-red-500 p-0.5 text-white hover:bg-red-600"
-													>
-														<svg
-															xmlns="http://www.w3.org/2000/svg"
-															className="h-4 w-4"
-															viewBox="0 0 20 20"
-															fill="currentColor"
-														>
-															<path
-																fillRule="evenodd"
-																d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-																clipRule="evenodd"
+											{photoPreviews.length > 0 && (
+												<div className="mb-2 flex flex-wrap gap-2">
+													{photoPreviews.map((preview, i) => (
+														<div key={preview} className="group relative inline-block">
+															<img
+																src={preview}
+																alt="Aperçu"
+																className="h-20 w-20 rounded-lg border object-cover"
 															/>
-														</svg>
-													</button>
+															<button
+																type="button"
+																onClick={() => {
+																	setPhotoFiles((prev) => prev.filter((_, idx) => idx !== i))
+																	setPhotoPreviews((prev) => prev.filter((_, idx) => idx !== i))
+																}}
+																className="absolute -right-1.5 -top-1.5 rounded-full bg-red-500 p-0.5 text-white opacity-0 transition-opacity group-hover:opacity-100"
+															>
+																<svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor">
+																	<path
+																		fillRule="evenodd"
+																		d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+																		clipRule="evenodd"
+																	/>
+																</svg>
+															</button>
+														</div>
+													))}
 												</div>
-											) : (
-												<label className="flex cursor-pointer items-center gap-2 rounded border border-dashed px-3 py-3 text-sm text-muted-foreground hover:border-primary hover:text-foreground">
-													<svg
-														xmlns="http://www.w3.org/2000/svg"
-														className="h-5 w-5"
-														viewBox="0 0 20 20"
-														fill="currentColor"
-													>
-														<path
-															fillRule="evenodd"
-															d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"
-															clipRule="evenodd"
-														/>
-													</svg>
-													Ajouter une photo
-													<input
-														type="file"
-														accept="image/jpeg,image/png,image/webp,image/avif"
-														className="hidden"
-														onChange={(e) => {
-															const file = e.target.files?.[0]
-															if (file) {
-																setPhotoFile(file)
-																setPhotoPreview(URL.createObjectURL(file))
-															}
-														}}
-													/>
-												</label>
 											)}
+											<label className="flex cursor-pointer items-center gap-2 rounded border border-dashed px-3 py-3 text-sm text-muted-foreground hover:border-primary hover:text-foreground">
+												<svg
+													xmlns="http://www.w3.org/2000/svg"
+													className="h-5 w-5"
+													viewBox="0 0 20 20"
+													fill="currentColor"
+												>
+													<path
+														fillRule="evenodd"
+														d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"
+														clipRule="evenodd"
+													/>
+												</svg>
+												Ajouter des photos
+												<input
+													type="file"
+													multiple
+													accept="image/jpeg,image/png,image/webp,image/avif"
+													className="hidden"
+													onChange={(e) => {
+														const files = e.target.files
+														if (files && files.length > 0) {
+															const newFiles = Array.from(files)
+															setPhotoFiles((prev) => [...prev, ...newFiles])
+															setPhotoPreviews((prev) => [
+																...prev,
+																...newFiles.map((f) => URL.createObjectURL(f)),
+															])
+														}
+														e.target.value = ''
+													}}
+												/>
+											</label>
 										</div>
 									</div>
 								)}
