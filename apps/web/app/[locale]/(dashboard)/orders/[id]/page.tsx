@@ -1,7 +1,7 @@
 'use client'
 
 import { PLATFORM_FEE_PERCENT, STRIPE_FEE_FIXED, STRIPE_FEE_PERCENT } from '@patissio/config'
-import { useParams } from 'next/navigation'
+import { useParams, useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { PlanGate } from '@/components/auth/plan-gate'
 import { api } from '@/lib/api/client'
@@ -103,6 +103,7 @@ const allStatuses = [
 
 export default function PatissierOrderDetailPage() {
 	const params = useParams()
+	const searchParams = useSearchParams()
 	const orderId = params.id as string
 
 	const [order, setOrder] = useState<Order | null>(null)
@@ -259,6 +260,13 @@ export default function PatissierOrderDetailPage() {
 	useEffect(() => {
 		fetchOrder()
 	}, [orderId])
+
+	// Auto-open edit mode when ?edit=1
+	useEffect(() => {
+		if (order && searchParams.get('edit') === '1' && !isEditing) {
+			startEditing()
+		}
+	}, [order])
 
 	const handleUpdateStatus = async () => {
 		if (!newStatus || !order) return
@@ -707,14 +715,17 @@ export default function PatissierOrderDetailPage() {
 								)}
 								{order.total != null &&
 									(() => {
-										const platformFee = (order.total * PLATFORM_FEE_PERCENT) / 100
-										const stripeFee = (order.total * STRIPE_FEE_PERCENT) / 100 + STRIPE_FEE_FIXED
+										const platformFee = (Number(order.total) * PLATFORM_FEE_PERCENT) / 100
+										const stripeFee =
+											(Number(order.total) * STRIPE_FEE_PERCENT) / 100 + STRIPE_FEE_FIXED
 										const totalFees = platformFee + stripeFee
 										return (
 											<>
 												<div className="mt-1 flex justify-between gap-8">
 													<p className="text-sm font-medium">Total client</p>
-													<p className="text-sm font-medium">{order.total.toFixed(2)} &euro;</p>
+													<p className="text-sm font-medium">
+														{Number(order.total).toFixed(2)} &euro;
+													</p>
 												</div>
 												<div className="mt-1 flex justify-between gap-8">
 													<p className="text-sm text-muted-foreground">
@@ -732,7 +743,7 @@ export default function PatissierOrderDetailPage() {
 												<div className="mt-1 flex justify-between gap-8 border-t pt-2">
 													<p className="text-sm font-semibold">Vous recevez</p>
 													<p className="text-lg font-bold text-green-600">
-														{(order.total - totalFees).toFixed(2)} &euro;
+														{(Number(order.total) - totalFees).toFixed(2)} &euro;
 													</p>
 												</div>
 											</>
@@ -1036,14 +1047,15 @@ export default function PatissierOrderDetailPage() {
 						{/* Total display */}
 						{order.total != null &&
 							(() => {
-								const platformFee = (order.total * PLATFORM_FEE_PERCENT) / 100
-								const stripeFee = (order.total * STRIPE_FEE_PERCENT) / 100 + STRIPE_FEE_FIXED
+								const platformFee = (Number(order.total) * PLATFORM_FEE_PERCENT) / 100
+								const stripeFee =
+									(Number(order.total) * STRIPE_FEE_PERCENT) / 100 + STRIPE_FEE_FIXED
 								const totalFees = platformFee + stripeFee
 								return (
 									<div className="mt-4 border-t pt-4 space-y-1">
 										<div className="flex items-center justify-between">
 											<p className="text-sm font-medium">Total client</p>
-											<p className="text-sm font-medium">{order.total.toFixed(2)} &euro;</p>
+											<p className="text-sm font-medium">{Number(order.total).toFixed(2)} &euro;</p>
 										</div>
 										<div className="flex items-center justify-between">
 											<p className="text-sm text-muted-foreground">
@@ -1060,7 +1072,7 @@ export default function PatissierOrderDetailPage() {
 										<div className="flex items-center justify-between border-t pt-2">
 											<p className="text-sm font-semibold">Vous recevez</p>
 											<p className="text-xl font-bold text-green-600">
-												{(order.total - totalFees).toFixed(2)} &euro;
+												{(Number(order.total) - totalFees).toFixed(2)} &euro;
 											</p>
 										</div>
 									</div>

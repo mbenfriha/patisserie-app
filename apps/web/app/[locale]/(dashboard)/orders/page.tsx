@@ -1,11 +1,11 @@
 'use client'
 
-import { useEffect, useState, useMemo, useCallback } from 'react'
 import Link from 'next/link'
-import { api } from '@/lib/api/client'
-import { useAuth } from '@/lib/providers/auth-provider'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { PlanGate } from '@/components/auth/plan-gate'
+import { api } from '@/lib/api/client'
 import { useDashboardPrefix } from '@/lib/hooks/use-custom-domain'
+import { useAuth } from '@/lib/providers/auth-provider'
 
 interface Order {
 	id: string
@@ -305,7 +305,8 @@ export default function OrdersPage() {
 			} else {
 				if (form.customType) formData.append('customType', form.customType)
 				if (form.customNbPersonnes) formData.append('customNbPersonnes', form.customNbPersonnes)
-				if (form.customDateSouhaitee) formData.append('customDateSouhaitee', form.customDateSouhaitee)
+				if (form.customDateSouhaitee)
+					formData.append('customDateSouhaitee', form.customDateSouhaitee)
 				if (form.customTheme) formData.append('customTheme', form.customTheme)
 				if (form.customAllergies) formData.append('customAllergies', form.customAllergies)
 				if (form.customMessage) formData.append('customMessage', form.customMessage)
@@ -467,7 +468,10 @@ export default function OrdersPage() {
 						{/* Mobile: card list */}
 						<div className="space-y-3 sm:hidden">
 							{orders.map((order) => (
-								<div key={order.id} className="relative rounded-lg border p-4 transition-colors hover:bg-muted/30">
+								<div
+									key={order.id}
+									className="relative rounded-lg border p-4 transition-colors hover:bg-muted/30"
+								>
 									<Link href={`${dashboardPrefix}/orders/${order.id}`} className="block">
 										<div className="flex items-center justify-between pr-8">
 											<span className="font-mono text-sm font-medium text-primary">
@@ -521,6 +525,13 @@ export default function OrdersPage() {
 													onClick={() => setMenuOpen(null)}
 												>
 													Voir la commande
+												</Link>
+												<Link
+													href={`${dashboardPrefix}/orders/${order.id}?edit=1`}
+													className="block px-4 py-2 text-sm hover:bg-muted"
+													onClick={() => setMenuOpen(null)}
+												>
+													Modifier
 												</Link>
 												<button
 													type="button"
@@ -616,6 +627,13 @@ export default function OrdersPage() {
 															onClick={() => setMenuOpen(null)}
 														>
 															Voir la commande
+														</Link>
+														<Link
+															href={`${dashboardPrefix}/orders/${order.id}?edit=1`}
+															className="block px-4 py-2 text-sm hover:bg-muted"
+															onClick={() => setMenuOpen(null)}
+														>
+															Modifier
 														</Link>
 														<button
 															type="button"
@@ -833,9 +851,7 @@ export default function OrdersPage() {
 											</label>
 											<select
 												value={form.depositPercent}
-												onChange={(e) =>
-													setForm((f) => ({ ...f, depositPercent: e.target.value }))
-												}
+												onChange={(e) => setForm((f) => ({ ...f, depositPercent: e.target.value }))}
 												className="w-full rounded border px-3 py-2 text-sm"
 											>
 												<option value="30">30%</option>
@@ -857,9 +873,7 @@ export default function OrdersPage() {
 										<input
 											type="checkbox"
 											checked={form.depositPaid}
-											onChange={(e) =>
-												setForm((f) => ({ ...f, depositPaid: e.target.checked }))
-											}
+											onChange={(e) => setForm((f) => ({ ...f, depositPaid: e.target.checked }))}
 											className="h-4 w-4 rounded border"
 										/>
 										Acompte déjà payé (paiement en boutique, espèces...)
@@ -1031,15 +1045,33 @@ export default function OrdersPage() {
 														}}
 														className="absolute -right-2 -top-2 rounded-full bg-red-500 p-0.5 text-white hover:bg-red-600"
 													>
-														<svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-															<path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+														<svg
+															xmlns="http://www.w3.org/2000/svg"
+															className="h-4 w-4"
+															viewBox="0 0 20 20"
+															fill="currentColor"
+														>
+															<path
+																fillRule="evenodd"
+																d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+																clipRule="evenodd"
+															/>
 														</svg>
 													</button>
 												</div>
 											) : (
 												<label className="flex cursor-pointer items-center gap-2 rounded border border-dashed px-3 py-3 text-sm text-muted-foreground hover:border-primary hover:text-foreground">
-													<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-														<path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+													<svg
+														xmlns="http://www.w3.org/2000/svg"
+														className="h-5 w-5"
+														viewBox="0 0 20 20"
+														fill="currentColor"
+													>
+														<path
+															fillRule="evenodd"
+															d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"
+															clipRule="evenodd"
+														/>
 													</svg>
 													Ajouter une photo
 													<input
