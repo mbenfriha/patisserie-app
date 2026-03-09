@@ -41,6 +41,7 @@ interface Order {
 	deliveryAddress: string | null
 	deliveryNotes: string | null
 	paymentStatus: string
+	depositPercent: number | null
 	patissierNotes: string | null
 	customType: string | null
 	customNbPersonnes: number | null
@@ -259,6 +260,9 @@ export default function PatissierOrderDetailPage() {
 				}
 				if (data.quotedPrice != null) {
 					setQuotedPrice(String(data.quotedPrice))
+				}
+				if (data.depositPercent != null) {
+					setDepositPercent(String(data.depositPercent))
 				}
 				if (data.responseMessage) {
 					setQuoteResponseMessage(data.responseMessage)

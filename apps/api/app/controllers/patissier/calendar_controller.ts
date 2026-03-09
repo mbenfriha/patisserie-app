@@ -15,11 +15,14 @@ export default class CalendarController {
 			return response.badRequest({ message: 'start and end are required' })
 		}
 
-		// Orders (non-cancelled)
+		// Orders (non-cancelled, exclude pending custom/devis)
 		const orders = await Order.query()
 			.where('patissierId', profile.id)
 			.whereNull('deletedAt')
 			.whereNot('status', 'cancelled')
+			.whereNot((q) => {
+				q.where('type', 'custom').where('status', 'pending')
+			})
 			.where((q) => {
 				q.whereBetween('requestedDate', [start, end])
 					.orWhereBetween('confirmedDate', [start, end])
