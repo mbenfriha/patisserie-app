@@ -1,9 +1,14 @@
 'use client'
 
-import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react'
-import { useAuth } from '@/lib/providers/auth-provider'
+import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react'
 import { api } from '@/lib/api/client'
-import { useSiteProfile, useSiteConfig, type SiteConfig, type PatissierProfile } from '../site-provider'
+import { useAuth } from '@/lib/providers/auth-provider'
+import {
+	type PatissierProfile,
+	type SiteConfig,
+	useSiteConfig,
+	useSiteProfile,
+} from '../site-provider'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333'
 
@@ -130,9 +135,12 @@ export function InlineEditProvider({
 		[editedConfig, config]
 	)
 
-	const updateConfig = useCallback((key: keyof SiteConfig, value: string | boolean | string[] | number) => {
-		setEditedConfig((prev) => ({ ...prev, [key]: value }))
-	}, [])
+	const updateConfig = useCallback(
+		(key: keyof SiteConfig, value: string | boolean | string[] | number) => {
+			setEditedConfig((prev) => ({ ...prev, [key]: value }))
+		},
+		[]
+	)
 
 	const description = editedDescription !== null ? editedDescription : profile.description
 
@@ -241,7 +249,17 @@ export function InlineEditProvider({
 		} finally {
 			setIsSaving(false)
 		}
-	}, [editedConfig, editedDescription, heroFile, storyFile, heroDeleted, storyDeleted, profile, onProfileUpdate, resetEditState])
+	}, [
+		editedConfig,
+		editedDescription,
+		heroFile,
+		storyFile,
+		heroDeleted,
+		storyDeleted,
+		profile,
+		onProfileUpdate,
+		resetEditState,
+	])
 
 	return (
 		<InlineEditContext.Provider

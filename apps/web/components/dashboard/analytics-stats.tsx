@@ -1,7 +1,10 @@
 'use client'
 
+import { Activity, Clock, Eye, MousePointerClick } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useEffect, useState } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
 import { api } from '@/lib/api/client'
 
 interface AnalyticsData {
@@ -48,36 +51,74 @@ export function AnalyticsStats() {
 				<h2 className="text-lg font-semibold">{t('analytics')}</h2>
 				{!isLoading && data && data.realtime > 0 && (
 					<span className="inline-flex items-center gap-1.5 rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700">
-						<span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
+						<span className="h-1.5 w-1.5 animate-pulse rounded-full bg-green-500" />
 						{data.realtime} {t('realtimeVisitors')}
 					</span>
 				)}
 			</div>
 			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-				<div className="rounded-lg border bg-card p-6">
-					<h3 className="text-sm font-medium text-muted-foreground">{t('visitors30d')}</h3>
-					<p className="mt-2 text-3xl font-bold">
-						{isLoading ? '–' : (data?.aggregate.visitors ?? 0)}
-					</p>
-				</div>
-				<div className="rounded-lg border bg-card p-6">
-					<h3 className="text-sm font-medium text-muted-foreground">{t('pageviews30d')}</h3>
-					<p className="mt-2 text-3xl font-bold">
-						{isLoading ? '–' : (data?.aggregate.pageviews ?? 0)}
-					</p>
-				</div>
-				<div className="rounded-lg border bg-card p-6">
-					<h3 className="text-sm font-medium text-muted-foreground">{t('bounceRate')}</h3>
-					<p className="mt-2 text-3xl font-bold">
-						{isLoading ? '–' : `${data?.aggregate.bounceRate ?? 0}%`}
-					</p>
-				</div>
-				<div className="rounded-lg border bg-card p-6">
-					<h3 className="text-sm font-medium text-muted-foreground">{t('avgDuration')}</h3>
-					<p className="mt-2 text-3xl font-bold">
-						{isLoading ? '–' : formatDuration(data?.aggregate.visitDuration ?? 0)}
-					</p>
-				</div>
+				<Card>
+					<CardHeader className="flex flex-row items-center justify-between pb-2">
+						<CardTitle className="text-sm font-medium text-muted-foreground">
+							{t('visitors30d')}
+						</CardTitle>
+						<Eye className="size-4 text-muted-foreground" />
+					</CardHeader>
+					<CardContent>
+						{isLoading ? (
+							<Skeleton className="h-8 w-20" />
+						) : (
+							<div className="text-2xl font-bold">{data?.aggregate.visitors ?? 0}</div>
+						)}
+					</CardContent>
+				</Card>
+				<Card>
+					<CardHeader className="flex flex-row items-center justify-between pb-2">
+						<CardTitle className="text-sm font-medium text-muted-foreground">
+							{t('pageviews30d')}
+						</CardTitle>
+						<MousePointerClick className="size-4 text-muted-foreground" />
+					</CardHeader>
+					<CardContent>
+						{isLoading ? (
+							<Skeleton className="h-8 w-20" />
+						) : (
+							<div className="text-2xl font-bold">{data?.aggregate.pageviews ?? 0}</div>
+						)}
+					</CardContent>
+				</Card>
+				<Card>
+					<CardHeader className="flex flex-row items-center justify-between pb-2">
+						<CardTitle className="text-sm font-medium text-muted-foreground">
+							{t('bounceRate')}
+						</CardTitle>
+						<Activity className="size-4 text-muted-foreground" />
+					</CardHeader>
+					<CardContent>
+						{isLoading ? (
+							<Skeleton className="h-8 w-20" />
+						) : (
+							<div className="text-2xl font-bold">{data?.aggregate.bounceRate ?? 0}%</div>
+						)}
+					</CardContent>
+				</Card>
+				<Card>
+					<CardHeader className="flex flex-row items-center justify-between pb-2">
+						<CardTitle className="text-sm font-medium text-muted-foreground">
+							{t('avgDuration')}
+						</CardTitle>
+						<Clock className="size-4 text-muted-foreground" />
+					</CardHeader>
+					<CardContent>
+						{isLoading ? (
+							<Skeleton className="h-8 w-20" />
+						) : (
+							<div className="text-2xl font-bold">
+								{formatDuration(data?.aggregate.visitDuration ?? 0)}
+							</div>
+						)}
+					</CardContent>
+				</Card>
 			</div>
 		</div>
 	)

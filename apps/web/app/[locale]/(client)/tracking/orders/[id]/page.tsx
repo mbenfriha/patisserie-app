@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import { api } from '@/lib/api/client'
 
 interface OrderItem {
@@ -127,7 +127,7 @@ export default function ClientOrderTrackingPage() {
 			setNewMessage('')
 			fetchMessages(email)
 		} catch (err: any) {
-			setError(err.message || 'Erreur lors de l\'envoi du message')
+			setError(err.message || "Erreur lors de l'envoi du message")
 		} finally {
 			setIsSending(false)
 		}
@@ -165,9 +165,7 @@ export default function ClientOrderTrackingPage() {
 							</button>
 						</div>
 					</div>
-					{error && hasSearched && (
-						<p className="text-sm text-red-600">{error}</p>
-					)}
+					{error && hasSearched && <p className="text-sm text-red-600">{error}</p>}
 				</form>
 			)}
 
@@ -186,7 +184,9 @@ export default function ClientOrderTrackingPage() {
 							</div>
 							<div className="text-right">
 								<p className="text-sm text-muted-foreground">Type</p>
-								<p className="mt-1 text-sm font-medium capitalize">{order.type === 'catalogue' ? 'Catalogue' : 'Sur mesure'}</p>
+								<p className="mt-1 text-sm font-medium capitalize">
+									{order.type === 'catalogue' ? 'Catalogue' : 'Sur mesure'}
+								</p>
 							</div>
 						</div>
 					</div>
@@ -206,18 +206,24 @@ export default function ClientOrderTrackingPage() {
 							{order.requestedDate && (
 								<div>
 									<p className="text-sm text-muted-foreground">Date souhaitee</p>
-									<p className="text-sm font-medium">{new Date(order.requestedDate).toLocaleDateString('fr-FR')}</p>
+									<p className="text-sm font-medium">
+										{new Date(order.requestedDate).toLocaleDateString('fr-FR')}
+									</p>
 								</div>
 							)}
 							{order.confirmedDate && (
 								<div>
 									<p className="text-sm text-muted-foreground">Date confirmee</p>
-									<p className="text-sm font-medium">{new Date(order.confirmedDate).toLocaleDateString('fr-FR')}</p>
+									<p className="text-sm font-medium">
+										{new Date(order.confirmedDate).toLocaleDateString('fr-FR')}
+									</p>
 								</div>
 							)}
 							<div>
 								<p className="text-sm text-muted-foreground">Mode de livraison</p>
-								<p className="text-sm font-medium">{order.deliveryMethod === 'pickup' ? 'Retrait' : 'Livraison'}</p>
+								<p className="text-sm font-medium">
+									{order.deliveryMethod === 'pickup' ? 'Retrait' : 'Livraison'}
+								</p>
 							</div>
 							<div>
 								<p className="text-sm text-muted-foreground">Paiement</p>
@@ -252,7 +258,9 @@ export default function ClientOrderTrackingPage() {
 								{order.customDateSouhaitee && (
 									<div>
 										<p className="text-sm text-muted-foreground">Date souhaitee</p>
-										<p className="text-sm font-medium">{new Date(order.customDateSouhaitee).toLocaleDateString('fr-FR')}</p>
+										<p className="text-sm font-medium">
+											{new Date(order.customDateSouhaitee).toLocaleDateString('fr-FR')}
+										</p>
 									</div>
 								)}
 								{order.customTheme && (
@@ -297,10 +305,18 @@ export default function ClientOrderTrackingPage() {
 								<table className="w-full">
 									<thead>
 										<tr className="border-b">
-											<th className="pb-2 text-left text-sm font-medium text-muted-foreground">Produit</th>
-											<th className="pb-2 text-center text-sm font-medium text-muted-foreground">Qte</th>
-											<th className="pb-2 text-right text-sm font-medium text-muted-foreground">Prix unit.</th>
-											<th className="pb-2 text-right text-sm font-medium text-muted-foreground">Total</th>
+											<th className="pb-2 text-left text-sm font-medium text-muted-foreground">
+												Produit
+											</th>
+											<th className="pb-2 text-center text-sm font-medium text-muted-foreground">
+												Qte
+											</th>
+											<th className="pb-2 text-right text-sm font-medium text-muted-foreground">
+												Prix unit.
+											</th>
+											<th className="pb-2 text-right text-sm font-medium text-muted-foreground">
+												Total
+											</th>
 										</tr>
 									</thead>
 									<tbody>
@@ -309,7 +325,9 @@ export default function ClientOrderTrackingPage() {
 												<td className="py-3 text-sm">
 													{item.productName}
 													{item.specialInstructions && (
-														<p className="mt-0.5 text-xs text-muted-foreground">{item.specialInstructions}</p>
+														<p className="mt-0.5 text-xs text-muted-foreground">
+															{item.specialInstructions}
+														</p>
 													)}
 												</td>
 												<td className="py-3 text-center text-sm">{item.quantity}</td>
@@ -378,25 +396,27 @@ export default function ClientOrderTrackingPage() {
 						</div>
 
 						{/* Send message form */}
-						{order.status !== 'cancelled' && order.status !== 'delivered' && order.status !== 'picked_up' && (
-							<form onSubmit={handleSendMessage} className="mt-4 flex gap-2">
-								<input
-									type="text"
-									value={newMessage}
-									onChange={(e) => setNewMessage(e.target.value)}
-									placeholder="Ecrire un message..."
-									className="flex-1 rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-									required
-								/>
-								<button
-									type="submit"
-									disabled={isSending}
-									className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-								>
-									{isSending ? 'Envoi...' : 'Envoyer'}
-								</button>
-							</form>
-						)}
+						{order.status !== 'cancelled' &&
+							order.status !== 'delivered' &&
+							order.status !== 'picked_up' && (
+								<form onSubmit={handleSendMessage} className="mt-4 flex gap-2">
+									<input
+										type="text"
+										value={newMessage}
+										onChange={(e) => setNewMessage(e.target.value)}
+										placeholder="Ecrire un message..."
+										className="flex-1 rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+										required
+									/>
+									<button
+										type="submit"
+										disabled={isSending}
+										className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+									>
+										{isSending ? 'Envoi...' : 'Envoyer'}
+									</button>
+								</form>
+							)}
 					</div>
 				</div>
 			)}

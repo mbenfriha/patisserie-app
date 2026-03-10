@@ -1,12 +1,52 @@
 'use client'
 
-import { useEffect, useState, useCallback, useRef } from 'react'
+import {
+	EyeOff,
+	ImagePlus,
+	MoreHorizontal,
+	Palette,
+	Pencil,
+	Plus,
+	Search,
+	Star,
+	Trash2,
+} from 'lucide-react'
 import { useTranslations } from 'next-intl'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { CategoryCombobox } from '@/components/ui/category-combobox'
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from '@/components/ui/dialog'
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { ImageCropper } from '@/components/ui/image-cropper'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { RichEditor } from '@/components/ui/rich-editor'
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@/components/ui/select'
+import { Switch } from '@/components/ui/switch'
 import { api } from '@/lib/api/client'
 import { getImageUrl } from '@/lib/utils/image-url'
-import { CategoryCombobox } from '@/components/ui/category-combobox'
-import { RichEditor } from '@/components/ui/rich-editor'
-import { ImageCropper } from '@/components/ui/image-cropper'
 
 interface CreationImage {
 	url: string
@@ -61,8 +101,15 @@ export default function CreationsPage() {
 	const [saving, setSaving] = useState(false)
 	const [tagInput, setTagInput] = useState('')
 	const [toast, setToast] = useState('')
-	const [cropState, setCropState] = useState<{ creationId: string; src: string; file?: File; editIdx?: number } | null>(null)
+	const [cropState, setCropState] = useState<{
+		creationId: string
+		src: string
+		file?: File
+		editIdx?: number
+	} | null>(null)
 	const [imageMenuId, setImageMenuId] = useState<{ creationId: string; idx: number } | null>(null)
+	const [searchQuery, setSearchQuery] = useState('')
+	const [categoryFilter, setCategoryFilter] = useState<string>('all')
 
 	const showToast = (msg: string) => {
 		setToast(msg)
@@ -97,6 +144,17 @@ export default function CreationsPage() {
 		document.addEventListener('click', handleClick)
 		return () => document.removeEventListener('click', handleClick)
 	}, [imageMenuId])
+
+	const filteredCreations = useMemo(() => {
+		return creations.filter((creation) => {
+			const matchesSearch =
+				!searchQuery ||
+				creation.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+				creation.tags?.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+			const matchesCategory = categoryFilter === 'all' || creation.categoryId === categoryFilter
+			return matchesSearch && matchesCategory
+		})
+	}, [creations, searchQuery, categoryFilter])
 
 	const openCreate = () => {
 		setEditingId(null)
@@ -251,32 +309,78 @@ export default function CreationsPage() {
 
 	return (
 		<div className="space-y-6">
+			{/* Header */}
 			<div className="flex items-center justify-between">
-				<h1 className="text-3xl font-bold">{t('creations')}</h1>
-				<button
-					type="button"
-					onClick={openCreate}
-					className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-				>
-					+ Nouvelle création
-				</button>
+				<div>
+					<h1 className="text-2xl font-bold tracking-tight">{t('creations')}</h1>
+					<p className="text-muted-foreground">Gérez vos créations pâtissières</p>
+				</div>
+				<Button onClick={openCreate}>
+					<Plus />
+					Nouvelle création
+				</Button>
 			</div>
+
+			{/* Search + Category filter */}
+			{!isLoading && creations.length > 0 && (
+				<div className="flex flex-col gap-3 sm:flex-row">
+					<div className="relative flex-1">
+						<Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+						<Input
+							placeholder="Rechercher une création..."
+							value={searchQuery}
+							onChange={(e) => setSearchQuery(e.target.value)}
+							className="pl-9"
+						/>
+					</div>
+					<Select value={categoryFilter} onValueChange={setCategoryFilter}>
+						<SelectTrigger className="w-full sm:w-[200px]">
+							<SelectValue placeholder="Toutes les catégories" />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value="all">Toutes les catégories</SelectItem>
+							{categories.map((cat) => (
+								<SelectItem key={cat.id} value={cat.id}>
+									{cat.name}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
+				</div>
+			)}
 
 			{isLoading ? (
 				<p className="text-muted-foreground">Chargement...</p>
 			) : creations.length === 0 ? (
-				<div className="rounded-lg border border-dashed p-12 text-center">
-					<p className="text-muted-foreground">Aucune création pour le moment</p>
-					<p className="mt-1 text-sm text-muted-foreground">
-						Ajoutez vos premières créations pour les afficher sur votre site
-					</p>
-				</div>
+				<Card className="border-dashed py-12">
+					<CardContent className="flex flex-col items-center text-center">
+						<Palette className="mb-3 h-12 w-12 text-muted-foreground/40" />
+						<p className="font-medium">Aucune création pour le moment</p>
+						<p className="mt-1 text-sm text-muted-foreground">
+							Ajoutez vos premières créations pour les afficher sur votre site
+						</p>
+						<Button onClick={openCreate} className="mt-4">
+							<Plus />
+							Nouvelle création
+						</Button>
+					</CardContent>
+				</Card>
+			) : filteredCreations.length === 0 ? (
+				<Card className="border-dashed py-12">
+					<CardContent className="flex flex-col items-center text-center">
+						<Search className="mb-3 h-12 w-12 text-muted-foreground/40" />
+						<p className="font-medium">Aucun résultat</p>
+						<p className="mt-1 text-sm text-muted-foreground">
+							Essayez de modifier votre recherche ou vos filtres
+						</p>
+					</CardContent>
+				</Card>
 			) : (
-				<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-					{creations.map((creation) => (
-						<div key={creation.id} className="group relative rounded-lg border bg-card">
-							{/* Image */}
-							<div className="relative aspect-[4/3] bg-muted">
+				<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+					{filteredCreations.map((creation) => (
+						<Card key={creation.id} className="group relative gap-0 overflow-hidden p-0">
+							{/* Image area */}
+							<div className="relative aspect-square bg-muted">
 								{creation.images?.[0]?.url ? (
 									<img
 										src={getImageUrl(creation.images[0].url) || ''}
@@ -285,247 +389,320 @@ export default function CreationsPage() {
 									/>
 								) : (
 									<div className="flex h-full w-full items-center justify-center text-muted-foreground/40">
-										<svg className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-											<path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z" />
-										</svg>
+										<ImagePlus className="h-12 w-12" />
 									</div>
 								)}
-								{/* Image count badge */}
-								{creation.images?.length > 1 && (
-									<span className="absolute bottom-2 right-2 rounded-full bg-black/60 px-2 py-0.5 text-xs text-white">
-										{creation.images.length} photos
-									</span>
+
+								{/* Featured badge - top left */}
+								{creation.isFeatured && (
+									<Badge className="absolute top-2 left-2 bg-amber-500 text-white hover:bg-amber-500">
+										<Star className="h-3 w-3" />
+										En vedette
+									</Badge>
 								)}
+
+								{/* Hidden badge - top right */}
+								{!creation.isVisible && (
+									<Badge
+										variant="secondary"
+										className="absolute top-2 right-2 bg-black/60 text-white hover:bg-black/60"
+									>
+										<EyeOff className="h-3 w-3" />
+										Masqué
+									</Badge>
+								)}
+
+								{/* Hover overlay with actions */}
+								<div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100">
+									<div className="flex w-full items-center justify-between p-3">
+										<Button variant="secondary" size="sm" asChild>
+											<label className="cursor-pointer">
+												<ImagePlus className="h-4 w-4" />
+												Photo
+												<input
+													type="file"
+													accept="image/*"
+													className="hidden"
+													onChange={(e) => handleImageSelect(creation.id, e)}
+												/>
+											</label>
+										</Button>
+										<DropdownMenu>
+											<DropdownMenuTrigger asChild>
+												<Button variant="secondary" size="icon" className="h-8 w-8">
+													<MoreHorizontal className="h-4 w-4" />
+												</Button>
+											</DropdownMenuTrigger>
+											<DropdownMenuContent align="end">
+												<DropdownMenuItem onClick={() => openEdit(creation)}>
+													<Pencil />
+													Modifier
+												</DropdownMenuItem>
+												<DropdownMenuItem
+													onClick={async () => {
+														const body = {
+															title: creation.title,
+															isVisible: !creation.isVisible,
+														}
+														try {
+															await api.put(`/patissier/creations/${creation.id}`, body)
+															showToast(
+																creation.isVisible ? 'Création masquée' : 'Création visible'
+															)
+															await loadData()
+														} catch {
+															showToast('Erreur lors de la mise à jour')
+														}
+													}}
+												>
+													<EyeOff />
+													{creation.isVisible ? 'Masquer' : 'Rendre visible'}
+												</DropdownMenuItem>
+												<DropdownMenuItem
+													onClick={async () => {
+														const body = {
+															title: creation.title,
+															isFeatured: !creation.isFeatured,
+														}
+														try {
+															await api.put(`/patissier/creations/${creation.id}`, body)
+															showToast(
+																creation.isFeatured ? 'Retirée des vedettes' : 'Mise en vedette'
+															)
+															await loadData()
+														} catch {
+															showToast('Erreur lors de la mise à jour')
+														}
+													}}
+												>
+													<Star />
+													{creation.isFeatured ? 'Retirer des vedettes' : 'Mettre en vedette'}
+												</DropdownMenuItem>
+												<DropdownMenuSeparator />
+												<DropdownMenuItem
+													variant="destructive"
+													onClick={() => handleDelete(creation.id)}
+												>
+													<Trash2 />
+													Supprimer
+												</DropdownMenuItem>
+											</DropdownMenuContent>
+										</DropdownMenu>
+									</div>
+								</div>
 							</div>
 
 							{/* Content */}
-							<div className="p-4">
-								<h3 className="font-medium">{creation.title || <span className="text-muted-foreground italic">Sans titre</span>}</h3>
-								{creation.description && (
-									<div
-										className="mt-1 line-clamp-2 text-sm text-muted-foreground"
-										dangerouslySetInnerHTML={{ __html: creation.description }}
-									/>
-								)}
+							<CardContent className="p-4">
+								<h3 className="font-medium">
+									{creation.title || (
+										<span className="text-muted-foreground italic">Sans titre</span>
+									)}
+								</h3>
 								{getCategoryName(creation.categoryId) && (
-									<span className="mt-2 inline-block rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+									<p className="mt-0.5 text-sm text-muted-foreground">
 										{getCategoryName(creation.categoryId)}
-									</span>
+									</p>
 								)}
-								<div className="mt-2 flex gap-2">
-									{creation.isFeatured && (
-										<span className="rounded bg-primary/10 px-2 py-0.5 text-xs text-primary">
-											En vedette
-										</span>
-									)}
-									{!creation.isVisible && (
-										<span className="rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-											Masqué
-										</span>
-									)}
-								</div>
-
-								{/* Actions */}
-								<div className="mt-3 flex items-center gap-2 border-t pt-3">
-									<label className="cursor-pointer rounded border px-3 py-1.5 text-xs hover:bg-muted">
-										+ Photo
-										<input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageSelect(creation.id, e)} />
-									</label>
-									<button
-										type="button"
-										onClick={() => openEdit(creation)}
-										className="rounded border px-3 py-1.5 text-xs hover:bg-muted"
-									>
-										Modifier
-									</button>
-									<button
-										type="button"
-										onClick={() => handleDelete(creation.id)}
-										className="rounded border border-red-200 px-3 py-1.5 text-xs text-red-600 hover:bg-red-50"
-									>
-										Supprimer
-									</button>
-								</div>
+								{creation.price !== null && creation.price !== undefined && (
+									<p className="mt-1 text-sm font-semibold">
+										{new Intl.NumberFormat('fr-FR', {
+											style: 'currency',
+											currency: 'EUR',
+										}).format(creation.price)}
+									</p>
+								)}
+								{creation.tags && creation.tags.length > 0 && (
+									<div className="mt-2 flex flex-wrap gap-1">
+										{creation.tags.slice(0, 3).map((tag) => (
+											<Badge key={tag} variant="secondary" className="text-xs">
+												{tag}
+											</Badge>
+										))}
+										{creation.tags.length > 3 && (
+											<Badge variant="outline" className="text-xs">
+												+{creation.tags.length - 3}
+											</Badge>
+										)}
+									</div>
+								)}
 
 								{/* Image thumbnails */}
 								{creation.images?.length > 0 && (
-									<div className="mt-3 flex flex-wrap gap-2">
+									<div className="mt-3 flex flex-wrap gap-2 border-t pt-3">
 										{creation.images.map((img, idx) => (
-											<div key={idx} className="relative h-16 w-16 shrink-0">
-												<button
-													type="button"
-													onClick={(e) => { e.stopPropagation(); setImageMenuId(imageMenuId?.creationId === creation.id && imageMenuId?.idx === idx ? null : { creationId: creation.id, idx }) }}
-													className={`h-full w-full overflow-hidden rounded border-2 transition-colors ${idx === 0 ? 'border-primary' : 'border-transparent hover:border-muted-foreground/30'}`}
-												>
-													<img src={getImageUrl(img.url) || ''} alt="" className="h-full w-full object-cover" />
-												</button>
+											<div key={idx} className="relative h-12 w-12 shrink-0">
+												<DropdownMenu>
+													<DropdownMenuTrigger asChild>
+														<button
+															type="button"
+															className={`h-full w-full overflow-hidden rounded border-2 transition-colors ${idx === 0 ? 'border-primary' : 'border-transparent hover:border-muted-foreground/30'}`}
+														>
+															<img
+																src={getImageUrl(img.url) || ''}
+																alt=""
+																className="h-full w-full object-cover"
+															/>
+														</button>
+													</DropdownMenuTrigger>
+													<DropdownMenuContent align="start">
+														{idx !== 0 && (
+															<DropdownMenuItem onClick={() => handleSetCover(creation.id, idx)}>
+																<Star />
+																Couverture
+															</DropdownMenuItem>
+														)}
+														<DropdownMenuItem
+															onClick={() => handleEditImage(creation.id, idx, img.url)}
+														>
+															<ImagePlus />
+															Recadrer
+														</DropdownMenuItem>
+														<DropdownMenuSeparator />
+														<DropdownMenuItem
+															variant="destructive"
+															onClick={() => handleImageDelete(creation.id, idx)}
+														>
+															<Trash2 />
+															Supprimer
+														</DropdownMenuItem>
+													</DropdownMenuContent>
+												</DropdownMenu>
 												{idx === 0 && (
 													<span className="absolute -top-1 -left-1 rounded bg-primary px-1 text-[8px] font-semibold text-primary-foreground">
 														Cover
 													</span>
 												)}
-												{imageMenuId?.creationId === creation.id && imageMenuId?.idx === idx && (
-													<div className="absolute top-full left-0 z-20 mt-1 w-36 rounded-md border bg-card py-1 shadow-lg">
-														{idx !== 0 && (
-															<button
-																type="button"
-																onClick={() => { handleSetCover(creation.id, idx); setImageMenuId(null) }}
-																className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs hover:bg-muted"
-															>
-																<svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.562.562 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.562.562 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" /></svg>
-																Couverture
-															</button>
-														)}
-														<button
-															type="button"
-															onClick={() => handleEditImage(creation.id, idx, img.url)}
-															className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs hover:bg-muted"
-														>
-															<svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21z" /></svg>
-															Recadrer
-														</button>
-														<div className="my-1 border-t" />
-														<button
-															type="button"
-															onClick={() => { handleImageDelete(creation.id, idx); setImageMenuId(null) }}
-															className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-red-600 hover:bg-red-50"
-														>
-															<svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>
-															Supprimer
-														</button>
-													</div>
-												)}
 											</div>
 										))}
 									</div>
 								)}
-							</div>
-						</div>
+							</CardContent>
+						</Card>
 					))}
 				</div>
 			)}
 
-			{/* ── Modal Create/Edit ── */}
-			{showModal && (
-				<div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center">
-					<div className="max-h-[85vh] w-full overflow-y-auto rounded-t-xl bg-white p-4 shadow-xl sm:max-w-lg sm:rounded-lg sm:p-6">
-						<h2 className="text-xl font-bold">
-							{editingId ? 'Modifier la création' : 'Nouvelle création'}
-						</h2>
+			{/* ── Dialog Create/Edit ── */}
+			<Dialog open={showModal} onOpenChange={setShowModal}>
+				<DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+					<DialogHeader>
+						<DialogTitle>{editingId ? 'Modifier la création' : 'Nouvelle création'}</DialogTitle>
+						<DialogDescription>
+							{editingId
+								? 'Modifiez les informations de votre création.'
+								: 'Ajoutez une nouvelle création à votre catalogue.'}
+						</DialogDescription>
+					</DialogHeader>
 
-						<div className="mt-4 space-y-4">
-							{/* Title */}
-							<div>
-								<label className="mb-1 block text-sm font-medium">Titre</label>
-								<input
-									type="text"
-									value={form.title}
-									onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-									className="w-full rounded border px-3 py-2 text-sm"
-									placeholder="Nom de la création"
-								/>
-							</div>
-
-							{/* Description */}
-							<div>
-								<label className="mb-1 block text-sm font-medium">Description</label>
-								<RichEditor
-									content={form.description}
-									onChange={(html) => setForm((f) => ({ ...f, description: html }))}
-									placeholder="Description de la creation"
-								/>
-							</div>
-
-							{/* Category */}
-							<div>
-								<label className="mb-1 block text-sm font-medium">Catégorie</label>
-								<CategoryCombobox
-									categories={categories}
-									value={form.categoryId}
-									onChange={(v) => setForm((f) => ({ ...f, categoryId: v }))}
-									onCreateCategory={handleCreateCategory}
-								/>
-							</div>
-
-							{/* Tags */}
-							<div>
-								<label className="mb-1 block text-sm font-medium">Tags</label>
-								<div className="flex gap-2">
-									<input
-										type="text"
-										value={tagInput}
-										onChange={(e) => setTagInput(e.target.value)}
-										onKeyDown={(e) => {
-											if (e.key === 'Enter') {
-												e.preventDefault()
-												addTag()
-											}
-										}}
-										className="flex-1 rounded border px-3 py-2 text-sm"
-										placeholder="Ajouter un tag..."
-									/>
-									<button type="button" onClick={addTag} className="rounded border px-3 py-2 text-sm hover:bg-muted">
-										+
-									</button>
-								</div>
-								{form.tags.length > 0 && (
-									<div className="mt-2 flex flex-wrap gap-1">
-										{form.tags.map((tag) => (
-											<span key={tag} className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs">
-												{tag}
-												<button type="button" onClick={() => removeTag(tag)} className="text-muted-foreground hover:text-foreground">
-													&times;
-												</button>
-											</span>
-										))}
-									</div>
-								)}
-							</div>
-
-							{/* Toggles */}
-							<div className="flex gap-6">
-								<label className="flex items-center gap-2 text-sm">
-									<input
-										type="checkbox"
-										checked={form.isVisible}
-										onChange={(e) => setForm((f) => ({ ...f, isVisible: e.target.checked }))}
-										className="h-4 w-4 rounded border"
-									/>
-									Visible sur le site
-								</label>
-								<label className="flex items-center gap-2 text-sm">
-									<input
-										type="checkbox"
-										checked={form.isFeatured}
-										onChange={(e) => setForm((f) => ({ ...f, isFeatured: e.target.checked }))}
-										className="h-4 w-4 rounded border"
-									/>
-									En vedette
-								</label>
-							</div>
+					<div className="space-y-4">
+						{/* Title */}
+						<div className="space-y-2">
+							<Label htmlFor="creation-title">Titre</Label>
+							<Input
+								id="creation-title"
+								type="text"
+								value={form.title}
+								onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+								placeholder="Nom de la création"
+							/>
 						</div>
 
-						{/* Actions */}
-						<div className="mt-6 flex justify-end gap-3">
-							<button
-								type="button"
-								onClick={() => setShowModal(false)}
-								className="rounded border px-4 py-2 text-sm hover:bg-muted"
-							>
-								Annuler
-							</button>
-							<button
-								type="button"
-								onClick={handleSave}
-								disabled={saving}
-								className="rounded bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-							>
-								{saving ? 'Enregistrement...' : editingId ? 'Enregistrer' : 'Créer'}
-							</button>
+						{/* Description */}
+						<div className="space-y-2">
+							<Label>Description</Label>
+							<RichEditor
+								content={form.description}
+								onChange={(html) => setForm((f) => ({ ...f, description: html }))}
+								placeholder="Description de la creation"
+							/>
+						</div>
+
+						{/* Category */}
+						<div className="space-y-2">
+							<Label>Catégorie</Label>
+							<CategoryCombobox
+								categories={categories}
+								value={form.categoryId}
+								onChange={(v) => setForm((f) => ({ ...f, categoryId: v }))}
+								onCreateCategory={handleCreateCategory}
+							/>
+						</div>
+
+						{/* Tags */}
+						<div className="space-y-2">
+							<Label>Tags</Label>
+							<div className="flex gap-2">
+								<Input
+									type="text"
+									value={tagInput}
+									onChange={(e) => setTagInput(e.target.value)}
+									onKeyDown={(e) => {
+										if (e.key === 'Enter') {
+											e.preventDefault()
+											addTag()
+										}
+									}}
+									className="flex-1"
+									placeholder="Ajouter un tag..."
+								/>
+								<Button variant="outline" size="sm" onClick={addTag} className="h-9">
+									<Plus />
+								</Button>
+							</div>
+							{form.tags.length > 0 && (
+								<div className="flex flex-wrap gap-1">
+									{form.tags.map((tag) => (
+										<Badge key={tag} variant="secondary" className="gap-1">
+											{tag}
+											<button
+												type="button"
+												onClick={() => removeTag(tag)}
+												className="text-muted-foreground hover:text-foreground"
+											>
+												&times;
+											</button>
+										</Badge>
+									))}
+								</div>
+							)}
+						</div>
+
+						{/* Toggles */}
+						<div className="flex flex-col gap-4 rounded-lg border p-4">
+							<div className="flex items-center justify-between">
+								<Label htmlFor="creation-visible" className="cursor-pointer">
+									Visible sur le site
+								</Label>
+								<Switch
+									id="creation-visible"
+									checked={form.isVisible}
+									onCheckedChange={(checked) => setForm((f) => ({ ...f, isVisible: checked }))}
+								/>
+							</div>
+							<div className="flex items-center justify-between">
+								<Label htmlFor="creation-featured" className="cursor-pointer">
+									En vedette
+								</Label>
+								<Switch
+									id="creation-featured"
+									checked={form.isFeatured}
+									onCheckedChange={(checked) => setForm((f) => ({ ...f, isFeatured: checked }))}
+								/>
+							</div>
 						</div>
 					</div>
-				</div>
-			)}
+
+					<DialogFooter>
+						<Button variant="outline" onClick={() => setShowModal(false)}>
+							Annuler
+						</Button>
+						<Button onClick={handleSave} disabled={saving}>
+							{saving ? 'Enregistrement...' : editingId ? 'Enregistrer' : 'Créer'}
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 
 			{/* ── Image Cropper ── */}
 			{cropState && (

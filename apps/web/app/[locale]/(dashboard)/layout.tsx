@@ -1,28 +1,54 @@
 'use client'
 
-import { useMemo, useState, useEffect } from 'react'
+import {
+	ChefHat,
+	ClipboardList,
+	CreditCard,
+	ExternalLink,
+	FolderOpen,
+	Globe,
+	LayoutDashboard,
+	LogOut,
+	type LucideIcon,
+	Package,
+	Palette,
+	Settings,
+	ShoppingBag,
+	UserCog,
+	Users,
+} from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { Link, usePathname } from '@/i18n/navigation'
+import { useMemo } from 'react'
 import { RoleGuard } from '@/components/auth/role-guard'
 import { StripeConnectBanner } from '@/components/dashboard/stripe-connect-banner'
+import { Separator } from '@/components/ui/separator'
+import {
+	Sidebar,
+	SidebarContent,
+	SidebarFooter,
+	SidebarGroup,
+	SidebarGroupContent,
+	SidebarGroupLabel,
+	SidebarHeader,
+	SidebarInset,
+	SidebarMenu,
+	SidebarMenuButton,
+	SidebarMenuItem,
+	SidebarProvider,
+	SidebarTrigger,
+} from '@/components/ui/sidebar'
+import { Link, usePathname } from '@/i18n/navigation'
+import { useDashboardPrefix } from '@/lib/hooks/use-custom-domain'
 import { useAuth } from '@/lib/providers/auth-provider'
 import { getImageUrl } from '@/lib/utils/image-url'
-import { useDashboardPrefix } from '@/lib/hooks/use-custom-domain'
 
-const navItems: {
+type NavItem = {
+	title: string
 	href: string
+	icon: LucideIcon
 	labelKey: string
 	minPlan?: 'pro' | 'premium'
-}[] = [
-	{ href: '/dashboard', labelKey: 'dashboard' },
-	{ href: '/site', labelKey: 'site' },
-	{ href: '/creations', labelKey: 'creations' },
-	{ href: '/products', labelKey: 'products', minPlan: 'pro' },
-	{ href: '/orders', labelKey: 'orders', minPlan: 'pro' },
-	{ href: '/workshops', labelKey: 'workshops', minPlan: 'pro' },
-	{ href: '/settings', labelKey: 'settings' },
-	{ href: '/billing', labelKey: 'billing' },
-]
+}
 
 const PLAN_LEVELS: Record<string, number> = {
 	starter: 1,
@@ -30,19 +56,31 @@ const PLAN_LEVELS: Record<string, number> = {
 	premium: 3,
 }
 
-function PlanBadge({ plan }: { plan: 'pro' | 'premium' }) {
-	return (
-		<span
-			className={`ml-auto rounded-full px-1.5 py-0.5 text-[10px] font-semibold leading-none ${
-				plan === 'premium'
-					? 'bg-[#D4816A]/15 text-[#D4816A]'
-					: 'bg-[#B8A9D4]/15 text-[#B8A9D4]'
-			}`}
-		>
-			{plan === 'premium' ? 'Premium' : 'Pro'}
-		</span>
-	)
-}
+const overviewItems: NavItem[] = [
+	{ title: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, labelKey: 'dashboard' },
+	{ title: 'Éditeur du site', href: '/site', icon: Globe, labelKey: 'site' },
+]
+
+const contentItems: NavItem[] = [
+	{ title: 'Créations', href: '/creations', icon: Palette, labelKey: 'creations' },
+	{ title: 'Catégories', href: '/categories', icon: FolderOpen, labelKey: 'categories' },
+	{ title: 'Produits', href: '/products', icon: ShoppingBag, labelKey: 'products', minPlan: 'pro' },
+]
+
+const operationsItems: NavItem[] = [
+	{ title: 'Commandes', href: '/orders', icon: ClipboardList, labelKey: 'orders', minPlan: 'pro' },
+	{ title: 'Ateliers', href: '/workshops', icon: Users, labelKey: 'workshops', minPlan: 'pro' },
+]
+
+const costingItems: NavItem[] = [
+	{ title: 'Ingrédients', href: '/ingredients', icon: Package, labelKey: 'ingredients' },
+	{ title: 'Équipe', href: '/employees', icon: UserCog, labelKey: 'employees' },
+]
+
+const accountItems: NavItem[] = [
+	{ title: 'Paramètres', href: '/settings', icon: Settings, labelKey: 'settings' },
+	{ title: 'Abonnement', href: '/billing', icon: CreditCard, labelKey: 'billing' },
+]
 
 function getSiteUrl(profile: { slug: string; plan: string; customDomain?: string | null }) {
 	const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
@@ -57,66 +95,68 @@ function getSiteUrl(profile: { slug: string; plan: string; customDomain?: string
 		return `${protocol}//${profile.slug}.${hostname}${portSuffix}`
 	}
 
-	// Starter: path-based
 	return `${baseUrl}/${profile.slug}`
 }
 
-function NavLinks({
+function NavGroup({
+	label,
+	items,
 	pathname,
-	t,
 	userPlan,
-	onNavigate,
+	dashboardPrefix,
+	t,
 }: {
+	label: string
+	items: NavItem[]
 	pathname: string
-	t: (key: string) => string
 	userPlan: string
-	onNavigate?: () => void
+	dashboardPrefix: string
+	t: (key: string) => string
 }) {
 	const userLevel = PLAN_LEVELS[userPlan] || 1
-	const dashboardPrefix = useDashboardPrefix()
 
 	return (
-		<>
-			{navItems.map((item) => {
-				// On custom domains, prefix dashboard links (except /dashboard itself)
-				const href =
-					item.href === '/dashboard'
-						? '/dashboard'
-						: `${dashboardPrefix}${item.href}`
-				const isActive = pathname === href
-				const requiredLevel = item.minPlan ? PLAN_LEVELS[item.minPlan] || 1 : 1
-				const locked = userLevel < requiredLevel
+		<SidebarGroup>
+			<SidebarGroupLabel>{label}</SidebarGroupLabel>
+			<SidebarGroupContent>
+				<SidebarMenu>
+					{items.map((item) => {
+						const href =
+							item.href === '/dashboard' ? '/dashboard' : `${dashboardPrefix}${item.href}`
+						const isActive = pathname === href || pathname.startsWith(href + '/')
+						const requiredLevel = item.minPlan ? PLAN_LEVELS[item.minPlan] || 1 : 1
+						const locked = userLevel < requiredLevel
 
-				if (locked) {
-					return (
-						<Link
-							key={item.href}
-							href={`${dashboardPrefix}/billing`}
-							onClick={onNavigate}
-							className="flex items-center rounded-md px-3 py-2 text-sm font-medium text-sidebar-foreground/50 transition-colors hover:bg-sidebar-accent/30"
-						>
-							{t(item.labelKey)}
-							<PlanBadge plan={item.minPlan!} />
-						</Link>
-					)
-				}
+						if (locked) {
+							return (
+								<SidebarMenuItem key={item.href}>
+									<SidebarMenuButton asChild tooltip={t(item.labelKey)}>
+										<Link href={`${dashboardPrefix}/billing`} className="opacity-50">
+											<item.icon className="size-4" />
+											<span>{t(item.labelKey)}</span>
+											<span className="ml-auto rounded-full bg-sidebar-primary/20 px-1.5 py-0.5 text-[10px] font-medium text-sidebar-primary-foreground">
+												{item.minPlan === 'premium' ? 'Premium' : 'Pro'}
+											</span>
+										</Link>
+									</SidebarMenuButton>
+								</SidebarMenuItem>
+							)
+						}
 
-				return (
-					<Link
-						key={item.href}
-						href={href}
-						onClick={onNavigate}
-						className={`block rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-							isActive
-								? 'bg-sidebar-accent text-sidebar-accent-foreground'
-								: 'text-sidebar-foreground hover:bg-sidebar-accent/50'
-						}`}
-					>
-						{t(item.labelKey)}
-					</Link>
-				)
-			})}
-		</>
+						return (
+							<SidebarMenuItem key={item.href}>
+								<SidebarMenuButton asChild isActive={isActive} tooltip={t(item.labelKey)}>
+									<Link href={href}>
+										<item.icon className="size-4" />
+										<span>{t(item.labelKey)}</span>
+									</Link>
+								</SidebarMenuButton>
+							</SidebarMenuItem>
+						)
+					})}
+				</SidebarMenu>
+			</SidebarGroupContent>
+		</SidebarGroup>
 	)
 }
 
@@ -124,216 +164,139 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 	const t = useTranslations('nav')
 	const pathname = usePathname()
 	const { user, logout } = useAuth()
-	const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-
-	// Close mobile menu on route change
-	useEffect(() => {
-		setMobileMenuOpen(false)
-	}, [pathname])
-
-	// Prevent body scroll when mobile menu is open
-	useEffect(() => {
-		document.body.style.overflow = mobileMenuOpen ? 'hidden' : ''
-		return () => {
-			document.body.style.overflow = ''
-		}
-	}, [mobileMenuOpen])
+	const dashboardPrefix = useDashboardPrefix()
 
 	const siteUrl = useMemo(() => {
 		if (!user?.profile?.slug) return null
 		return getSiteUrl(user.profile)
 	}, [user?.profile])
 
+	const businessName = user?.profile?.businessName || 'Patissio'
+	const planLabel =
+		user?.profile?.plan === 'premium'
+			? 'Premium'
+			: user?.profile?.plan === 'pro'
+				? 'Pro'
+				: 'Starter'
+
 	return (
 		<RoleGuard allowedRoles={['patissier', 'superadmin']}>
-			<div className="flex min-h-screen">
-				{/* ── Desktop Sidebar ── */}
-				<aside className="hidden w-64 shrink-0 border-r bg-sidebar lg:flex lg:flex-col">
-					<div className="p-6">
-						<div className="flex items-center gap-3">
+			<SidebarProvider>
+				<Sidebar collapsible="icon" className="border-r-0">
+					<SidebarHeader className="border-b border-sidebar-border">
+						<div className="flex items-center gap-2 px-2 py-2">
 							{user?.profile?.logoUrl ? (
 								<img
 									src={getImageUrl(user.profile.logoUrl)!}
 									alt=""
-									className="h-10 w-10 shrink-0 rounded-lg border object-contain"
+									className="size-8 shrink-0 rounded-lg border object-contain"
 								/>
 							) : (
-								<div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-sm font-bold text-primary">
-									{(user?.profile?.businessName || 'P').charAt(0).toUpperCase()}
+								<div className="flex size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+									<ChefHat className="size-4" />
 								</div>
 							)}
-							<h2 className="truncate text-lg font-bold text-sidebar-foreground">
-								{user?.profile?.businessName || 'Patissio'}
-							</h2>
+							<span className="truncate font-semibold text-sidebar-foreground group-data-[collapsible=icon]:hidden">
+								{businessName}
+							</span>
 						</div>
 						{siteUrl && (
 							<a
 								href={siteUrl}
 								target="_blank"
 								rel="noopener noreferrer"
-								className="mt-3 inline-flex items-center gap-1.5 rounded-md border border-sidebar-accent px-2.5 py-1.5 text-xs font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent/50"
+								className="mx-2 mb-1 flex items-center gap-1.5 rounded-md border border-sidebar-border px-2.5 py-1.5 text-xs font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent/50 group-data-[collapsible=icon]:hidden"
 							>
-								<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-									<path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" />
-									<polyline points="15 3 21 3 21 9" />
-									<line x1="10" y1="14" x2="21" y2="3" />
-								</svg>
+								<ExternalLink className="size-3" />
 								Voir mon site
 							</a>
 						)}
-					</div>
-					<nav className="space-y-1 px-3">
-						<NavLinks pathname={pathname} t={t} userPlan={user?.profile?.plan || 'starter'} />
-					</nav>
-					<div className="mt-auto border-t p-4">
+					</SidebarHeader>
+					<SidebarContent>
+						<NavGroup
+							label="Vue d'ensemble"
+							items={overviewItems}
+							pathname={pathname}
+							userPlan={user?.profile?.plan || 'starter'}
+							dashboardPrefix={dashboardPrefix}
+							t={t}
+						/>
+						<NavGroup
+							label="Contenu"
+							items={contentItems}
+							pathname={pathname}
+							userPlan={user?.profile?.plan || 'starter'}
+							dashboardPrefix={dashboardPrefix}
+							t={t}
+						/>
+						<NavGroup
+							label="Opérations"
+							items={operationsItems}
+							pathname={pathname}
+							userPlan={user?.profile?.plan || 'starter'}
+							dashboardPrefix={dashboardPrefix}
+							t={t}
+						/>
+						<NavGroup
+							label="Costing"
+							items={costingItems}
+							pathname={pathname}
+							userPlan={user?.profile?.plan || 'starter'}
+							dashboardPrefix={dashboardPrefix}
+							t={t}
+						/>
+						<NavGroup
+							label="Compte"
+							items={accountItems}
+							pathname={pathname}
+							userPlan={user?.profile?.plan || 'starter'}
+							dashboardPrefix={dashboardPrefix}
+							t={t}
+						/>
+					</SidebarContent>
+					<SidebarFooter className="border-t border-sidebar-border">
 						<a
 							href="https://patissio.com"
 							target="_blank"
 							rel="noopener noreferrer"
-							className="mb-2 flex items-center gap-2 px-3 py-1.5 text-xs text-muted-foreground/60 transition-colors hover:text-muted-foreground"
+							className="flex items-center gap-2 px-2 py-1.5 text-xs text-sidebar-foreground/40 transition-colors hover:text-sidebar-foreground/60 group-data-[collapsible=icon]:hidden"
 						>
-							<img src="/logo-patissio.png" alt="" className="h-4 w-4" />
+							<img src="/logo-patissio.png" alt="" className="size-4" />
 							Propulsé par Patissio.com
 						</a>
-						<button
-							type="button"
-							onClick={logout}
-							className="w-full rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-sidebar-accent/50"
-						>
-							{t('logout' as any) || 'Deconnexion'}
-						</button>
-					</div>
-				</aside>
-
-				{/* ── Mobile Header ── */}
-				<div className="fixed inset-x-0 top-0 z-40 flex h-14 items-center justify-between border-b bg-sidebar px-4 lg:hidden">
-					<div className="flex items-center gap-2">
-						{user?.profile?.logoUrl ? (
-							<img
-								src={getImageUrl(user.profile.logoUrl)!}
-								alt=""
-								className="h-7 w-7 shrink-0 rounded-md border object-contain"
-							/>
-						) : (
-							<div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary/10 text-xs font-bold text-primary">
+						<Separator className="bg-sidebar-border" />
+						<div className="flex items-center gap-2 px-2 py-2">
+							<div className="flex size-8 items-center justify-center rounded-full bg-sidebar-accent text-sm font-medium text-sidebar-accent-foreground">
 								{(user?.profile?.businessName || 'P').charAt(0).toUpperCase()}
 							</div>
-						)}
-						<h2 className="truncate text-sm font-bold text-sidebar-foreground">
-							{user?.profile?.businessName || 'Patissio'}
-						</h2>
-					</div>
-					<button
-						type="button"
-						onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-						className="flex h-9 w-9 items-center justify-center rounded-md text-sidebar-foreground hover:bg-sidebar-accent/50"
-						aria-label="Menu"
-					>
-						{mobileMenuOpen ? (
-							<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-								<path d="M18 6L6 18M6 6l12 12" />
-							</svg>
-						) : (
-							<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-								<path d="M3 12h18M3 6h18M3 18h18" />
-							</svg>
-						)}
-					</button>
-				</div>
-
-				{/* ── Mobile Drawer Overlay ── */}
-				{mobileMenuOpen && (
-					<div
-						className="fixed inset-0 z-40 bg-black/50 lg:hidden"
-						onClick={() => setMobileMenuOpen(false)}
-					/>
-				)}
-
-				{/* ── Mobile Drawer ── */}
-				<div
-					className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-sidebar transition-transform duration-300 lg:hidden ${
-						mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
-					}`}
-				>
-					<div className="flex items-center justify-between border-b p-4">
-						<div className="flex items-center gap-2.5">
-							{user?.profile?.logoUrl ? (
-								<img
-									src={getImageUrl(user.profile.logoUrl)!}
-									alt=""
-									className="h-8 w-8 shrink-0 rounded-lg border object-contain"
-								/>
-							) : (
-								<div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-sm font-bold text-primary">
-									{(user?.profile?.businessName || 'P').charAt(0).toUpperCase()}
-								</div>
-							)}
-							<h2 className="truncate text-lg font-bold text-sidebar-foreground">
-								{user?.profile?.businessName || 'Patissio'}
-							</h2>
-						</div>
-						<button
-							type="button"
-							onClick={() => setMobileMenuOpen(false)}
-							className="flex h-9 w-9 items-center justify-center rounded-md text-sidebar-foreground hover:bg-sidebar-accent/50"
-							aria-label="Fermer"
-						>
-							<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-								<path d="M18 6L6 18M6 6l12 12" />
-							</svg>
-						</button>
-					</div>
-
-					{siteUrl && (
-						<div className="px-4 pt-4">
-							<a
-								href={siteUrl}
-								target="_blank"
-								rel="noopener noreferrer"
-								className="inline-flex items-center gap-1.5 rounded-md border border-sidebar-accent px-2.5 py-1.5 text-xs font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent/50"
+							<div className="flex-1 group-data-[collapsible=icon]:hidden">
+								<p className="truncate text-sm font-medium text-sidebar-foreground">
+									{user?.fullName || user?.email || 'Utilisateur'}
+								</p>
+								<p className="text-xs text-sidebar-foreground/60">{planLabel}</p>
+							</div>
+							<button
+								type="button"
+								onClick={logout}
+								className="rounded-md p-1.5 text-sidebar-foreground/50 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground group-data-[collapsible=icon]:hidden"
+								title="Déconnexion"
 							>
-								<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-									<path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" />
-									<polyline points="15 3 21 3 21 9" />
-									<line x1="10" y1="14" x2="21" y2="3" />
-								</svg>
-								Voir mon site
-							</a>
+								<LogOut className="size-4" />
+							</button>
 						</div>
-					)}
-
-					<nav className="space-y-1 px-3 pt-4">
-						<NavLinks pathname={pathname} t={t} userPlan={user?.profile?.plan || 'starter'} onNavigate={() => setMobileMenuOpen(false)} />
-					</nav>
-
-					<div className="mt-auto border-t p-4">
-						<a
-							href="https://patissio.com"
-							target="_blank"
-							rel="noopener noreferrer"
-							className="mb-2 flex items-center gap-2 px-3 py-1.5 text-xs text-muted-foreground/60 transition-colors hover:text-muted-foreground"
-						>
-							<img src="/logo-patissio.png" alt="" className="h-4 w-4" />
-							Propulsé par Patissio.com
-						</a>
-						<button
-							type="button"
-							onClick={logout}
-							className="w-full rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-sidebar-accent/50"
-						>
-							{t('logout' as any) || 'Deconnexion'}
-						</button>
-					</div>
-				</div>
-
-				{/* ── Main Content ── */}
-				<main className="flex-1 overflow-auto pt-14 lg:pt-0">
-					<div className="p-4 sm:p-6 lg:p-8">
+					</SidebarFooter>
+				</Sidebar>
+				<SidebarInset>
+					<header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background px-4 md:px-6">
+						<SidebarTrigger />
+						<div className="flex-1" />
+					</header>
+					<div className="flex-1 p-4 md:p-6">
 						<StripeConnectBanner />
 						{children}
 					</div>
-				</main>
-			</div>
+				</SidebarInset>
+			</SidebarProvider>
 		</RoleGuard>
 	)
 }

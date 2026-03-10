@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
 import Link from 'next/link'
+import { useParams } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import { api } from '@/lib/api/client'
 
 interface Workshop {
@@ -181,7 +181,8 @@ export default function ClientBookingTrackingPage() {
 							<span
 								className={`rounded-full px-3 py-1 text-sm font-medium ${paymentStatusColors[booking.remainingPaymentStatus] || 'bg-gray-100'}`}
 							>
-								{paymentStatusLabels[booking.remainingPaymentStatus] || booking.remainingPaymentStatus}
+								{paymentStatusLabels[booking.remainingPaymentStatus] ||
+									booking.remainingPaymentStatus}
 							</span>
 						</div>
 

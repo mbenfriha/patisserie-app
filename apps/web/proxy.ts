@@ -1,5 +1,5 @@
-import createMiddleware from 'next-intl/middleware'
 import { type NextRequest, NextResponse } from 'next/server'
+import createMiddleware from 'next-intl/middleware'
 import { routing } from './i18n/routing'
 
 const intlMiddleware = createMiddleware(routing)
@@ -24,6 +24,8 @@ const RESERVED_PATHS = new Set([
 	'products',
 	'orders',
 	'workshops',
+	'ingredients',
+	'employees',
 	'tracking',
 	'site',
 	'instagram',
@@ -75,7 +77,11 @@ export function proxy(request: NextRequest) {
 	const pathname = request.nextUrl.pathname
 
 	// Skip static/internal paths
-	if (pathname.startsWith('/_next') || pathname.startsWith('/api') || pathname.startsWith('/favicon')) {
+	if (
+		pathname.startsWith('/_next') ||
+		pathname.startsWith('/api') ||
+		pathname.startsWith('/favicon')
+	) {
 		return NextResponse.next()
 	}
 
@@ -189,7 +195,11 @@ export function proxy(request: NextRequest) {
 	const segments = pathname.split('/').filter(Boolean)
 	const firstSegment = LOCALES.includes(segments[0]) ? segments[1] : segments[0]
 
-	if (firstSegment && !RESERVED_PATHS.has(firstSegment) && /^[a-z0-9][a-z0-9-]*[a-z0-9]$/.test(firstSegment)) {
+	if (
+		firstSegment &&
+		!RESERVED_PATHS.has(firstSegment) &&
+		/^[a-z0-9][a-z0-9-]*[a-z0-9]$/.test(firstSegment)
+	) {
 		const locale = detectLocale(pathname)
 		const restSegments = LOCALES.includes(segments[0]) ? segments.slice(2) : segments.slice(1)
 		const restPath = restSegments.length > 0 ? '/' + restSegments.join('/') : ''

@@ -1,6 +1,11 @@
 import type { HttpContext } from '@adonisjs/core/http'
-import PatissierProfile from '#models/patissier_profile'
 import Category from '#models/category'
+import PatissierProfile from '#models/patissier_profile'
+import {
+	reorderCategoryValidator,
+	storeCategoryValidator,
+	updateCategoryValidator,
+} from '#validators/category_validator'
 
 export default class CategoriesController {
 	async index({ auth, response }: HttpContext) {
@@ -21,7 +26,7 @@ export default class CategoriesController {
 		const user = auth.user!
 		const profile = await PatissierProfile.findByOrFail('userId', user.id)
 
-		const data = request.only(['name', 'slug', 'description', 'imageUrl'])
+		const data = await request.validateUsing(storeCategoryValidator)
 
 		const slug =
 			data.slug ||
@@ -74,7 +79,7 @@ export default class CategoriesController {
 			.where('patissierId', profile.id)
 			.firstOrFail()
 
-		const data = request.only(['name', 'slug', 'description', 'imageUrl', 'isVisible'])
+		const data = await request.validateUsing(updateCategoryValidator)
 
 		if (data.slug && data.slug !== category.slug) {
 			const existingSlug = await Category.query()
@@ -121,7 +126,7 @@ export default class CategoriesController {
 		const user = auth.user!
 		const profile = await PatissierProfile.findByOrFail('userId', user.id)
 
-		const items: { id: string; sort_order: number }[] = request.input('items', [])
+		const { items } = await request.validateUsing(reorderCategoryValidator)
 
 		for (const item of items) {
 			await Category.query()

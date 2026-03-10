@@ -47,8 +47,6 @@ export default await Env.create(new URL('../', import.meta.url), {
 	STRIPE_PRICE_PRO_YEARLY: Env.schema.string.optional(),
 	STRIPE_PRICE_PREMIUM_MONTHLY: Env.schema.string.optional(),
 	STRIPE_PRICE_PREMIUM_YEARLY: Env.schema.string.optional(),
-	STRIPE_PLATFORM_FEE_PERCENT: Env.schema.number.optional(),
-
 	// Instagram OAuth
 	INSTAGRAM_APP_ID: Env.schema.string.optional(),
 	INSTAGRAM_APP_SECRET: Env.schema.string.optional(),

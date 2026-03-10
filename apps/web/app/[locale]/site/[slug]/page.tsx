@@ -1,13 +1,13 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useSiteProfile, useSiteBasePath, useSiteConfig } from './site-provider'
-import { useInlineEdit } from './components/inline-edit-provider'
-import { EditableText } from './components/editable-text'
+import { getImageUrl } from '@/lib/utils/image-url'
 import { EditableImage } from './components/editable-image'
 import { EditableRichText } from './components/editable-rich-text'
+import { EditableText } from './components/editable-text'
+import { useInlineEdit } from './components/inline-edit-provider'
 import { SectionTitle } from './components/section-title'
-import { getImageUrl } from '@/lib/utils/image-url'
+import { useSiteBasePath, useSiteConfig, useSiteProfile } from './site-provider'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333'
 
@@ -52,14 +52,14 @@ export default function PatissierSitePage() {
 		deleteStoryImage,
 	} = useInlineEdit()
 	const [creations, setCreations] = useState<Creation[]>([])
-	const [instagramPosts, setInstagramPosts] = useState<{ id: string; mediaUrl: string; permalink: string; caption: string }[]>([])
+	const [instagramPosts, setInstagramPosts] = useState<
+		{ id: string; mediaUrl: string; permalink: string; caption: string }[]
+	>([])
 
 	useEffect(() => {
 		async function fetchCreations() {
 			try {
-				const res = await fetch(
-					`${API_URL}/public/${profile.slug}/creations?featured=true&limit=6`
-				)
+				const res = await fetch(`${API_URL}/public/${profile.slug}/creations?featured=true&limit=6`)
 				if (res.ok) {
 					const data = await res.json()
 					setCreations(data.data || [])
@@ -88,17 +88,26 @@ export default function PatissierSitePage() {
 	}, [profile.slug, config.showInstagramSection, isEditing])
 
 	const ctaLabel =
-		getConfigValue('heroCtaLabel') ||
-		(profile.ordersEnabled ? 'Commander' : 'Voir nos créations')
+		getConfigValue('heroCtaLabel') || (profile.ordersEnabled ? 'Commander' : 'Voir nos créations')
 
 	const configuredHref = getConfigValue('heroCtaHref') as string
 	const ctaHref = configuredHref
-		? (configuredHref.startsWith('#') ? configuredHref : `${basePath}${configuredHref.startsWith('/') ? configuredHref : `/${configuredHref}`}`)
-		: (profile.ordersEnabled ? `${basePath}/commandes` : `${basePath}/creations`)
+		? configuredHref.startsWith('#')
+			? configuredHref
+			: `${basePath}${configuredHref.startsWith('/') ? configuredHref : `/${configuredHref}`}`
+		: profile.ordersEnabled
+			? `${basePath}/commandes`
+			: `${basePath}/creations`
 
-	const storyText = getConfigValue('storyText') || (editedDescription !== null ? editedDescription : profile.description)
-	const heroImage = heroImagePreview === 'deleted' ? null : (heroImagePreview || getImageUrl(profile.heroImageUrl))
-	const storyImage = storyImagePreview === 'deleted' ? null : (storyImagePreview || getImageUrl(profile.storyImageUrl) || heroImage)
+	const storyText =
+		getConfigValue('storyText') ||
+		(editedDescription !== null ? editedDescription : profile.description)
+	const heroImage =
+		heroImagePreview === 'deleted' ? null : heroImagePreview || getImageUrl(profile.heroImageUrl)
+	const storyImage =
+		storyImagePreview === 'deleted'
+			? null
+			: storyImagePreview || getImageUrl(profile.storyImageUrl) || heroImage
 
 	return (
 		<>
@@ -186,17 +195,22 @@ export default function PatissierSitePage() {
 								style={{ fontFamily: 'var(--font-body)' }}
 							>
 								<EditableText
-									value={getConfigValue('heroCtaLabel') as string || (profile.ordersEnabled ? 'Commander' : 'Voir nos créations')}
+									value={
+										(getConfigValue('heroCtaLabel') as string) ||
+										(profile.ordersEnabled ? 'Commander' : 'Voir nos créations')
+									}
 									onChange={(v) => updateConfig('heroCtaLabel', v)}
 									as="span"
 								/>
 							</span>
 							<select
-								value={getConfigValue('heroCtaHref') as string || ''}
+								value={(getConfigValue('heroCtaHref') as string) || ''}
 								onChange={(e) => updateConfig('heroCtaHref', e.target.value)}
 								className="rounded-lg border border-white/20 bg-[#1A1A1A]/90 px-3 py-1.5 text-[11px] text-white/80 backdrop-blur-sm focus:border-[var(--gold)] focus:outline-none"
 							>
-								<option value="">Automatique ({profile.ordersEnabled ? 'Commandes' : 'Créations'})</option>
+								<option value="">
+									Automatique ({profile.ordersEnabled ? 'Commandes' : 'Créations'})
+								</option>
 								<optgroup label="Pages">
 									<option value="/creations">Créations</option>
 									<option value="/commandes">Commandes</option>
@@ -236,8 +250,11 @@ export default function PatissierSitePage() {
 			{/* ══════════════════════════════════════════════════════════
 			     STORY SECTION - "Notre histoire"
 			     ══════════════════════════════════════════════════════════ */}
-			{(config.showStorySection && storyText) && (
-				<section id="story" className="mx-auto grid max-w-[1100px] items-center gap-16 px-6 py-24 md:grid-cols-2">
+			{config.showStorySection && storyText && (
+				<section
+					id="story"
+					className="mx-auto grid max-w-[1100px] items-center gap-16 px-6 py-24 md:grid-cols-2"
+				>
 					{/* Image */}
 					<div className="relative overflow-hidden rounded-xl" style={{ aspectRatio: '3/4' }}>
 						<EditableImage
@@ -277,7 +294,10 @@ export default function PatissierSitePage() {
 								<div className="mt-4 h-[3px] w-16 bg-[var(--gold)]" />
 							</div>
 						) : (
-							<SectionTitle subtitle={getConfigValue('storySubtitle') as string} title={getConfigValue('storyTitle') as string} />
+							<SectionTitle
+								subtitle={getConfigValue('storySubtitle') as string}
+								title={getConfigValue('storyTitle') as string}
+							/>
 						)}
 						<EditableRichText
 							value={storyText}
@@ -341,7 +361,10 @@ export default function PatissierSitePage() {
 							<div className="mx-auto mt-4 h-[3px] w-16 bg-[var(--gold)]" />
 						</div>
 					) : (
-						<SectionTitle subtitle={getConfigValue('creationsSubtitle') as string} title={getConfigValue('creationsTitle') as string} />
+						<SectionTitle
+							subtitle={getConfigValue('creationsSubtitle') as string}
+							title={getConfigValue('creationsTitle') as string}
+						/>
 					)}
 
 					<div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
@@ -366,7 +389,10 @@ export default function PatissierSitePage() {
 											/>
 										) : (
 											<div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[var(--cream)] to-[var(--cream-dark)]">
-												<span className="text-2xl text-[var(--gold)]/40" style={{ fontFamily: 'var(--font-heading)' }}>
+												<span
+													className="text-2xl text-[var(--gold)]/40"
+													style={{ fontFamily: 'var(--font-heading)' }}
+												>
 													{creation.title}
 												</span>
 											</div>
@@ -385,7 +411,10 @@ export default function PatissierSitePage() {
 									{(creation.title || creation.description || creation.price != null) && (
 										<div className="p-6">
 											{creation.title && (
-												<h3 className="text-[26px] font-medium text-[var(--dark)]" style={{ fontFamily: 'var(--font-heading)' }}>
+												<h3
+													className="text-[26px] font-medium text-[var(--dark)]"
+													style={{ fontFamily: 'var(--font-heading)' }}
+												>
 													{creation.title}
 												</h3>
 											)}
@@ -396,7 +425,10 @@ export default function PatissierSitePage() {
 												/>
 											)}
 											{creation.price != null && (
-												<p className="mt-3 text-sm font-semibold text-[var(--gold)]" style={{ fontFamily: 'var(--font-body)' }}>
+												<p
+													className="mt-3 text-sm font-semibold text-[var(--gold)]"
+													style={{ fontFamily: 'var(--font-body)' }}
+												>
 													{creation.price}&nbsp;&euro;
 												</p>
 											)}
@@ -423,159 +455,202 @@ export default function PatissierSitePage() {
 			{/* ══════════════════════════════════════════════════════════
 			     INSTAGRAM SECTION
 			     ══════════════════════════════════════════════════════════ */}
-			{(config.showInstagramSection || isEditing) && profile.socialLinks?.instagram && (() => {
-				const instagramUrl = profile.socialLinks.instagram!
-				const cleanPath = instagramUrl.split('?')[0].replace(/\/$/, '')
-				const handle = cleanPath.split('/').pop() || ''
-				const showSection = config.showInstagramSection
+			{(config.showInstagramSection || isEditing) &&
+				profile.socialLinks?.instagram &&
+				(() => {
+					const instagramUrl = profile.socialLinks.instagram!
+					const cleanPath = instagramUrl.split('?')[0].replace(/\/$/, '')
+					const handle = cleanPath.split('/').pop() || ''
+					const showSection = config.showInstagramSection
 
-				return (
-					<section
-						id="instagram"
-						className="relative overflow-hidden px-6 py-24 text-center"
-						style={{
-							background: 'linear-gradient(160deg, #faf8f5 0%, #f0ebe4 50%, #faf8f5 100%)',
-							opacity: !showSection && isEditing ? 0.5 : 1,
-						}}
-					>
-						{/* Decorative gold radial accents */}
-						<div
-							className="pointer-events-none absolute inset-0 opacity-[0.03]"
+					return (
+						<section
+							id="instagram"
+							className="relative overflow-hidden px-6 py-24 text-center"
 							style={{
-								background:
-									'radial-gradient(circle at 30% 50%, var(--gold) 0%, transparent 50%), radial-gradient(circle at 70% 50%, var(--gold) 0%, transparent 50%)',
+								background: 'linear-gradient(160deg, var(--cream) 0%, var(--cream-dark) 50%, var(--cream) 100%)',
+								opacity: !showSection && isEditing ? 0.5 : 1,
 							}}
-						/>
+						>
+							{/* Decorative gold radial accents */}
+							<div
+								className="pointer-events-none absolute inset-0 opacity-[0.03]"
+								style={{
+									background:
+										'radial-gradient(circle at 30% 50%, var(--gold) 0%, transparent 50%), radial-gradient(circle at 70% 50%, var(--gold) 0%, transparent 50%)',
+								}}
+							/>
 
-						{isEditing && !showSection && (
-							<div className="absolute inset-x-0 top-4 z-10 text-center">
-								<span className="rounded-full bg-[#1A1A1A]/80 px-3 py-1 text-xs text-white/80">
-									Section masquée (visible uniquement en mode édition)
-								</span>
-							</div>
-						)}
-
-						<div className="relative z-10 mx-auto max-w-[800px]">
-							{isEditing ? (
-								<div className="mb-10">
-									<EditableText
-										value={getConfigValue('instagramSectionSubtitle') as string}
-										onChange={(v) => updateConfig('instagramSectionSubtitle', v)}
-										as="p"
-										className="mb-3 text-center text-[12px] uppercase tracking-[5px] text-[var(--gold)]"
-										style={{ fontFamily: 'var(--font-body)' }}
-									/>
-									<EditableText
-										value={getConfigValue('instagramSectionTitle') as string}
-										onChange={(v) => updateConfig('instagramSectionTitle', v)}
-										as="h2"
-										className="text-center text-[clamp(32px,5vw,48px)] font-light leading-[1.15] text-[var(--dark)]"
-										style={{ fontFamily: 'var(--font-heading)' }}
-									/>
-									<div className="mx-auto mt-4 h-[3px] w-16 bg-[var(--gold)]" />
+							{isEditing && !showSection && (
+								<div className="absolute inset-x-0 top-4 z-10 text-center">
+									<span className="rounded-full bg-[#1A1A1A]/80 px-3 py-1 text-xs text-white/80">
+										Section masquée (visible uniquement en mode édition)
+									</span>
 								</div>
-							) : (
-								<SectionTitle
-									subtitle={getConfigValue('instagramSectionSubtitle') as string}
-									title={getConfigValue('instagramSectionTitle') as string}
-								/>
 							)}
 
-							{/* Instagram handle display */}
-							<a
-								href={cleanPath}
-								target="_blank"
-								rel="noopener noreferrer"
-								className="group mx-auto mb-10 flex w-fit items-center gap-3 rounded-full border border-[var(--gold)]/30 bg-white/80 px-6 py-3 shadow-sm transition-all duration-300 hover:border-[var(--gold)] hover:shadow-md"
-							>
-								<svg width="22" height="22" viewBox="0 0 24 24" fill="none" className="text-[var(--gold)]">
-									<rect x="2" y="2" width="20" height="20" rx="5" stroke="currentColor" strokeWidth="1.5" />
-									<circle cx="12" cy="12" r="5" stroke="currentColor" strokeWidth="1.5" />
-									<circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" />
-								</svg>
-								<span
-									className="text-sm font-medium tracking-wide text-[var(--dark)]"
-									style={{ fontFamily: 'var(--font-body)' }}
-								>
-									@{handle}
-								</span>
-								<svg
-									width="16"
-									height="16"
-									viewBox="0 0 24 24"
-									fill="none"
-									stroke="currentColor"
-									strokeWidth="1.5"
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									className="text-[var(--gold)] transition-transform duration-300 group-hover:translate-x-1"
-								>
-									<line x1="5" y1="12" x2="19" y2="12" />
-									<polyline points="12 5 19 12 12 19" />
-								</svg>
-							</a>
+							<div className="relative z-10 mx-auto max-w-[800px]">
+								{isEditing ? (
+									<div className="mb-10">
+										<EditableText
+											value={getConfigValue('instagramSectionSubtitle') as string}
+											onChange={(v) => updateConfig('instagramSectionSubtitle', v)}
+											as="p"
+											className="mb-3 text-center text-[12px] uppercase tracking-[5px] text-[var(--gold)]"
+											style={{ fontFamily: 'var(--font-body)' }}
+										/>
+										<EditableText
+											value={getConfigValue('instagramSectionTitle') as string}
+											onChange={(v) => updateConfig('instagramSectionTitle', v)}
+											as="h2"
+											className="text-center text-[clamp(32px,5vw,48px)] font-light leading-[1.15] text-[var(--dark)]"
+											style={{ fontFamily: 'var(--font-heading)' }}
+										/>
+										<div className="mx-auto mt-4 h-[3px] w-16 bg-[var(--gold)]" />
+									</div>
+								) : (
+									<SectionTitle
+										subtitle={getConfigValue('instagramSectionSubtitle') as string}
+										title={getConfigValue('instagramSectionTitle') as string}
+									/>
+								)}
 
-							{/* Instagram feed grid */}
-							{instagramPosts.length > 0 ? (
-								<div className="mx-auto grid max-w-[700px] grid-cols-3 gap-3">
-									{instagramPosts.slice(0, 9).map((post) => (
-										<a
-											key={post.id}
-											href={post.permalink}
-											target="_blank"
-											rel="noopener noreferrer"
-											className="group/item relative overflow-hidden rounded-lg"
-											style={{ aspectRatio: '1' }}
-										>
-											<img
-												src={post.mediaUrl}
-												alt={post.caption}
-												className="h-full w-full object-cover transition-all duration-500 group-hover/item:scale-105"
-											/>
-											<div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-all duration-300 group-hover/item:bg-black/30">
-												<svg
-													width="24"
-													height="24"
-													viewBox="0 0 24 24"
-													fill="none"
-													className="text-white opacity-0 transition-all duration-300 group-hover/item:opacity-100"
-												>
-													<rect x="2" y="2" width="20" height="20" rx="5" stroke="currentColor" strokeWidth="1.5" />
-													<circle cx="12" cy="12" r="5" stroke="currentColor" strokeWidth="1.5" />
-													<circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" />
-												</svg>
-											</div>
-										</a>
-									))}
-								</div>
-							) : (
+								{/* Instagram handle display */}
 								<a
 									href={cleanPath}
 									target="_blank"
 									rel="noopener noreferrer"
-									className="group mx-auto block max-w-[600px] overflow-hidden rounded-2xl border border-[var(--gold)]/20 bg-white/60 p-12 transition-all duration-300 hover:border-[var(--gold)]/40 hover:shadow-lg"
+									className="group mx-auto mb-10 flex w-fit items-center gap-3 rounded-full border border-[var(--gold)]/30 bg-white/80 px-6 py-3 shadow-sm transition-all duration-300 hover:border-[var(--gold)] hover:shadow-md"
 								>
-									<svg width="48" height="48" viewBox="0 0 24 24" fill="none" className="mx-auto mb-4 text-[var(--gold)] transition-transform duration-300 group-hover:scale-110">
-										<rect x="2" y="2" width="20" height="20" rx="5" stroke="currentColor" strokeWidth="1.5" />
+									<svg
+										width="22"
+										height="22"
+										viewBox="0 0 24 24"
+										fill="none"
+										className="text-[var(--gold)]"
+									>
+										<rect
+											x="2"
+											y="2"
+											width="20"
+											height="20"
+											rx="5"
+											stroke="currentColor"
+											strokeWidth="1.5"
+										/>
 										<circle cx="12" cy="12" r="5" stroke="currentColor" strokeWidth="1.5" />
 										<circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" />
 									</svg>
-									<p className="text-sm font-medium text-[var(--dark-soft)]" style={{ fontFamily: 'var(--font-body)' }}>
-										{isEditing ? 'Ajoutez votre token Instagram dans les parametres' : 'Voir notre Instagram'}
-									</p>
+									<span
+										className="text-sm font-medium tracking-wide text-[var(--dark)]"
+										style={{ fontFamily: 'var(--font-body)' }}
+									>
+										@{handle}
+									</span>
+									<svg
+										width="16"
+										height="16"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										strokeWidth="1.5"
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										className="text-[var(--gold)] transition-transform duration-300 group-hover:translate-x-1"
+									>
+										<line x1="5" y1="12" x2="19" y2="12" />
+										<polyline points="12 5 19 12 12 19" />
+									</svg>
 								</a>
-							)}
 
-							<p
-								className="mt-8 text-sm text-[var(--dark-soft)]/60"
-								style={{ fontFamily: 'var(--font-body)' }}
-							>
-								Retrouvez nos dernières créations sur Instagram
-							</p>
-						</div>
-					</section>
-				)
-			})()}
+								{/* Instagram feed grid */}
+								{instagramPosts.length > 0 ? (
+									<div className="mx-auto grid max-w-[700px] grid-cols-3 gap-3">
+										{instagramPosts.slice(0, 9).map((post) => (
+											<a
+												key={post.id}
+												href={post.permalink}
+												target="_blank"
+												rel="noopener noreferrer"
+												className="group/item relative overflow-hidden rounded-lg"
+												style={{ aspectRatio: '1' }}
+											>
+												<img
+													src={post.mediaUrl}
+													alt={post.caption}
+													className="h-full w-full object-cover transition-all duration-500 group-hover/item:scale-105"
+												/>
+												<div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-all duration-300 group-hover/item:bg-black/30">
+													<svg
+														width="24"
+														height="24"
+														viewBox="0 0 24 24"
+														fill="none"
+														className="text-white opacity-0 transition-all duration-300 group-hover/item:opacity-100"
+													>
+														<rect
+															x="2"
+															y="2"
+															width="20"
+															height="20"
+															rx="5"
+															stroke="currentColor"
+															strokeWidth="1.5"
+														/>
+														<circle cx="12" cy="12" r="5" stroke="currentColor" strokeWidth="1.5" />
+														<circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" />
+													</svg>
+												</div>
+											</a>
+										))}
+									</div>
+								) : (
+									<a
+										href={cleanPath}
+										target="_blank"
+										rel="noopener noreferrer"
+										className="group mx-auto block max-w-[600px] overflow-hidden rounded-2xl border border-[var(--gold)]/20 bg-white/60 p-12 transition-all duration-300 hover:border-[var(--gold)]/40 hover:shadow-lg"
+									>
+										<svg
+											width="48"
+											height="48"
+											viewBox="0 0 24 24"
+											fill="none"
+											className="mx-auto mb-4 text-[var(--gold)] transition-transform duration-300 group-hover:scale-110"
+										>
+											<rect
+												x="2"
+												y="2"
+												width="20"
+												height="20"
+												rx="5"
+												stroke="currentColor"
+												strokeWidth="1.5"
+											/>
+											<circle cx="12" cy="12" r="5" stroke="currentColor" strokeWidth="1.5" />
+											<circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" />
+										</svg>
+										<p
+											className="text-sm font-medium text-[var(--dark-soft)]"
+											style={{ fontFamily: 'var(--font-body)' }}
+										>
+											{isEditing
+												? 'Ajoutez votre token Instagram dans les parametres'
+												: 'Voir notre Instagram'}
+										</p>
+									</a>
+								)}
+
+								<p
+									className="mt-8 text-sm text-[var(--dark-soft)]/60"
+									style={{ fontFamily: 'var(--font-body)' }}
+								>
+									Retrouvez nos dernières créations sur Instagram
+								</p>
+							</div>
+						</section>
+					)
+				})()}
 
 			{/* ══════════════════════════════════════════════════════════
 			     MASTERCLASS / ATELIERS CTA

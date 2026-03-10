@@ -12,7 +12,7 @@ export default class IntegrationsController {
 
 		if (profile.stripeAccountId) {
 			// Account already exists, check if onboarding is complete
-			const account = await this.stripeService.getConnectAccount(profile.stripeAccountId) as any
+			const account = (await this.stripeService.getConnectAccount(profile.stripeAccountId)) as any
 
 			const transfersActive = account.capabilities?.transfers === 'active'
 			const isReady = account.details_submitted && account.charges_enabled && transfersActive
@@ -89,7 +89,7 @@ export default class IntegrationsController {
 			})
 		}
 
-		const account = await this.stripeService.getConnectAccount(profile.stripeAccountId) as any
+		const account = (await this.stripeService.getConnectAccount(profile.stripeAccountId)) as any
 
 		const transfersActive = account.capabilities?.transfers === 'active'
 		const isReady = account.details_submitted && account.charges_enabled && transfersActive
@@ -123,7 +123,7 @@ export default class IntegrationsController {
 		}
 
 		// Verify capabilities are active before allowing dashboard access
-		const account = await this.stripeService.getConnectAccount(profile.stripeAccountId) as any
+		const account = (await this.stripeService.getConnectAccount(profile.stripeAccountId)) as any
 		const transfersActive = account.capabilities?.transfers === 'active'
 
 		if (!account.charges_enabled || !account.details_submitted || !transfersActive) {

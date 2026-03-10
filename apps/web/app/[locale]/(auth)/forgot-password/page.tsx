@@ -1,8 +1,8 @@
 'use client'
 
 import { CheckCircle } from 'lucide-react'
-import { useState } from 'react'
 import Image from 'next/image'
+import { useState } from 'react'
 import { Link } from '@/i18n/navigation'
 import { useAuth } from '@/lib/providers/auth-provider'
 
@@ -32,7 +32,13 @@ export default function ForgotPasswordPage() {
 			<div className="mx-auto w-full max-w-md space-y-6 p-8">
 				<div className="flex flex-col items-center">
 					<Link href="/">
-						<Image src="/logo-patissio-full.png" alt="Patissio" width={886} height={368} className="h-12 w-auto" />
+						<Image
+							src="/logo-patissio-full.png"
+							alt="Patissio"
+							width={886}
+							height={368}
+							className="h-12 w-auto"
+						/>
 					</Link>
 					<p className="text-muted-foreground mt-3">Mot de passe oublié</p>
 				</div>
@@ -45,7 +51,8 @@ export default function ForgotPasswordPage() {
 						<div>
 							<p className="font-medium">Email envoyé</p>
 							<p className="mt-1 text-sm text-muted-foreground">
-								Si un compte existe avec l'adresse <strong>{email}</strong>, vous recevrez un lien pour réinitialiser votre mot de passe.
+								Si un compte existe avec l'adresse <strong>{email}</strong>, vous recevrez un lien
+								pour réinitialiser votre mot de passe.
 							</p>
 						</div>
 						<p className="text-sm text-muted-foreground">
@@ -57,7 +64,8 @@ export default function ForgotPasswordPage() {
 				) : (
 					<>
 						<p className="text-center text-sm text-muted-foreground">
-							Entrez votre adresse email et nous vous enverrons un lien pour réinitialiser votre mot de passe.
+							Entrez votre adresse email et nous vous enverrons un lien pour réinitialiser votre mot
+							de passe.
 						</p>
 
 						<form onSubmit={handleSubmit} className="space-y-4">

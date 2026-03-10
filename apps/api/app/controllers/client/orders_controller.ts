@@ -10,6 +10,10 @@ import User from '#models/user'
 import EmailService from '#services/email_service'
 import StorageService from '#services/storage_service'
 import env from '#start/env'
+import {
+	clientSendMessageValidator,
+	storeClientOrderValidator,
+} from '#validators/client_order_validator'
 
 export default class OrdersController {
 	private async verifyTurnstile(token: string | null): Promise<boolean> {
@@ -74,22 +78,25 @@ export default class OrdersController {
 			}
 		}
 
-		const slug = request.input('slug')
-		const type = request.input('type')
-		const clientName = request.input('clientName')
-		const clientEmail = request.input('clientEmail')
-		const clientPhone = request.input('clientPhone')
-		const deliveryMethod = request.input('deliveryMethod')
-		const requestedDate = request.input('requestedDate')
-		const deliveryAddress = request.input('deliveryAddress')
-		const deliveryNotes = request.input('deliveryNotes')
-		const items = request.input('items')
-		const customType = request.input('customType')
-		const customNbPersonnes = request.input('customNbPersonnes')
-		const customDateSouhaitee = request.input('customDateSouhaitee')
-		const customTheme = request.input('customTheme')
-		const customAllergies = request.input('customAllergies')
-		const customMessage = request.input('customMessage')
+		const data = await request.validateUsing(storeClientOrderValidator)
+		const {
+			slug,
+			type,
+			clientName,
+			clientEmail,
+			clientPhone,
+			deliveryMethod,
+			requestedDate,
+			deliveryAddress,
+			deliveryNotes,
+			items,
+			customType,
+			customNbPersonnes,
+			customDateSouhaitee,
+			customTheme,
+			customAllergies,
+			customMessage,
+		} = data
 
 		const patissier = await PatissierProfile.findBy('slug', slug)
 		if (!patissier) {
@@ -236,15 +243,9 @@ export default class OrdersController {
 
 	async sendMessage({ params, request, response }: HttpContext) {
 		const { orderNumber } = params
-		const { message, senderName, clientEmail } = request.only([
-			'message',
-			'senderName',
-			'clientEmail',
-		])
-
-		if (!clientEmail) {
-			return response.badRequest({ success: false, message: 'Email is required' })
-		}
+		const { message, senderName, clientEmail } = await request.validateUsing(
+			clientSendMessageValidator
+		)
 
 		const order = await Order.query()
 			.where('orderNumber', orderNumber)

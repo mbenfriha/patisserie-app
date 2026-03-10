@@ -1,13 +1,12 @@
 'use client'
 
-import { useCallback, useState } from 'react'
-import { useEditor, EditorContent } from '@tiptap/react'
-import StarterKit from '@tiptap/starter-kit'
-import Underline from '@tiptap/extension-underline'
-import TextAlign from '@tiptap/extension-text-align'
-import Placeholder from '@tiptap/extension-placeholder'
 import Link from '@tiptap/extension-link'
-import { useEffect } from 'react'
+import Placeholder from '@tiptap/extension-placeholder'
+import TextAlign from '@tiptap/extension-text-align'
+import Underline from '@tiptap/extension-underline'
+import { EditorContent, useEditor } from '@tiptap/react'
+import StarterKit from '@tiptap/starter-kit'
+import { useCallback, useEffect, useState } from 'react'
 
 interface RichTextEditorProps {
 	content: string
@@ -149,7 +148,14 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
 					active={editor.isActive('bulletList')}
 					title="Liste a puces"
 				>
-					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+					<svg
+						width="16"
+						height="16"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						strokeWidth="2"
+					>
 						<line x1="8" y1="6" x2="21" y2="6" />
 						<line x1="8" y1="12" x2="21" y2="12" />
 						<line x1="8" y1="18" x2="21" y2="18" />
@@ -163,13 +169,47 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
 					active={editor.isActive('orderedList')}
 					title="Liste numerotee"
 				>
-					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+					<svg
+						width="16"
+						height="16"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						strokeWidth="2"
+					>
 						<line x1="10" y1="6" x2="21" y2="6" />
 						<line x1="10" y1="12" x2="21" y2="12" />
 						<line x1="10" y1="18" x2="21" y2="18" />
-						<text x="1" y="8" fontSize="8" fill="currentColor" stroke="none" fontFamily="sans-serif">1</text>
-						<text x="1" y="14" fontSize="8" fill="currentColor" stroke="none" fontFamily="sans-serif">2</text>
-						<text x="1" y="20" fontSize="8" fill="currentColor" stroke="none" fontFamily="sans-serif">3</text>
+						<text
+							x="1"
+							y="8"
+							fontSize="8"
+							fill="currentColor"
+							stroke="none"
+							fontFamily="sans-serif"
+						>
+							1
+						</text>
+						<text
+							x="1"
+							y="14"
+							fontSize="8"
+							fill="currentColor"
+							stroke="none"
+							fontFamily="sans-serif"
+						>
+							2
+						</text>
+						<text
+							x="1"
+							y="20"
+							fontSize="8"
+							fill="currentColor"
+							stroke="none"
+							fontFamily="sans-serif"
+						>
+							3
+						</text>
 					</svg>
 				</ToolbarButton>
 
@@ -180,7 +220,14 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
 					active={editor.isActive('blockquote')}
 					title="Citation"
 				>
-					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+					<svg
+						width="16"
+						height="16"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						strokeWidth="2"
+					>
 						<path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V21" />
 						<path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3" />
 					</svg>
@@ -193,7 +240,14 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
 					active={editor.isActive({ textAlign: 'left' })}
 					title="Aligner a gauche"
 				>
-					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+					<svg
+						width="16"
+						height="16"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						strokeWidth="2"
+					>
 						<line x1="3" y1="6" x2="15" y2="6" />
 						<line x1="3" y1="12" x2="21" y2="12" />
 						<line x1="3" y1="18" x2="15" y2="18" />
@@ -204,7 +258,14 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
 					active={editor.isActive({ textAlign: 'center' })}
 					title="Centrer"
 				>
-					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+					<svg
+						width="16"
+						height="16"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						strokeWidth="2"
+					>
 						<line x1="6" y1="6" x2="18" y2="6" />
 						<line x1="3" y1="12" x2="21" y2="12" />
 						<line x1="6" y1="18" x2="18" y2="18" />
@@ -214,12 +275,16 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
 				<div className="mx-1 w-px bg-border" />
 
 				<div className="relative">
-					<ToolbarButton
-						onClick={openLinkInput}
-						active={editor.isActive('link')}
-						title="Lien"
-					>
-						<svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+					<ToolbarButton onClick={openLinkInput} active={editor.isActive('link')} title="Lien">
+						<svg
+							className="h-4 w-4"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							strokeWidth={2}
+							strokeLinecap="round"
+							strokeLinejoin="round"
+						>
 							<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
 							<path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
 						</svg>
@@ -244,7 +309,13 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
 								className="rounded px-1.5 py-1 text-xs text-primary hover:bg-muted"
 								title="Appliquer"
 							>
-								<svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+								<svg
+									className="h-3.5 w-3.5"
+									fill="none"
+									viewBox="0 0 24 24"
+									stroke="currentColor"
+									strokeWidth={2.5}
+								>
 									<path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
 								</svg>
 							</button>
@@ -255,7 +326,13 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
 									className="rounded px-1.5 py-1 text-xs text-destructive hover:bg-muted"
 									title="Supprimer le lien"
 								>
-									<svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+									<svg
+										className="h-3.5 w-3.5"
+										fill="none"
+										viewBox="0 0 24 24"
+										stroke="currentColor"
+										strokeWidth={2.5}
+									>
 										<path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
 									</svg>
 								</button>

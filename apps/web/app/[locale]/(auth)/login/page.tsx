@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
 import Image from 'next/image'
 import { useTranslations } from 'next-intl'
+import { useState } from 'react'
 import { Link } from '@/i18n/navigation'
 import { useAuth } from '@/lib/providers/auth-provider'
 
@@ -32,16 +32,20 @@ export default function LoginPage() {
 			<div className="mx-auto w-full max-w-md space-y-6 p-8">
 				<div className="flex flex-col items-center">
 					<Link href="/">
-						<Image src="/logo-patissio-full.png" alt="Patissio" width={886} height={368} className="h-12 w-auto" />
+						<Image
+							src="/logo-patissio-full.png"
+							alt="Patissio"
+							width={886}
+							height={368}
+							className="h-12 w-auto"
+						/>
 					</Link>
 					<p className="text-muted-foreground mt-3">{t('login')}</p>
 				</div>
 
 				<form onSubmit={handleSubmit} className="space-y-4">
 					{error && (
-						<div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-							{error}
-						</div>
+						<div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</div>
 					)}
 
 					<div className="space-y-2">

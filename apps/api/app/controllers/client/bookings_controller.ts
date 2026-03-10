@@ -8,21 +8,19 @@ import EmailService from '#services/email_service'
 import NotificationService from '#services/notification_service'
 import StripeService from '#services/stripe_service'
 import env from '#start/env'
+import {
+	cancelBookingValidator,
+	storeClientBookingValidator,
+} from '#validators/client_booking_validator'
 
 export default class BookingsController {
 	async store({ request, params, response }: HttpContext) {
-		const body = request.only([
-			'client_name',
-			'client_email',
-			'client_phone',
-			'nb_participants',
-			'message',
-		])
+		const body = await request.validateUsing(storeClientBookingValidator)
 		const clientName = body.client_name
 		const clientEmail = body.client_email
-		const clientPhone = body.client_phone
+		const clientPhone = body.client_phone || null
 		const nbParticipants = body.nb_participants
-		const message = body.message
+		const message = body.message || null
 
 		const workshopId = params.id
 		const workshop = await Workshop.find(workshopId)
@@ -193,7 +191,7 @@ export default class BookingsController {
 			return response.notFound({ success: false, message: 'Booking not found' })
 		}
 
-		const { clientEmail, cancellationReason } = request.only(['clientEmail', 'cancellationReason'])
+		const { clientEmail, cancellationReason } = await request.validateUsing(cancelBookingValidator)
 
 		// Verify ownership via clientEmail
 		if (booking.clientEmail !== clientEmail) {

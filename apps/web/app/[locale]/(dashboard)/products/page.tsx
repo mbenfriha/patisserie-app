@@ -1,11 +1,63 @@
 'use client'
 
-import { useEffect, useRef, useState, useCallback } from 'react'
+import {
+	Check,
+	Eye,
+	EyeOff,
+	Filter,
+	FolderOpen,
+	MoreHorizontal,
+	Pencil,
+	Plus,
+	Search,
+	ShoppingBag,
+	Trash2,
+	X,
+} from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { api } from '@/lib/api/client'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+
 import { PlanGate } from '@/components/auth/plan-gate'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
 import { CategoryCombobox } from '@/components/ui/category-combobox'
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from '@/components/ui/dialog'
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { ImageCropper } from '@/components/ui/image-cropper'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@/components/ui/select'
+import { Switch } from '@/components/ui/switch'
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from '@/components/ui/table'
+import { Textarea } from '@/components/ui/textarea'
+import { api } from '@/lib/api/client'
 import { getImageUrl } from '@/lib/utils/image-url'
 
 interface Product {
@@ -80,6 +132,8 @@ export default function ProductsPage() {
 		file?: File
 	} | null>(null)
 	const [stagedFile, setStagedFile] = useState<File | null>(null)
+	const [searchQuery, setSearchQuery] = useState('')
+	const [categoryFilter, setCategoryFilter] = useState<string>('all')
 
 	const showToast = (msg: string) => {
 		setToast(msg)
@@ -107,6 +161,19 @@ export default function ProductsPage() {
 	useEffect(() => {
 		loadData()
 	}, [loadData])
+
+	const filteredProducts = useMemo(() => {
+		return products.filter((product) => {
+			const matchesSearch =
+				!searchQuery ||
+				product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+				(product.description &&
+					product.description.toLowerCase().includes(searchQuery.toLowerCase()))
+			const matchesCategory =
+				categoryFilter === 'all' || product.categoryId === categoryFilter
+			return matchesSearch && matchesCategory
+		})
+	}, [products, searchQuery, categoryFilter])
 
 	const openCreate = () => {
 		setEditingId(null)
@@ -190,6 +257,32 @@ export default function ProductsPage() {
 		}
 	}
 
+	const handleToggleVisibility = async (product: Product) => {
+		try {
+			await api.put(`/patissier/products/${product.id}`, {
+				...product,
+				isVisible: !product.isVisible,
+			})
+			showToast(product.isVisible ? 'Produit masqué' : 'Produit affiché')
+			await loadData()
+		} catch {
+			showToast('Erreur lors de la mise à jour')
+		}
+	}
+
+	const handleToggleAvailability = async (product: Product) => {
+		try {
+			await api.put(`/patissier/products/${product.id}`, {
+				...product,
+				isAvailable: !product.isAvailable,
+			})
+			showToast(product.isAvailable ? 'Produit indisponible' : 'Produit disponible')
+			await loadData()
+		} catch {
+			showToast('Erreur lors de la mise à jour')
+		}
+	}
+
 	const handleCreateCategory = async (name: string): Promise<string | null> => {
 		try {
 			const res = await api.post('/patissier/categories', { name })
@@ -233,7 +326,10 @@ export default function ProductsPage() {
 		return categories.find((c) => c.id === id)?.name || null
 	}
 
-	const handleIllustrationSelect = (productId: string | null, e: React.ChangeEvent<HTMLInputElement>) => {
+	const handleIllustrationSelect = (
+		productId: string | null,
+		e: React.ChangeEvent<HTMLInputElement>
+	) => {
 		const file = e.target.files?.[0]
 		if (!file) return
 		const src = URL.createObjectURL(file)
@@ -279,185 +375,343 @@ export default function ProductsPage() {
 
 	return (
 		<PlanGate minPlan="pro">
-		<div className="space-y-6">
-			<div className="flex items-center justify-between">
-				<h1 className="text-3xl font-bold">{t('products')}</h1>
-				<div className="flex gap-2">
-					<button
-						type="button"
-						onClick={() => setShowCategories(true)}
-						className="rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent"
-					>
-						Catégories
-					</button>
-					<button
-						type="button"
-						onClick={openCreate}
-						className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-					>
-						+ Nouveau produit
-					</button>
-				</div>
-			</div>
-
-			{isLoading ? (
-				<p className="text-muted-foreground">Chargement...</p>
-			) : products.length === 0 ? (
-				<div className="rounded-lg border border-dashed p-12 text-center">
-					<p className="text-muted-foreground">Aucun produit dans le catalogue</p>
-					<button
-						type="button"
-						onClick={openCreate}
-						className="mt-4 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-					>
-						Créer un produit
-					</button>
-				</div>
-			) : (
-				<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-					{products.map((product) => (
-						<div
-							key={product.id}
-							className="group relative cursor-pointer rounded-lg border bg-card p-4 transition-shadow hover:shadow-md"
-							onClick={() => openEdit(product)}
-						>
-							<div className="flex items-start justify-between">
-								<div className="min-w-0 flex-1">
-									<h3 className="font-medium">{product.name}</h3>
-									{getCategoryName(product.categoryId) && (
-										<p className="mt-0.5 text-xs text-muted-foreground">
-											{getCategoryName(product.categoryId)}
-										</p>
-									)}
-								</div>
-								<button
-									type="button"
-									onClick={(e) => {
-										e.stopPropagation()
-										handleDelete(product.id)
-									}}
-									className="ml-2 rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"
-								>
-									<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-										<path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
-									</svg>
-								</button>
-							</div>
-							<p className="mt-2 text-lg font-bold text-primary">
-								{product.price} &euro;{product.unit ? ` / ${product.unit}` : ''}
-							</p>
-							<div className="mt-2 flex flex-wrap gap-1.5">
-								{!product.isAvailable && (
-									<span className="rounded bg-destructive/10 px-2 py-0.5 text-xs text-destructive">
-										Indisponible
-									</span>
-								)}
-								{!product.isVisible && (
-									<span className="rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-										Masqué
-									</span>
-								)}
-								{product.preparationDays != null && product.preparationDays > 0 && (
-									<span className="rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-										{product.preparationDays}j de prépa
-									</span>
-								)}
-							</div>
-							{product.images?.[0]?.url && (
-								<div className="mt-3">
-									<div className="h-16 w-24 shrink-0 overflow-hidden rounded">
-										<img
-											src={getImageUrl(product.images[0].url) || ''}
-											alt=""
-											className="h-full w-full object-cover"
-										/>
-									</div>
-								</div>
-							)}
+			<div className="space-y-6">
+				{/* Header */}
+				<div className="flex items-center justify-between">
+					<div className="space-y-1">
+						<div className="flex items-center gap-3">
+							<h1 className="text-2xl font-bold tracking-tight">{t('products')}</h1>
+							<Badge className="bg-primary/10 text-primary hover:bg-primary/20">Pro</Badge>
 						</div>
-					))}
+						<p className="text-muted-foreground">
+							Gérez votre catalogue de produits en vente
+						</p>
+					</div>
+					<div className="flex gap-2">
+						<Button variant="outline" onClick={() => setShowCategories(true)}>
+							<FolderOpen className="size-4" />
+							Catégories
+						</Button>
+						<Button onClick={openCreate}>
+							<Plus className="size-4" />
+							Nouveau produit
+						</Button>
+					</div>
 				</div>
-			)}
 
-			{/* ── Modal Create/Edit ── */}
-			{showModal && (
-				<div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center">
-					<div className="max-h-[85vh] w-full overflow-y-auto rounded-t-xl bg-white p-4 shadow-xl sm:max-w-lg sm:rounded-lg sm:p-6">
-						<h2 className="text-xl font-bold">
-							{editingId ? 'Modifier le produit' : 'Nouveau produit'}
-						</h2>
+				{/* Search + Category filter */}
+				<div className="flex items-center gap-3">
+					<div className="relative flex-1">
+						<Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+						<Input
+							placeholder="Rechercher un produit..."
+							value={searchQuery}
+							onChange={(e) => setSearchQuery(e.target.value)}
+							className="pl-9"
+						/>
+					</div>
+					<Select value={categoryFilter} onValueChange={setCategoryFilter}>
+						<SelectTrigger className="w-[200px]">
+							<Filter className="size-4" />
+							<SelectValue placeholder="Catégorie" />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value="all">Toutes les catégories</SelectItem>
+							{categories.map((cat) => (
+								<SelectItem key={cat.id} value={cat.id}>
+									{cat.name}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
+				</div>
 
-						<div className="mt-4 space-y-4">
+				{/* Table */}
+				{isLoading ? (
+					<p className="text-muted-foreground">Chargement...</p>
+				) : (
+					<Card>
+						<CardContent className="p-0">
+							<Table>
+								<TableHeader>
+									<TableRow>
+										<TableHead className="w-[300px]">Produit</TableHead>
+										<TableHead>Catégorie</TableHead>
+										<TableHead>Prix</TableHead>
+										<TableHead>Qté</TableHead>
+										<TableHead>Préparation</TableHead>
+										<TableHead>Statut</TableHead>
+										<TableHead>Visible</TableHead>
+										<TableHead className="w-[50px]">
+											<span className="sr-only">Actions</span>
+										</TableHead>
+									</TableRow>
+								</TableHeader>
+								<TableBody>
+									{filteredProducts.length === 0 ? (
+										<TableRow>
+											<TableCell colSpan={8} className="h-32 text-center">
+												<div className="flex flex-col items-center justify-center gap-2">
+													<ShoppingBag className="size-10 text-muted-foreground" />
+													<p className="text-muted-foreground">
+														{products.length === 0
+															? 'Aucun produit dans le catalogue'
+															: 'Aucun produit ne correspond aux filtres'}
+													</p>
+													{products.length === 0 && (
+														<Button className="mt-2" onClick={openCreate}>
+															Créer un produit
+														</Button>
+													)}
+												</div>
+											</TableCell>
+										</TableRow>
+									) : (
+										filteredProducts.map((product) => (
+											<TableRow key={product.id}>
+												{/* Produit: image + name + description */}
+												<TableCell>
+													<div className="flex items-center gap-3">
+														{product.images?.[0]?.url ? (
+															<div className="size-12 shrink-0 overflow-hidden rounded-lg">
+																<img
+																	src={getImageUrl(product.images[0].url) || ''}
+																	alt={product.name}
+																	className="size-full object-cover"
+																/>
+															</div>
+														) : (
+															<div className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-muted">
+																<ShoppingBag className="size-5 text-muted-foreground" />
+															</div>
+														)}
+														<div className="min-w-0">
+															<p className="font-medium">{product.name}</p>
+															{product.description && (
+																<p className="max-w-[200px] truncate text-xs text-muted-foreground">
+																	{product.description}
+																</p>
+															)}
+														</div>
+													</div>
+												</TableCell>
+
+												{/* Catégorie */}
+												<TableCell>
+													{getCategoryName(product.categoryId) ? (
+														<Badge variant="outline">
+															{getCategoryName(product.categoryId)}
+														</Badge>
+													) : (
+														<span className="text-muted-foreground">—</span>
+													)}
+												</TableCell>
+
+												{/* Prix */}
+												<TableCell>
+													<span className="font-medium">
+														{product.price} &euro;
+													</span>
+													{product.unit && (
+														<span className="text-muted-foreground">
+															{' '}/ {product.unit}
+														</span>
+													)}
+												</TableCell>
+
+												{/* Qté */}
+												<TableCell>
+													{product.minQuantity != null || product.maxQuantity != null ? (
+														<span className="text-sm">
+															{product.minQuantity ?? '—'} - {product.maxQuantity ?? '—'}
+														</span>
+													) : (
+														<span className="text-muted-foreground">—</span>
+													)}
+												</TableCell>
+
+												{/* Préparation */}
+												<TableCell>
+													{product.preparationDays != null && product.preparationDays > 0 ? (
+														<span className="text-sm">
+															{product.preparationDays} jour{product.preparationDays > 1 ? 's' : ''}
+														</span>
+													) : (
+														<span className="text-muted-foreground">—</span>
+													)}
+												</TableCell>
+
+												{/* Statut */}
+												<TableCell>
+													{product.isAvailable ? (
+														<Badge className="bg-green-50 text-green-700 hover:bg-green-100 border-green-200">
+															<Check className="size-3" />
+															Disponible
+														</Badge>
+													) : (
+														<Badge className="bg-amber-50 text-amber-700 hover:bg-amber-100 border-amber-200">
+															<X className="size-3" />
+															Indisponible
+														</Badge>
+													)}
+												</TableCell>
+
+												{/* Visible */}
+												<TableCell>
+													{product.isVisible ? (
+														<Eye className="size-4 text-muted-foreground" />
+													) : (
+														<EyeOff className="size-4 text-muted-foreground" />
+													)}
+												</TableCell>
+
+												{/* Actions */}
+												<TableCell>
+													<DropdownMenu>
+														<DropdownMenuTrigger asChild>
+															<Button variant="ghost" size="icon" className="size-8">
+																<MoreHorizontal className="size-4" />
+																<span className="sr-only">Actions</span>
+															</Button>
+														</DropdownMenuTrigger>
+														<DropdownMenuContent align="end">
+															<DropdownMenuItem onClick={() => openEdit(product)}>
+																<Pencil className="size-4" />
+																Modifier
+															</DropdownMenuItem>
+															<DropdownMenuItem onClick={() => handleToggleVisibility(product)}>
+																{product.isVisible ? (
+																	<>
+																		<EyeOff className="size-4" />
+																		Masquer
+																	</>
+																) : (
+																	<>
+																		<Eye className="size-4" />
+																		Afficher
+																	</>
+																)}
+															</DropdownMenuItem>
+															<DropdownMenuItem onClick={() => handleToggleAvailability(product)}>
+																{product.isAvailable ? (
+																	<>
+																		<X className="size-4" />
+																		Indisponible
+																	</>
+																) : (
+																	<>
+																		<Check className="size-4" />
+																		Disponible
+																	</>
+																)}
+															</DropdownMenuItem>
+															<DropdownMenuSeparator />
+															<DropdownMenuItem
+																variant="destructive"
+																onClick={() => handleDelete(product.id)}
+															>
+																<Trash2 className="size-4" />
+																Supprimer
+															</DropdownMenuItem>
+														</DropdownMenuContent>
+													</DropdownMenu>
+												</TableCell>
+											</TableRow>
+										))
+									)}
+								</TableBody>
+							</Table>
+						</CardContent>
+					</Card>
+				)}
+
+				{/* ── Dialog Create/Edit ── */}
+				<Dialog open={showModal} onOpenChange={setShowModal}>
+					<DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+						<DialogHeader>
+							<DialogTitle>
+								{editingId ? 'Modifier le produit' : 'Nouveau produit'}
+							</DialogTitle>
+							<DialogDescription>
+								{editingId
+									? 'Modifiez les informations de votre produit.'
+									: 'Remplissez les informations pour créer un nouveau produit.'}
+							</DialogDescription>
+						</DialogHeader>
+
+						<div className="space-y-4">
 							{/* Name */}
-							<div>
-								<label className="mb-1 block text-sm font-medium">Nom *</label>
-								<input
+							<div className="space-y-2">
+								<Label htmlFor="product-name">Nom *</Label>
+								<Input
+									id="product-name"
 									type="text"
 									value={form.name}
 									onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-									className="w-full rounded border px-3 py-2 text-sm"
 									placeholder="Nom du produit"
 								/>
 							</div>
 
 							{/* Description */}
-							<div>
-								<label className="mb-1 block text-sm font-medium">Description</label>
-								<textarea
+							<div className="space-y-2">
+								<Label htmlFor="product-description">Description</Label>
+								<Textarea
+									id="product-description"
 									value={form.description}
 									onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-									className="w-full rounded border px-3 py-2 text-sm"
 									rows={3}
 									placeholder="Description du produit"
 								/>
 							</div>
 
 							{/* Illustration */}
-							<div>
-								<label className="mb-1 block text-sm font-medium">Illustration</label>
-								{editingId ? (() => {
-									const currentProduct = products.find((p) => p.id === editingId)
-									const hasImage = currentProduct?.images?.[0]?.url
-									return hasImage ? (
-										<div className="flex items-center gap-3">
-											<div className="h-16 w-24 shrink-0 overflow-hidden rounded border">
-												<img
-													src={getImageUrl(currentProduct!.images[0].url) || ''}
-													alt=""
-													className="h-full w-full object-cover"
-												/>
-											</div>
-											<div className="flex gap-2">
-												<label className="cursor-pointer rounded border px-3 py-1.5 text-xs hover:bg-muted">
-													Changer
-													<input
-														type="file"
-														accept="image/*"
-														className="hidden"
-														onChange={(e) => handleIllustrationSelect(editingId, e)}
+							<div className="space-y-2">
+								<Label>Illustration</Label>
+								{editingId ? (
+									(() => {
+										const currentProduct = products.find((p) => p.id === editingId)
+										const hasImage = currentProduct?.images?.[0]?.url
+										return hasImage ? (
+											<div className="flex items-center gap-3">
+												<div className="h-16 w-24 shrink-0 overflow-hidden rounded-lg border">
+													<img
+														src={getImageUrl(currentProduct!.images[0].url) || ''}
+														alt=""
+														className="h-full w-full object-cover"
 													/>
-												</label>
-												<button
-													type="button"
-													onClick={() => handleIllustrationDelete(editingId)}
-													className="rounded border px-3 py-1.5 text-xs text-destructive hover:bg-destructive/10"
-												>
-													Supprimer
-												</button>
+												</div>
+												<div className="flex gap-2">
+													<label className="cursor-pointer rounded-md border px-3 py-1.5 text-xs hover:bg-muted">
+														Changer
+														<input
+															type="file"
+															accept="image/*"
+															className="hidden"
+															onChange={(e) => handleIllustrationSelect(editingId, e)}
+														/>
+													</label>
+													<button
+														type="button"
+														onClick={() => handleIllustrationDelete(editingId)}
+														className="rounded-md border px-3 py-1.5 text-xs text-destructive hover:bg-destructive/10"
+													>
+														Supprimer
+													</button>
+												</div>
 											</div>
-										</div>
-									) : (
-										<label className="inline-flex cursor-pointer items-center gap-2 rounded border px-3 py-2 text-sm hover:bg-muted">
-											Ajouter une illustration
-											<input
-												type="file"
-												accept="image/*"
-												className="hidden"
-												onChange={(e) => handleIllustrationSelect(editingId, e)}
-											/>
-										</label>
-									)
-								})() : (
+										) : (
+											<label className="inline-flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-muted">
+												Ajouter une illustration
+												<input
+													type="file"
+													accept="image/*"
+													className="hidden"
+													onChange={(e) => handleIllustrationSelect(editingId, e)}
+												/>
+											</label>
+										)
+									})()
+								) : (
 									<div>
 										{stagedFile ? (
 											<div className="flex items-center gap-3">
@@ -465,13 +719,13 @@ export default function ProductsPage() {
 												<button
 													type="button"
 													onClick={() => setStagedFile(null)}
-													className="rounded border px-3 py-1.5 text-xs text-destructive hover:bg-destructive/10"
+													className="rounded-md border px-3 py-1.5 text-xs text-destructive hover:bg-destructive/10"
 												>
 													Retirer
 												</button>
 											</div>
 										) : (
-											<label className="inline-flex cursor-pointer items-center gap-2 rounded border px-3 py-2 text-sm hover:bg-muted">
+											<label className="inline-flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-muted">
 												Ajouter une illustration
 												<input
 													type="file"
@@ -487,33 +741,33 @@ export default function ProductsPage() {
 
 							{/* Price + Unit */}
 							<div className="grid grid-cols-2 gap-3">
-								<div>
-									<label className="mb-1 block text-sm font-medium">Prix * (€)</label>
-									<input
+								<div className="space-y-2">
+									<Label htmlFor="product-price">Prix * (€)</Label>
+									<Input
+										id="product-price"
 										type="number"
 										step="0.01"
 										min="0"
 										value={form.price}
 										onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
-										className="w-full rounded border px-3 py-2 text-sm"
 										placeholder="0.00"
 									/>
 								</div>
-								<div>
-									<label className="mb-1 block text-sm font-medium">Unité</label>
-									<input
+								<div className="space-y-2">
+									<Label htmlFor="product-unit">Unité</Label>
+									<Input
+										id="product-unit"
 										type="text"
 										value={form.unit}
 										onChange={(e) => setForm((f) => ({ ...f, unit: e.target.value }))}
-										className="w-full rounded border px-3 py-2 text-sm"
 										placeholder="pièce, kg, lot..."
 									/>
 								</div>
 							</div>
 
 							{/* Category */}
-							<div>
-								<label className="mb-1 block text-sm font-medium">Catégorie</label>
+							<div className="space-y-2">
+								<Label>Catégorie</Label>
 								<CategoryCombobox
 									categories={categories}
 									value={form.categoryId}
@@ -524,46 +778,46 @@ export default function ProductsPage() {
 
 							{/* Quantities + Preparation */}
 							<div className="grid grid-cols-3 gap-3">
-								<div>
-									<label className="mb-1 block text-sm font-medium">Qté min</label>
-									<input
+								<div className="space-y-2">
+									<Label htmlFor="product-min-qty">Qté min</Label>
+									<Input
+										id="product-min-qty"
 										type="number"
 										min="1"
 										value={form.minQuantity}
 										onChange={(e) => setForm((f) => ({ ...f, minQuantity: e.target.value }))}
-										className="w-full rounded border px-3 py-2 text-sm"
 										placeholder="—"
 									/>
 								</div>
-								<div>
-									<label className="mb-1 block text-sm font-medium">Qté max</label>
-									<input
+								<div className="space-y-2">
+									<Label htmlFor="product-max-qty">Qté max</Label>
+									<Input
+										id="product-max-qty"
 										type="number"
 										min="1"
 										value={form.maxQuantity}
 										onChange={(e) => setForm((f) => ({ ...f, maxQuantity: e.target.value }))}
-										className="w-full rounded border px-3 py-2 text-sm"
 										placeholder="—"
 									/>
 								</div>
-								<div>
-									<label className="mb-1 block text-sm font-medium">Prépa (j)</label>
-									<input
+								<div className="space-y-2">
+									<Label htmlFor="product-prep">Prépa (j)</Label>
+									<Input
+										id="product-prep"
 										type="number"
 										min="0"
 										value={form.preparationDays}
 										onChange={(e) => setForm((f) => ({ ...f, preparationDays: e.target.value }))}
-										className="w-full rounded border px-3 py-2 text-sm"
 										placeholder="—"
 									/>
 								</div>
 							</div>
 
 							{/* Allergens */}
-							<div>
-								<label className="mb-1 block text-sm font-medium">Allergènes</label>
+							<div className="space-y-2">
+								<Label>Allergènes</Label>
 								<div className="flex gap-2">
-									<input
+									<Input
 										type="text"
 										value={allergenInput}
 										onChange={(e) => setAllergenInput(e.target.value)}
@@ -573,32 +827,36 @@ export default function ProductsPage() {
 												addAllergen()
 											}
 										}}
-										className="flex-1 rounded border px-3 py-2 text-sm"
+										className="flex-1"
 										placeholder="Gluten, lait, oeufs..."
 									/>
-									<button type="button" onClick={addAllergen} className="rounded border px-3 py-2 text-sm hover:bg-muted">
-										+
-									</button>
+									<Button variant="outline" size="sm" type="button" onClick={addAllergen}>
+										<Plus className="size-4" />
+									</Button>
 								</div>
 								{form.allergens.length > 0 && (
 									<div className="mt-2 flex flex-wrap gap-1">
 										{form.allergens.map((a) => (
-											<span key={a} className="inline-flex items-center gap-1 rounded-full bg-orange-50 px-2 py-0.5 text-xs text-orange-700">
+											<Badge key={a} className="bg-orange-50 text-orange-700 hover:bg-orange-100">
 												{a}
-												<button type="button" onClick={() => removeAllergen(a)} className="hover:text-orange-900">
-													&times;
+												<button
+													type="button"
+													onClick={() => removeAllergen(a)}
+													className="hover:text-orange-900"
+												>
+													<X className="size-3" />
 												</button>
-											</span>
+											</Badge>
 										))}
 									</div>
 								)}
 							</div>
 
 							{/* Tags */}
-							<div>
-								<label className="mb-1 block text-sm font-medium">Tags</label>
+							<div className="space-y-2">
+								<Label>Tags</Label>
 								<div className="flex gap-2">
-									<input
+									<Input
 										type="text"
 										value={tagInput}
 										onChange={(e) => setTagInput(e.target.value)}
@@ -608,96 +866,89 @@ export default function ProductsPage() {
 												addTag()
 											}
 										}}
-										className="flex-1 rounded border px-3 py-2 text-sm"
+										className="flex-1"
 										placeholder="Ajouter un tag..."
 									/>
-									<button type="button" onClick={addTag} className="rounded border px-3 py-2 text-sm hover:bg-muted">
-										+
-									</button>
+									<Button variant="outline" size="sm" type="button" onClick={addTag}>
+										<Plus className="size-4" />
+									</Button>
 								</div>
 								{form.tags.length > 0 && (
 									<div className="mt-2 flex flex-wrap gap-1">
 										{form.tags.map((tag) => (
-											<span key={tag} className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs">
+											<Badge key={tag} variant="secondary">
 												{tag}
-												<button type="button" onClick={() => removeTag(tag)} className="text-muted-foreground hover:text-foreground">
-													&times;
+												<button
+													type="button"
+													onClick={() => removeTag(tag)}
+													className="text-muted-foreground hover:text-foreground"
+												>
+													<X className="size-3" />
 												</button>
-											</span>
+											</Badge>
 										))}
 									</div>
 								)}
 							</div>
 
 							{/* Toggles */}
-							<div className="flex gap-6">
-								<label className="flex items-center gap-2 text-sm">
-									<input
-										type="checkbox"
+							<div className="flex items-center gap-6">
+								<div className="flex items-center gap-2">
+									<Switch
+										id="product-visible"
 										checked={form.isVisible}
-										onChange={(e) => setForm((f) => ({ ...f, isVisible: e.target.checked }))}
-										className="h-4 w-4 rounded border"
+										onCheckedChange={(checked) =>
+											setForm((f) => ({ ...f, isVisible: checked }))
+										}
 									/>
-									Visible sur le site
-								</label>
-								<label className="flex items-center gap-2 text-sm">
-									<input
-										type="checkbox"
+									<Label htmlFor="product-visible">Visible sur le site</Label>
+								</div>
+								<div className="flex items-center gap-2">
+									<Switch
+										id="product-available"
 										checked={form.isAvailable}
-										onChange={(e) => setForm((f) => ({ ...f, isAvailable: e.target.checked }))}
-										className="h-4 w-4 rounded border"
+										onCheckedChange={(checked) =>
+											setForm((f) => ({ ...f, isAvailable: checked }))
+										}
 									/>
-									Disponible
-								</label>
+									<Label htmlFor="product-available">Disponible</Label>
+								</div>
 							</div>
 						</div>
 
-						{/* Actions */}
-						<div className="mt-6 flex justify-end gap-3">
-							<button
-								type="button"
-								onClick={() => setShowModal(false)}
-								className="rounded border px-4 py-2 text-sm hover:bg-muted"
-							>
+						<DialogFooter>
+							<Button variant="outline" onClick={() => setShowModal(false)}>
 								Annuler
-							</button>
-							<button
-								type="button"
-								onClick={handleSave}
-								disabled={saving || !form.name.trim() || !form.price}
-								className="rounded bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-							>
+							</Button>
+							<Button onClick={handleSave} disabled={saving || !form.name.trim() || !form.price}>
 								{saving ? 'Enregistrement...' : editingId ? 'Enregistrer' : 'Créer'}
-							</button>
-						</div>
+							</Button>
+						</DialogFooter>
+					</DialogContent>
+				</Dialog>
+
+				{showCategories && <CategoriesDialog onClose={() => setShowCategories(false)} />}
+
+				{/* ── Image Cropper ── */}
+				{cropState && (
+					<ImageCropper
+						imageSrc={cropState.src}
+						onCrop={handleCropConfirm}
+						onCancel={() => {
+							if (cropState.src.startsWith('blob:')) URL.revokeObjectURL(cropState.src)
+							setCropState(null)
+						}}
+						aspect={4 / 3}
+					/>
+				)}
+
+				{/* Toast */}
+				{toast && (
+					<div className="fixed bottom-6 right-6 z-50 rounded-lg border bg-card px-4 py-3 text-sm shadow-lg">
+						{toast}
 					</div>
-				</div>
-			)}
-
-			{showCategories && (
-				<CategoriesDialog onClose={() => setShowCategories(false)} />
-			)}
-
-			{/* ── Image Cropper ── */}
-			{cropState && (
-				<ImageCropper
-					imageSrc={cropState.src}
-					onCrop={handleCropConfirm}
-					onCancel={() => {
-						if (cropState.src.startsWith('blob:')) URL.revokeObjectURL(cropState.src)
-						setCropState(null)
-					}}
-					aspect={4 / 3}
-				/>
-			)}
-
-			{/* Toast */}
-			{toast && (
-				<div className="fixed bottom-6 right-6 z-50 rounded-lg border bg-card px-4 py-3 text-sm shadow-lg">
-					{toast}
-				</div>
-			)}
-		</div>
+				)}
+			</div>
 		</PlanGate>
 	)
 }
@@ -779,116 +1030,106 @@ function CategoriesDialog({ onClose }: { onClose: () => void }) {
 			onClick={handleBackdropClick}
 			className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
 		>
-			<div className="mx-4 w-full max-w-md rounded-lg border bg-card p-6 shadow-lg">
-				<div className="flex items-center justify-between">
-					<h2 className="text-lg font-semibold">Gérer les catégories</h2>
-					<button
-						type="button"
-						onClick={onClose}
-						className="rounded-md p-1 text-muted-foreground hover:bg-accent"
-					>
-						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-							<path d="M18 6L6 18M6 6l12 12" />
-						</svg>
-					</button>
-				</div>
+			<Card className="mx-4 w-full max-w-md shadow-lg">
+				<CardContent className="p-6">
+					<div className="flex items-center justify-between">
+						<h2 className="text-lg font-semibold">Gérer les catégories</h2>
+						<Button variant="ghost" size="icon" onClick={onClose}>
+							<X className="size-5" />
+						</Button>
+					</div>
 
-				{/* Add new category */}
-				<form onSubmit={handleCreate} className="mt-4 flex gap-2">
-					<input
-						type="text"
-						value={newName}
-						onChange={(e) => setNewName(e.target.value)}
-						placeholder="Nouvelle catégorie..."
-						className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-					/>
-					<button
-						type="submit"
-						disabled={isSaving || !newName.trim()}
-						className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-					>
-						Ajouter
-					</button>
-				</form>
+					{/* Add new category */}
+					<form onSubmit={handleCreate} className="mt-4 flex gap-2">
+						<Input
+							type="text"
+							value={newName}
+							onChange={(e) => setNewName(e.target.value)}
+							placeholder="Nouvelle catégorie..."
+							className="flex-1"
+						/>
+						<Button type="submit" disabled={isSaving || !newName.trim()}>
+							Ajouter
+						</Button>
+					</form>
 
-				{/* Category list */}
-				<div className="mt-4 max-h-64 space-y-2 overflow-y-auto">
-					{isLoading ? (
-						<p className="text-sm text-muted-foreground">Chargement...</p>
-					) : categories.length === 0 ? (
-						<p className="py-4 text-center text-sm text-muted-foreground">Aucune catégorie</p>
-					) : (
-						categories.map((cat) => (
-							<div key={cat.id} className="flex items-center justify-between rounded-md border px-3 py-2">
-								{editingId === cat.id ? (
-									<input
-										type="text"
-										value={editingName}
-										onChange={(e) => setEditingName(e.target.value)}
-										onKeyDown={(e) => {
-											if (e.key === 'Enter') handleUpdate(cat.id)
-											if (e.key === 'Escape') setEditingId(null)
-										}}
-										className="flex-1 rounded border border-input bg-background px-2 py-1 text-sm focus:outline-none"
-										autoFocus
-									/>
-								) : (
-									<span className="text-sm">{cat.name}</span>
-								)}
-								<div className="ml-2 flex gap-1">
+					{/* Category list */}
+					<div className="mt-4 max-h-64 space-y-2 overflow-y-auto">
+						{isLoading ? (
+							<p className="text-sm text-muted-foreground">Chargement...</p>
+						) : categories.length === 0 ? (
+							<p className="py-4 text-center text-sm text-muted-foreground">Aucune catégorie</p>
+						) : (
+							categories.map((cat) => (
+								<div
+									key={cat.id}
+									className="flex items-center justify-between rounded-md border px-3 py-2"
+								>
 									{editingId === cat.id ? (
-										<>
-											<button
-												type="button"
-												onClick={() => handleUpdate(cat.id)}
-												className="rounded p-1 text-primary hover:bg-accent"
-											>
-												<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-													<path d="M20 6L9 17l-5-5" />
-												</svg>
-											</button>
-											<button
-												type="button"
-												onClick={() => setEditingId(null)}
-												className="rounded p-1 text-muted-foreground hover:bg-accent"
-											>
-												<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-													<path d="M18 6L6 18M6 6l12 12" />
-												</svg>
-											</button>
-										</>
+										<Input
+											type="text"
+											value={editingName}
+											onChange={(e) => setEditingName(e.target.value)}
+											onKeyDown={(e) => {
+												if (e.key === 'Enter') handleUpdate(cat.id)
+												if (e.key === 'Escape') setEditingId(null)
+											}}
+											className="flex-1"
+											autoFocus
+										/>
 									) : (
-										<>
-											<button
-												type="button"
-												onClick={() => {
-													setEditingId(cat.id)
-													setEditingName(cat.name)
-												}}
-												className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
-											>
-												<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-													<path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
-													<path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
-												</svg>
-											</button>
-											<button
-												type="button"
-												onClick={() => handleDelete(cat.id)}
-												className="rounded p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-											>
-												<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-													<path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
-												</svg>
-											</button>
-										</>
+										<span className="text-sm">{cat.name}</span>
 									)}
+									<div className="ml-2 flex gap-1">
+										{editingId === cat.id ? (
+											<>
+												<Button
+													variant="ghost"
+													size="icon"
+													onClick={() => handleUpdate(cat.id)}
+													className="text-primary"
+												>
+													<Check className="size-4" />
+												</Button>
+												<Button
+													variant="ghost"
+													size="icon"
+													onClick={() => setEditingId(null)}
+													className="text-muted-foreground"
+												>
+													<X className="size-4" />
+												</Button>
+											</>
+										) : (
+											<>
+												<Button
+													variant="ghost"
+													size="icon"
+													onClick={() => {
+														setEditingId(cat.id)
+														setEditingName(cat.name)
+													}}
+													className="text-muted-foreground hover:text-foreground"
+												>
+													<Pencil className="size-4" />
+												</Button>
+												<Button
+													variant="ghost"
+													size="icon"
+													onClick={() => handleDelete(cat.id)}
+													className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+												>
+													<Trash2 className="size-4" />
+												</Button>
+											</>
+										)}
+									</div>
 								</div>
-							</div>
-						))
-					)}
-				</div>
-			</div>
+							))
+						)}
+					</div>
+				</CardContent>
+			</Card>
 		</div>
 	)
 }

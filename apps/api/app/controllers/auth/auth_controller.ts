@@ -5,33 +5,20 @@ import PatissierProfile from '#models/patissier_profile'
 import User from '#models/user'
 import EmailService from '#services/email_service'
 import env from '#start/env'
+import {
+	changePasswordValidator,
+	forgotPasswordValidator,
+	loginValidator,
+	registerValidator,
+	resetPasswordValidator,
+} from '#validators/auth_validator'
 
 export default class AuthController {
 	private emailService = new EmailService()
 
 	async register({ request, response }: HttpContext) {
-		const { email, password, fullName, slug, businessName } = request.only([
-			'email',
-			'password',
-			'fullName',
-			'slug',
-			'businessName',
-		])
-
-		// Password validation
-		if (!password || typeof password !== 'string' || password.length < 8) {
-			return response.badRequest({
-				success: false,
-				message: 'Le mot de passe doit contenir au moins 8 caractères',
-			})
-		}
-
-		if (password.length > 128) {
-			return response.badRequest({
-				success: false,
-				message: 'Le mot de passe ne peut pas dépasser 128 caractères',
-			})
-		}
+		const { email, password, fullName, slug, businessName } =
+			await request.validateUsing(registerValidator)
 
 		const existingUser = await User.findBy('email', email)
 		if (existingUser) {
@@ -47,13 +34,6 @@ export default class AuthController {
 
 		// Create patissier profile if role is patissier
 		if (user.role === 'patissier') {
-			if (!slug || !businessName) {
-				return response.badRequest({
-					success: false,
-					message: 'slug and businessName are required for patissier registration',
-				})
-			}
-
 			const existingSlug = await PatissierProfile.findBy('slug', slug)
 			if (existingSlug) {
 				return response.conflict({ success: false, message: 'Slug already taken' })
@@ -77,7 +57,7 @@ export default class AuthController {
 	}
 
 	async login({ request, response }: HttpContext) {
-		const { email, password } = request.only(['email', 'password'])
+		const { email, password } = await request.validateUsing(loginValidator)
 
 		const user = await User.verifyCredentials(email, password)
 
@@ -121,7 +101,7 @@ export default class AuthController {
 	}
 
 	async forgotPassword({ request, response }: HttpContext) {
-		const { email } = request.only(['email'])
+		const { email } = await request.validateUsing(forgotPasswordValidator)
 
 		const user = await User.findBy('email', email)
 
@@ -158,22 +138,7 @@ export default class AuthController {
 	}
 
 	async resetPassword({ request, response }: HttpContext) {
-		const { token, password } = request.only(['token', 'password'])
-
-		// Password validation
-		if (!password || typeof password !== 'string' || password.length < 8) {
-			return response.badRequest({
-				success: false,
-				message: 'Le mot de passe doit contenir au moins 8 caractères',
-			})
-		}
-
-		if (password.length > 128) {
-			return response.badRequest({
-				success: false,
-				message: 'Le mot de passe ne peut pas dépasser 128 caractères',
-			})
-		}
+		const { token, password } = await request.validateUsing(resetPasswordValidator)
 
 		let accessToken
 		try {
@@ -223,22 +188,7 @@ export default class AuthController {
 
 	async changePassword({ auth, request, response }: HttpContext) {
 		const user = auth.user!
-		const { currentPassword, newPassword } = request.only(['currentPassword', 'newPassword'])
-
-		// Password validation
-		if (!newPassword || typeof newPassword !== 'string' || newPassword.length < 8) {
-			return response.badRequest({
-				success: false,
-				message: 'Le nouveau mot de passe doit contenir au moins 8 caractères',
-			})
-		}
-
-		if (newPassword.length > 128) {
-			return response.badRequest({
-				success: false,
-				message: 'Le mot de passe ne peut pas dépasser 128 caractères',
-			})
-		}
+		const { currentPassword, newPassword } = await request.validateUsing(changePasswordValidator)
 
 		// Verify current password
 		if (!user.password) {

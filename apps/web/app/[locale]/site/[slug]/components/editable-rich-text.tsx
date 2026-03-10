@@ -1,11 +1,11 @@
 'use client'
 
-import { type CSSProperties, useCallback, useState } from 'react'
-import { useEditor, EditorContent } from '@tiptap/react'
-import StarterKit from '@tiptap/starter-kit'
-import Underline from '@tiptap/extension-underline'
-import TextAlign from '@tiptap/extension-text-align'
 import Link from '@tiptap/extension-link'
+import TextAlign from '@tiptap/extension-text-align'
+import Underline from '@tiptap/extension-underline'
+import { EditorContent, useEditor } from '@tiptap/react'
+import StarterKit from '@tiptap/starter-kit'
+import { type CSSProperties, useCallback, useState } from 'react'
 import { useInlineEdit } from './inline-edit-provider'
 
 interface EditableRichTextProps {
@@ -19,9 +19,7 @@ export function EditableRichText({ value, onChange, className, style }: Editable
 	const { isEditing } = useInlineEdit()
 
 	if (!isEditing) {
-		return (
-			<div className={className} style={style} dangerouslySetInnerHTML={{ __html: value }} />
-		)
+		return <div className={className} style={style} dangerouslySetInnerHTML={{ __html: value }} />
 	}
 
 	return <InlineRichEditor value={value} onChange={onChange} className={className} style={style} />
@@ -144,7 +142,15 @@ function InlineRichEditor({ value, onChange, className, style }: EditableRichTex
 				</MiniBtn>
 				<Sep />
 				<MiniBtn active={editor.isActive('link')} onClick={openLinkInput}>
-					<svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+					<svg
+						className="h-3.5 w-3.5"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						strokeWidth={2}
+						strokeLinecap="round"
+						strokeLinejoin="round"
+					>
 						<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
 						<path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
 					</svg>
@@ -167,13 +173,25 @@ function InlineRichEditor({ value, onChange, className, style }: EditableRichTex
 						className="h-6 w-48 rounded border border-white/20 bg-transparent px-2 text-[11px] text-white placeholder:text-white/40 focus:outline-none focus:border-[var(--gold)]"
 					/>
 					<MiniBtn onClick={applyLink}>
-						<svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+						<svg
+							className="h-3 w-3"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+							strokeWidth={2.5}
+						>
 							<path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
 						</svg>
 					</MiniBtn>
 					{editor.isActive('link') && (
 						<MiniBtn onClick={removeLink}>
-							<svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+							<svg
+								className="h-3 w-3"
+								fill="none"
+								viewBox="0 0 24 24"
+								stroke="currentColor"
+								strokeWidth={2.5}
+							>
 								<path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
 							</svg>
 						</MiniBtn>

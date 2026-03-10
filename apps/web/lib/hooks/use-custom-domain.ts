@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 /**
  * Detect if the current page is served from a "site domain"
@@ -33,12 +33,8 @@ export function useIsSiteDomain() {
 			!hostname.startsWith('www.')
 
 		// Custom domain: anything not localhost-related and not patissio.com
-		const isLocal =
-			hostname === 'localhost' || hostname === '127.0.0.1'
-		const isCustomDomain =
-			!isLocal &&
-			!isLocalSubdomain &&
-			!hostname.endsWith('patissio.com')
+		const isLocal = hostname === 'localhost' || hostname === '127.0.0.1'
+		const isCustomDomain = !isLocal && !isLocalSubdomain && !hostname.endsWith('patissio.com')
 
 		setIsSiteDomain(isLocalSubdomain || isProdSubdomain || isCustomDomain)
 	}, [])

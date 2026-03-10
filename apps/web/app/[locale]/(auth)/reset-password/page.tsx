@@ -1,9 +1,9 @@
 'use client'
 
 import { Check, CheckCircle, Eye, EyeOff, X } from 'lucide-react'
-import { Suspense, useState } from 'react'
 import Image from 'next/image'
 import { useSearchParams } from 'next/navigation'
+import { Suspense, useState } from 'react'
 import { Link } from '@/i18n/navigation'
 import { useAuth } from '@/lib/providers/auth-provider'
 
@@ -33,9 +33,7 @@ function ResetPasswordForm() {
 			key: 'match',
 			label: 'Les mots de passe correspondent',
 			valid:
-				password.length > 0 &&
-				passwordConfirmation.length > 0 &&
-				password === passwordConfirmation,
+				password.length > 0 && passwordConfirmation.length > 0 && password === passwordConfirmation,
 		},
 	]
 
@@ -62,7 +60,13 @@ function ResetPasswordForm() {
 				<div className="mx-auto w-full max-w-md space-y-6 p-8 text-center">
 					<div className="flex flex-col items-center">
 						<Link href="/">
-							<Image src="/logo-patissio-full.png" alt="Patissio" width={886} height={368} className="h-12 w-auto" />
+							<Image
+								src="/logo-patissio-full.png"
+								alt="Patissio"
+								width={886}
+								height={368}
+								className="h-12 w-auto"
+							/>
 						</Link>
 					</div>
 					<div className="rounded-md bg-destructive/10 p-4 text-sm text-destructive">
@@ -83,7 +87,13 @@ function ResetPasswordForm() {
 			<div className="mx-auto w-full max-w-md space-y-6 p-8">
 				<div className="flex flex-col items-center">
 					<Link href="/">
-						<Image src="/logo-patissio-full.png" alt="Patissio" width={886} height={368} className="h-12 w-auto" />
+						<Image
+							src="/logo-patissio-full.png"
+							alt="Patissio"
+							width={886}
+							height={368}
+							className="h-12 w-auto"
+						/>
 					</Link>
 					<p className="text-muted-foreground mt-3">Nouveau mot de passe</p>
 				</div>

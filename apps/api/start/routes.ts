@@ -137,9 +137,24 @@ router
 				router.get('/:id/messages', '#controllers/patissier/orders_controller.messages')
 				router.post('/:id/messages', '#controllers/patissier/orders_controller.sendMessage')
 				router.delete('/:id', '#controllers/patissier/orders_controller.destroy')
+				// Order costing
+				router.get('/:id/costing', '#controllers/patissier/order_costing_controller.show')
+				router.put('/:id/costing', '#controllers/patissier/order_costing_controller.save')
 			})
 			.prefix('/orders')
 			.use(middleware.planGuard({ minPlan: 'pro' }))
+
+		// Ingredients
+		router.get('/ingredients', '#controllers/patissier/ingredients_controller.index')
+		router.post('/ingredients', '#controllers/patissier/ingredients_controller.store')
+		router.put('/ingredients/:id', '#controllers/patissier/ingredients_controller.update')
+		router.delete('/ingredients/:id', '#controllers/patissier/ingredients_controller.destroy')
+
+		// Employees
+		router.get('/employees', '#controllers/patissier/employees_controller.index')
+		router.post('/employees', '#controllers/patissier/employees_controller.store')
+		router.put('/employees/:id', '#controllers/patissier/employees_controller.update')
+		router.delete('/employees/:id', '#controllers/patissier/employees_controller.destroy')
 
 		// Instagram OAuth
 		router.get('/instagram/auth-url', '#controllers/patissier/instagram_controller.authUrl')

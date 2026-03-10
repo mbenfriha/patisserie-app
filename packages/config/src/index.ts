@@ -39,12 +39,6 @@ export const PLANS = {
   },
 } as const
 
-// ─── Platform fee ────────────────────────────────────────────────────────────
-
-export const PLATFORM_FEE_PERCENT = 1
-export const STRIPE_FEE_PERCENT = 1.25
-export const STRIPE_FEE_FIXED = 0.25
-
 // ─── Statuses ────────────────────────────────────────────────────────────────
 
 export const ORDER_STATUSES = [

@@ -3,15 +3,14 @@ import { DateTime } from 'luxon'
 import PatissierProfile from '#models/patissier_profile'
 import User from '#models/user'
 import TurnstileService from '#services/turnstile_service'
+import { suspendUserValidator } from '#validators/superadmin_validator'
 
 export default class UsersController {
 	async index({ request, response }: HttpContext) {
 		const page = request.input('page', 1)
 		const limit = Math.min(Number(request.input('limit', 20)) || 20, 100)
 
-		const users = await User.query()
-			.orderBy('createdAt', 'desc')
-			.paginate(page, limit)
+		const users = await User.query().orderBy('createdAt', 'desc').paginate(page, limit)
 
 		return response.ok({
 			success: true,
@@ -63,7 +62,7 @@ export default class UsersController {
 			return response.badRequest({ success: false, message: 'User is already suspended' })
 		}
 
-		const { reason } = request.only(['reason'])
+		const { reason } = await request.validateUsing(suspendUserValidator)
 
 		user.suspendedAt = DateTime.now()
 		user.suspendReason = reason || null

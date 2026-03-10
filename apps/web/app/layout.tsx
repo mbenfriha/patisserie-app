@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { Josefin_Sans, Cormorant_Garamond } from 'next/font/google'
+import { Cormorant_Garamond, Josefin_Sans } from 'next/font/google'
 import type React from 'react'
 import './globals.css'
 
@@ -75,7 +75,11 @@ export default function RootLayout({
 }>) {
 	return (
 		<html lang="fr" suppressHydrationWarning>
-			<body className={`${josefin.variable} ${cormorant.variable} font-sans antialiased bg-background text-foreground`}>{children}</body>
+			<body
+				className={`${josefin.variable} ${cormorant.variable} font-sans antialiased bg-background text-foreground`}
+			>
+				{children}
+			</body>
 		</html>
 	)
 }

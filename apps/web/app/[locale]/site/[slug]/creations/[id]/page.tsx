@@ -1,10 +1,10 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-// Links use <a> to ensure middleware rewrites work on custom domains
-import { GoldDivider } from '../../components/gold-divider'
+import { resolveSlug } from '@/lib/resolve-slug'
 import { getImageUrl } from '@/lib/utils/image-url'
 import { stripHtml } from '@/lib/utils/strip-html'
-import { resolveSlug } from '@/lib/resolve-slug'
+// Links use <a> to ensure middleware rewrites work on custom domains
+import { GoldDivider } from '../../components/gold-divider'
 import { ImageGallery } from './image-gallery'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333'
@@ -21,7 +21,9 @@ async function getProfile(slug: string) {
 }
 
 async function getCreation(slug: string, creationSlug: string) {
-	const res = await fetch(`${API_URL}/public/${slug}/creations/${creationSlug}`, { next: { revalidate: 60 } })
+	const res = await fetch(`${API_URL}/public/${slug}/creations/${creationSlug}`, {
+		next: { revalidate: 60 },
+	})
 	if (!res.ok) return null
 	const data = await res.json()
 	return data.data || null
@@ -30,10 +32,7 @@ async function getCreation(slug: string, creationSlug: string) {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
 	const { slug: paramSlug, id } = await params
 	const slug = await resolveSlug(paramSlug)
-	const [profile, creation] = await Promise.all([
-		getProfile(slug),
-		getCreation(slug, id),
-	])
+	const [profile, creation] = await Promise.all([getProfile(slug), getCreation(slug, id)])
 	if (!profile || !creation) return {}
 
 	const description = stripHtml(creation.description)
@@ -68,10 +67,7 @@ export default async function CreationDetailPage({ params }: Props) {
 	let creation: any = null
 
 	try {
-		;[profile, creation] = await Promise.all([
-			getProfile(slug),
-			getCreation(slug, id),
-		])
+		;[profile, creation] = await Promise.all([getProfile(slug), getCreation(slug, id)])
 	} catch {
 		return notFound()
 	}
@@ -111,7 +107,10 @@ export default async function CreationDetailPage({ params }: Props) {
 				dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
 			/>
 
-			<div className="mx-auto max-w-[1100px] px-6 pb-20" style={{ paddingTop: 'calc(var(--navbar-height, 80px) + 16px)' }}>
+			<div
+				className="mx-auto max-w-[1100px] px-6 pb-20"
+				style={{ paddingTop: 'calc(var(--navbar-height, 80px) + 16px)' }}
+			>
 				{/* ── Back link ────────────────────────────────────────────── */}
 				<a
 					href={`${basePath}/creations`}
@@ -140,9 +139,7 @@ export default async function CreationDetailPage({ params }: Props) {
 
 						{/* Title */}
 						{creation.title && (
-							<h1
-								className="font-[family-name:'Cormorant_Garamond'] text-[36px] font-medium leading-[1.2] text-[var(--dark)]"
-							>
+							<h1 className="font-[family-name:'Cormorant_Garamond'] text-[36px] font-medium leading-[1.2] text-[var(--dark)]">
 								{creation.title}
 							</h1>
 						)}

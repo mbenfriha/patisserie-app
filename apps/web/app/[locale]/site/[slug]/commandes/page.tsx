@@ -1,10 +1,10 @@
 'use client'
 
-import { useEffect, useState, useMemo, useCallback } from 'react'
-import { useSearchParams, useRouter, usePathname } from 'next/navigation'
-import { useSiteProfile, useSiteBasePath, useSiteConfig } from '../site-provider'
-import { SectionTitle } from '../components/section-title'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { getImageUrl } from '@/lib/utils/image-url'
+import { SectionTitle } from '../components/section-title'
+import { useSiteBasePath, useSiteConfig, useSiteProfile } from '../site-provider'
 import { CatalogueTab } from './catalogue-tab'
 import { DevisForm } from './devis-form'
 
@@ -49,12 +49,15 @@ export default function OrderPage() {
 	const [activeTab, setActiveTab] = useState<'catalogue' | 'custom'>(initialTab)
 	const [success, setSuccess] = useState(false)
 
-	const switchTab = useCallback((tab: 'catalogue' | 'custom') => {
-		setActiveTab(tab)
-		const params = new URLSearchParams(searchParams.toString())
-		params.set('tab', tab === 'custom' ? 'devis' : 'catalogue')
-		router.replace(`${pathname}?${params.toString()}`, { scroll: false })
-	}, [searchParams, router, pathname])
+	const switchTab = useCallback(
+		(tab: 'catalogue' | 'custom') => {
+			setActiveTab(tab)
+			const params = new URLSearchParams(searchParams.toString())
+			params.set('tab', tab === 'custom' ? 'devis' : 'catalogue')
+			router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+		},
+		[searchParams, router, pathname]
+	)
 
 	useEffect(() => {
 		async function fetchProducts() {
@@ -103,10 +106,7 @@ export default function OrderPage() {
 								'radial-gradient(circle at 20% 30%, var(--gold) 0%, transparent 40%), radial-gradient(circle at 80% 70%, var(--gold) 0%, transparent 40%)',
 						}}
 					/>
-					<div
-						className="relative z-10 px-6"
-						style={{ animation: 'fadeInUp 0.8s ease-out' }}
-					>
+					<div className="relative z-10 px-6" style={{ animation: 'fadeInUp 0.8s ease-out' }}>
 						<SectionTitle subtitle="commande" title="Passer Commande" light />
 					</div>
 				</section>
@@ -139,8 +139,8 @@ export default function OrderPage() {
 							className="mx-auto mt-4 max-w-sm text-sm leading-relaxed text-[var(--dark-soft)]/70"
 							style={{ fontFamily: "'Josefin Sans', sans-serif" }}
 						>
-							Votre commande a bien &eacute;t&eacute; envoy&eacute;e. Vous recevrez une confirmation par email
-							tr&egrave;s prochainement.
+							Votre commande a bien &eacute;t&eacute; envoy&eacute;e. Vous recevrez une confirmation
+							par email tr&egrave;s prochainement.
 						</p>
 
 						<a
@@ -230,10 +230,7 @@ export default function OrderPage() {
 							'radial-gradient(circle at 20% 30%, var(--gold) 0%, transparent 40%), radial-gradient(circle at 80% 70%, var(--gold) 0%, transparent 40%)',
 					}}
 				/>
-				<div
-					className="relative z-10 px-6"
-					style={{ animation: 'fadeInUp 0.8s ease-out' }}
-				>
+				<div className="relative z-10 px-6" style={{ animation: 'fadeInUp 0.8s ease-out' }}>
 					<SectionTitle subtitle="commande" title="Passer Commande" light />
 				</div>
 			</section>
@@ -249,7 +246,8 @@ export default function OrderPage() {
 							style={{
 								fontFamily: "'Josefin Sans', sans-serif",
 								color: activeTab === 'catalogue' ? 'var(--gold)' : 'rgba(26,26,26,0.4)',
-								borderBottom: activeTab === 'catalogue' ? '2px solid var(--gold)' : '2px solid transparent',
+								borderBottom:
+									activeTab === 'catalogue' ? '2px solid var(--gold)' : '2px solid transparent',
 							}}
 						>
 							Catalogue
@@ -261,7 +259,8 @@ export default function OrderPage() {
 							style={{
 								fontFamily: "'Josefin Sans', sans-serif",
 								color: activeTab === 'custom' ? 'var(--gold)' : 'rgba(26,26,26,0.4)',
-								borderBottom: activeTab === 'custom' ? '2px solid var(--gold)' : '2px solid transparent',
+								borderBottom:
+									activeTab === 'custom' ? '2px solid var(--gold)' : '2px solid transparent',
 							}}
 						>
 							Sur-mesure
@@ -281,10 +280,7 @@ export default function OrderPage() {
 				)}
 
 				{showCustom && activeTab === 'custom' && (
-					<DevisForm
-						slug={profile.slug}
-						onSuccess={() => setSuccess(true)}
-					/>
+					<DevisForm slug={profile.slug} onSuccess={() => setSuccess(true)} />
 				)}
 			</section>
 		</>

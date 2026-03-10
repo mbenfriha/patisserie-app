@@ -1,10 +1,58 @@
 'use client'
 
-import { PLATFORM_FEE_PERCENT, STRIPE_FEE_FIXED, STRIPE_FEE_PERCENT } from '@patissio/config'
+import {
+	ArrowLeft,
+	AlertCircle,
+	Calendar,
+	CheckCircle,
+	Clock,
+	CreditCard,
+	FileText,
+	Calculator,
+	Mail,
+	MapPin,
+	MessageSquare,
+	Package,
+	Phone,
+	Save,
+	Send,
+	Truck,
+	User,
+	XCircle,
+} from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { useParams, useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
 import { PlanGate } from '@/components/auth/plan-gate'
+import { OrderCosting } from '@/components/dashboard/order-costing'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@/components/ui/select'
+import { Separator } from '@/components/ui/separator'
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from '@/components/ui/table'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Textarea } from '@/components/ui/textarea'
+import { Link } from '@/i18n/navigation'
 import { api } from '@/lib/api/client'
+import { useDashboardPrefix } from '@/lib/hooks/use-custom-domain'
 
 interface OrderItem {
 	id: string
@@ -19,7 +67,7 @@ interface OrderMessage {
 	id: string
 	senderType: 'patissier' | 'client' | 'system'
 	message: string
-	attachments: any[]
+	attachments: unknown[]
 	createdAt: string
 }
 
@@ -60,39 +108,16 @@ interface Order {
 	messages: OrderMessage[]
 }
 
-const statusColors: Record<string, string> = {
-	pending: 'bg-yellow-100 text-yellow-800',
-	confirmed: 'bg-blue-100 text-blue-800',
-	in_progress: 'bg-orange-100 text-orange-800',
-	ready: 'bg-green-100 text-green-800',
-	delivered: 'bg-gray-100 text-gray-800',
-	picked_up: 'bg-gray-100 text-gray-800',
-	cancelled: 'bg-red-100 text-red-800',
-}
+type OrderStatus =
+	| 'pending'
+	| 'confirmed'
+	| 'in_progress'
+	| 'ready'
+	| 'delivered'
+	| 'picked_up'
+	| 'cancelled'
 
-const statusLabels: Record<string, string> = {
-	pending: 'En attente',
-	confirmed: 'Confirmee',
-	in_progress: 'En cours',
-	ready: 'Prete',
-	delivered: 'Livree',
-	picked_up: 'Recuperee',
-	cancelled: 'Annulee',
-}
-
-const paymentStatusColors: Record<string, string> = {
-	paid: 'bg-green-100 text-green-800',
-	pending: 'bg-yellow-100 text-yellow-800',
-	refunded: 'bg-red-100 text-red-800',
-}
-
-const paymentStatusLabels: Record<string, string> = {
-	paid: 'Payé',
-	pending: 'En attente',
-	refunded: 'Remboursé',
-}
-
-const allStatuses = [
+const allStatuses: OrderStatus[] = [
 	'pending',
 	'confirmed',
 	'in_progress',
@@ -102,10 +127,71 @@ const allStatuses = [
 	'cancelled',
 ]
 
+function getStatusIcon(status: string) {
+	switch (status) {
+		case 'pending':
+			return AlertCircle
+		case 'confirmed':
+			return CheckCircle
+		case 'in_progress':
+			return Clock
+		case 'ready':
+			return Package
+		case 'delivered':
+		case 'picked_up':
+			return Truck
+		case 'cancelled':
+			return XCircle
+		default:
+			return AlertCircle
+	}
+}
+
+function getStatusColor(status: string) {
+	switch (status) {
+		case 'pending':
+			return 'text-amber-600 bg-amber-50 border-amber-200'
+		case 'confirmed':
+			return 'text-blue-600 bg-blue-50 border-blue-200'
+		case 'in_progress':
+			return 'text-purple-600 bg-purple-50 border-purple-200'
+		case 'ready':
+			return 'text-green-600 bg-green-50 border-green-200'
+		case 'delivered':
+		case 'picked_up':
+			return 'text-green-700 bg-green-100 border-green-300'
+		case 'cancelled':
+			return 'text-red-600 bg-red-50 border-red-200'
+		default:
+			return ''
+	}
+}
+
+function getPaymentStatusColor(status: string) {
+	switch (status) {
+		case 'paid':
+			return 'text-green-600 bg-green-50 border-green-200'
+		case 'pending':
+			return 'text-amber-600 bg-amber-50 border-amber-200'
+		case 'refunded':
+			return 'text-red-600 bg-red-50 border-red-200'
+		default:
+			return ''
+	}
+}
+
+function formatCurrency(amount: number) {
+	return `${Number(amount).toFixed(2)} \u20AC`
+}
+
 export default function PatissierOrderDetailPage() {
 	const params = useParams()
 	const searchParams = useSearchParams()
 	const orderId = params.id as string
+	const dashboardPrefix = useDashboardPrefix()
+	const t = useTranslations('orderDetail')
+	const to = useTranslations('orders')
+	const tc = useTranslations('common')
 
 	const [order, setOrder] = useState<Order | null>(null)
 	const [isLoading, setIsLoading] = useState(true)
@@ -115,7 +201,6 @@ export default function PatissierOrderDetailPage() {
 	const [newStatus, setNewStatus] = useState('')
 	const [confirmedDate, setConfirmedDate] = useState('')
 	const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
-	const [statusError, setStatusError] = useState('')
 
 	// Quote form (custom orders)
 	const [quotedPrice, setQuotedPrice] = useState('')
@@ -123,8 +208,6 @@ export default function PatissierOrderDetailPage() {
 	const [quoteResponseMessage, setQuoteResponseMessage] = useState('')
 	const [quoteConfirmedDate, setQuoteConfirmedDate] = useState('')
 	const [isSubmittingQuote, setIsSubmittingQuote] = useState(false)
-	const [quoteError, setQuoteError] = useState('')
-	const [quoteSuccess, setQuoteSuccess] = useState('')
 
 	// Mark as paid
 	const [isMarkingPaid, setIsMarkingPaid] = useState(false)
@@ -136,7 +219,6 @@ export default function PatissierOrderDetailPage() {
 	// Edit mode
 	const [isEditing, setIsEditing] = useState(false)
 	const [isSaving, setIsSaving] = useState(false)
-	const [editError, setEditError] = useState('')
 	const [editForm, setEditForm] = useState({
 		clientName: '',
 		clientEmail: '',
@@ -161,6 +243,28 @@ export default function PatissierOrderDetailPage() {
 	// Lightbox
 	const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
 
+	const statusLabelKey = (s: string) => {
+		const map: Record<string, string> = {
+			pending: 'statusPending',
+			confirmed: 'statusConfirmed',
+			in_progress: 'statusInProgress',
+			ready: 'statusReady',
+			delivered: 'statusDelivered',
+			picked_up: 'statusPickedUp',
+			cancelled: 'statusCancelled',
+		}
+		return map[s] || s
+	}
+
+	const paymentLabelKey = (s: string) => {
+		const map: Record<string, string> = {
+			paid: 'paymentPaid',
+			pending: 'paymentPending',
+			refunded: 'paymentRefunded',
+		}
+		return map[s] || s
+	}
+
 	const startEditing = () => {
 		if (!order) return
 		setEditForm({
@@ -174,8 +278,11 @@ export default function PatissierOrderDetailPage() {
 			patissierNotes: order.patissierNotes || '',
 			total: order.total != null ? String(order.total) : '',
 			customType: order.customType || '',
-			customNbPersonnes: order.customNbPersonnes != null ? String(order.customNbPersonnes) : '',
-			customDateSouhaitee: order.customDateSouhaitee ? order.customDateSouhaitee.split('T')[0] : '',
+			customNbPersonnes:
+				order.customNbPersonnes != null ? String(order.customNbPersonnes) : '',
+			customDateSouhaitee: order.customDateSouhaitee
+				? order.customDateSouhaitee.split('T')[0]
+				: '',
 			customTheme: order.customTheme || '',
 			customAllergies: order.customAllergies || '',
 			customMessage: order.customMessage || '',
@@ -183,22 +290,20 @@ export default function PatissierOrderDetailPage() {
 		setNewPhotoFiles([])
 		setNewPhotoPreviews([])
 		setPhotosToRemove([])
-		setEditError('')
 		setIsEditing(true)
 	}
 
 	const cancelEditing = () => {
 		setIsEditing(false)
-		setEditError('')
 		setNewPhotoFiles([])
 		setNewPhotoPreviews([])
 		setPhotosToRemove([])
 	}
 
 	const handleAddPhotos = (files: FileList) => {
-		const newFiles = Array.from(files)
-		setNewPhotoFiles((prev) => [...prev, ...newFiles])
-		setNewPhotoPreviews((prev) => [...prev, ...newFiles.map((f) => URL.createObjectURL(f))])
+		const addedFiles = Array.from(files)
+		setNewPhotoFiles((prev) => [...prev, ...addedFiles])
+		setNewPhotoPreviews((prev) => [...prev, ...addedFiles.map((f) => URL.createObjectURL(f))])
 	}
 
 	const handleRemoveNewPhoto = (index: number) => {
@@ -209,7 +314,6 @@ export default function PatissierOrderDetailPage() {
 	const handleSaveEdit = async () => {
 		if (!order) return
 		setIsSaving(true)
-		setEditError('')
 		try {
 			const formData = new FormData()
 			formData.append('clientName', editForm.clientName)
@@ -240,9 +344,10 @@ export default function PatissierOrderDetailPage() {
 			const res = await api.upload(`/patissier/orders/${orderId}`, formData, 'PUT')
 			setOrder(res.data.data)
 			setIsEditing(false)
+			toast.success(t('saveChanges'))
 		} catch (err: unknown) {
-			const message = err instanceof Error ? err.message : 'Erreur lors de la sauvegarde'
-			setEditError(message)
+			const message = err instanceof Error ? err.message : 'Error'
+			toast.error(message)
 		} finally {
 			setIsSaving(false)
 		}
@@ -271,7 +376,10 @@ export default function PatissierOrderDetailPage() {
 					setQuoteConfirmedDate(data.confirmedDate || data.customDateSouhaitee)
 				}
 			})
-			.catch((err: any) => setError(err.message || 'Commande introuvable'))
+			.catch((err: unknown) => {
+				const message = err instanceof Error ? err.message : t('notFound')
+				setError(message)
+			})
 			.finally(() => setIsLoading(false))
 	}
 
@@ -289,7 +397,6 @@ export default function PatissierOrderDetailPage() {
 	const handleUpdateStatus = async () => {
 		if (!newStatus || !order) return
 		setIsUpdatingStatus(true)
-		setStatusError('')
 		try {
 			const body: Record<string, string> = { status: newStatus }
 			if (newStatus === 'confirmed' && confirmedDate) {
@@ -297,8 +404,10 @@ export default function PatissierOrderDetailPage() {
 			}
 			const res = await api.put(`/patissier/orders/${orderId}/status`, body)
 			setOrder({ ...order, ...res.data.data })
-		} catch (err: any) {
-			setStatusError(err.message || 'Erreur lors de la mise a jour du statut')
+			toast.success(t('update'))
+		} catch (err: unknown) {
+			const message = err instanceof Error ? err.message : 'Error'
+			toast.error(message)
 		} finally {
 			setIsUpdatingStatus(false)
 		}
@@ -308,8 +417,6 @@ export default function PatissierOrderDetailPage() {
 		e.preventDefault()
 		if (!order) return
 		setIsSubmittingQuote(true)
-		setQuoteError('')
-		setQuoteSuccess('')
 		try {
 			const res = await api.put(`/patissier/orders/${orderId}/quote`, {
 				quotedPrice: Number(quotedPrice),
@@ -320,15 +427,13 @@ export default function PatissierOrderDetailPage() {
 			setOrder({ ...order, ...res.data.data })
 			const warnings = res.data.warnings as string[] | undefined
 			if (warnings && warnings.length > 0) {
-				setQuoteSuccess(warnings[0])
+				toast.warning(warnings[0])
 			} else {
-				setQuoteSuccess(
-					'Devis envoyé avec succès ! Le client a reçu un email avec le lien de paiement.'
-				)
+				toast.success(t('quoteSuccess'))
 			}
-			setTimeout(() => setQuoteSuccess(''), 8000)
-		} catch (err: any) {
-			setQuoteError(err.message || "Erreur lors de l'envoi du devis")
+		} catch (err: unknown) {
+			const message = err instanceof Error ? err.message : 'Error'
+			toast.error(message)
 		} finally {
 			setIsSubmittingQuote(false)
 		}
@@ -340,8 +445,10 @@ export default function PatissierOrderDetailPage() {
 		try {
 			const res = await api.put(`/patissier/orders/${orderId}/payment`)
 			setOrder({ ...order, ...res.data.data })
-		} catch (err: any) {
-			setError(err.message || 'Erreur lors du marquage du paiement')
+			toast.success(t('markAsPaid'))
+		} catch (err: unknown) {
+			const message = err instanceof Error ? err.message : 'Error'
+			toast.error(message)
 		} finally {
 			setIsMarkingPaid(false)
 		}
@@ -357,8 +464,9 @@ export default function PatissierOrderDetailPage() {
 			})
 			setNewMessage('')
 			fetchOrder()
-		} catch (err: any) {
-			setError(err.message || "Erreur lors de l'envoi du message")
+		} catch (err: unknown) {
+			const message = err instanceof Error ? err.message : 'Error'
+			toast.error(message)
 		} finally {
 			setIsSending(false)
 		}
@@ -366,833 +474,1093 @@ export default function PatissierOrderDetailPage() {
 
 	if (isLoading) {
 		return (
-			<div className="space-y-6">
-				<p className="text-muted-foreground">Chargement...</p>
+			<div className="flex items-center justify-center py-12">
+				<p className="text-muted-foreground">{t('loading')}</p>
 			</div>
 		)
 	}
 
 	if (error || !order) {
 		return (
-			<div className="space-y-6">
-				<div className="rounded-lg border border-dashed p-12 text-center">
-					<p className="text-muted-foreground">{error || 'Commande introuvable'}</p>
-				</div>
+			<div className="flex flex-col items-center justify-center py-12">
+				<Package className="size-12 text-muted-foreground" />
+				<h2 className="mt-4 text-lg font-semibold">{t('notFound')}</h2>
+				<Button asChild className="mt-4">
+					<Link href={`${dashboardPrefix}/orders`}>
+						<ArrowLeft className="mr-2 size-4" />
+						{t('backToOrders')}
+					</Link>
+				</Button>
 			</div>
 		)
 	}
+
+	const StatusIcon = getStatusIcon(order.status)
+
+	// Client info card (reused across tabs)
+	const ClientInfoCard = ({ showEdit = false }: { showEdit?: boolean }) => (
+		<Card>
+			<CardHeader>
+				<CardTitle className="flex items-center gap-2">
+					<User className="size-5" />
+					{t('clientInfo')}
+				</CardTitle>
+			</CardHeader>
+			<CardContent className="space-y-4">
+				{showEdit && isEditing ? (
+					<div className="space-y-4">
+						<div className="space-y-2">
+							<Label>{t('name')}</Label>
+							<Input
+								value={editForm.clientName}
+								onChange={(e) => setEditForm({ ...editForm, clientName: e.target.value })}
+							/>
+						</div>
+						<div className="space-y-2">
+							<Label>{t('email')}</Label>
+							<Input
+								type="email"
+								value={editForm.clientEmail}
+								onChange={(e) => setEditForm({ ...editForm, clientEmail: e.target.value })}
+							/>
+						</div>
+						<div className="space-y-2">
+							<Label>{t('telephone')}</Label>
+							<Input
+								type="tel"
+								value={editForm.clientPhone}
+								onChange={(e) => setEditForm({ ...editForm, clientPhone: e.target.value })}
+							/>
+						</div>
+					</div>
+				) : (
+					<>
+						<div className="flex items-center gap-3">
+							<Avatar>
+								<AvatarFallback>
+									{order.clientName
+										.split(' ')
+										.map((n) => n[0])
+										.join('')}
+								</AvatarFallback>
+							</Avatar>
+							<div>
+								<p className="font-medium">{order.clientName}</p>
+							</div>
+						</div>
+						<Separator />
+						<div className="space-y-3">
+							<div className="flex items-center gap-2 text-sm">
+								<Mail className="size-4 text-muted-foreground" />
+								<a href={`mailto:${order.clientEmail}`} className="hover:underline">
+									{order.clientEmail}
+								</a>
+							</div>
+							{order.clientPhone && (
+								<div className="flex items-center gap-2 text-sm">
+									<Phone className="size-4 text-muted-foreground" />
+									<a href={`tel:${order.clientPhone}`} className="hover:underline">
+										{order.clientPhone}
+									</a>
+								</div>
+							)}
+						</div>
+					</>
+				)}
+			</CardContent>
+		</Card>
+	)
 
 	return (
 		<PlanGate minPlan="pro">
 			<div className="space-y-6">
 				{/* Header */}
-				<div className="flex items-center justify-between">
-					<div>
-						<h1 className="text-3xl font-bold">Commande {order.orderNumber}</h1>
-						<p className="mt-1 text-muted-foreground">
-							{order.type === 'catalogue' ? 'Catalogue' : 'Sur mesure'} &mdash; Creee le{' '}
-							{new Date(order.createdAt).toLocaleDateString('fr-FR')}
+				<div className="flex items-center gap-4">
+					<Button variant="ghost" size="icon" asChild>
+						<Link href={`${dashboardPrefix}/orders`}>
+							<ArrowLeft className="size-4" />
+						</Link>
+					</Button>
+					<div className="flex-1">
+						<div className="flex items-center gap-3">
+							<h1 className="text-2xl font-bold tracking-tight">{order.orderNumber}</h1>
+							<Badge variant="outline" className={getStatusColor(order.status)}>
+								<StatusIcon className="mr-1 size-3" />
+								{to(statusLabelKey(order.status))}
+							</Badge>
+							<Badge variant="outline" className="capitalize">
+								{order.type === 'catalogue' ? to('typeCatalogue') : to('typeCustom')}
+							</Badge>
+						</div>
+						<p className="text-muted-foreground">
+							{t('createdOn', {
+								date: new Date(order.createdAt).toLocaleDateString('fr-FR'),
+							})}
 						</p>
 					</div>
-					<div className="flex items-center gap-3">
+					<div className="flex items-center gap-2">
 						{!isEditing ? (
-							<button
-								type="button"
-								onClick={startEditing}
-								className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted"
-							>
-								Modifier
-							</button>
+							<Button variant="outline" onClick={startEditing}>
+								{t('modify')}
+							</Button>
 						) : (
 							<>
-								<button
-									type="button"
-									onClick={cancelEditing}
-									className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted"
-								>
-									Annuler
-								</button>
-								<button
-									type="button"
-									onClick={handleSaveEdit}
-									disabled={isSaving}
-									className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-								>
-									{isSaving ? 'Sauvegarde...' : 'Sauvegarder'}
-								</button>
+								<Button variant="outline" onClick={cancelEditing}>
+									{t('cancel')}
+								</Button>
+								<Button onClick={handleSaveEdit} disabled={isSaving}>
+									<Save className="mr-2 size-4" />
+									{isSaving ? t('savingChanges') : t('saveChanges')}
+								</Button>
 							</>
 						)}
-						<span
-							className={`rounded-full px-3 py-1 text-sm font-medium ${statusColors[order.status] || 'bg-gray-100'}`}
-						>
-							{statusLabels[order.status] || order.status}
-						</span>
 					</div>
 				</div>
-				{editError && (
-					<div className="rounded-lg border border-red-200 bg-red-50 p-4">
-						<p className="text-sm text-red-600">{editError}</p>
-					</div>
-				)}
 
-				{/* Status update */}
-				<div className="rounded-lg border bg-card p-6">
-					<h2 className="text-lg font-semibold">Mettre a jour le statut</h2>
-					<div className="mt-4 flex flex-wrap items-end gap-3">
-						<div className="flex-1">
-							<label htmlFor="status" className="block text-sm font-medium text-muted-foreground">
-								Nouveau statut
-							</label>
-							<select
-								id="status"
-								value={newStatus}
-								onChange={(e) => setNewStatus(e.target.value)}
-								className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-							>
-								{allStatuses.map((s) => (
-									<option key={s} value={s}>
-										{statusLabels[s] || s}
-									</option>
-								))}
-							</select>
-						</div>
-						{newStatus === 'confirmed' && (
-							<div className="flex-1">
-								<label
-									htmlFor="confirmedDate"
-									className="block text-sm font-medium text-muted-foreground"
-								>
-									Date de {order.deliveryMethod === 'delivery' ? 'livraison' : 'retrait'}
-								</label>
-								<input
-									id="confirmedDate"
-									type="date"
-									value={confirmedDate}
-									onChange={(e) => setConfirmedDate(e.target.value)}
-									className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-								/>
-							</div>
-						)}
-						<button
-							type="button"
-							onClick={handleUpdateStatus}
-							disabled={isUpdatingStatus || newStatus === order.status}
-							className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-						>
-							{isUpdatingStatus ? 'Mise a jour...' : 'Mettre a jour'}
-						</button>
-					</div>
-					{statusError && <p className="mt-2 text-sm text-red-600">{statusError}</p>}
-				</div>
+				{/* Tabs */}
+				<Tabs defaultValue="details" className="space-y-6">
+					<TabsList>
+						<TabsTrigger value="details">
+							<FileText className="mr-2 size-4" />
+							{t('tabDetails')}
+						</TabsTrigger>
+						<TabsTrigger value="costing">
+							<Calculator className="mr-2 size-4" />
+							{t('tabCosting')}
+						</TabsTrigger>
+						<TabsTrigger value="messages">
+							<MessageSquare className="mr-2 size-4" />
+							{t('tabMessages')}
+						</TabsTrigger>
+					</TabsList>
 
-				{/* Client info */}
-				<div className="rounded-lg border bg-card p-6">
-					<h2 className="text-lg font-semibold">Informations client</h2>
-					{isEditing ? (
-						<div className="mt-4 grid gap-4 sm:grid-cols-2">
-							<div>
-								<label className="block text-sm font-medium text-muted-foreground">Nom</label>
-								<input
-									type="text"
-									value={editForm.clientName}
-									onChange={(e) => setEditForm({ ...editForm, clientName: e.target.value })}
-									className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-								/>
-							</div>
-							<div>
-								<label className="block text-sm font-medium text-muted-foreground">Email</label>
-								<input
-									type="email"
-									value={editForm.clientEmail}
-									onChange={(e) => setEditForm({ ...editForm, clientEmail: e.target.value })}
-									className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-								/>
-							</div>
-							<div>
-								<label className="block text-sm font-medium text-muted-foreground">Telephone</label>
-								<input
-									type="tel"
-									value={editForm.clientPhone}
-									onChange={(e) => setEditForm({ ...editForm, clientPhone: e.target.value })}
-									className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-								/>
-							</div>
-							<div>
-								<label className="block text-sm font-medium text-muted-foreground">
-									Mode de livraison
-								</label>
-								<select
-									value={editForm.deliveryMethod}
-									onChange={(e) =>
-										setEditForm({
-											...editForm,
-											deliveryMethod: e.target.value as 'pickup' | 'delivery',
-										})
-									}
-									className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-								>
-									<option value="pickup">Retrait</option>
-									<option value="delivery">Livraison</option>
-								</select>
-							</div>
-							{editForm.deliveryMethod === 'delivery' && (
-								<div className="sm:col-span-2">
-									<label className="block text-sm font-medium text-muted-foreground">
-										Adresse de livraison
-									</label>
-									<input
-										type="text"
-										value={editForm.deliveryAddress}
-										onChange={(e) => setEditForm({ ...editForm, deliveryAddress: e.target.value })}
-										className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-									/>
-								</div>
-							)}
-							<div className="sm:col-span-2">
-								<label className="block text-sm font-medium text-muted-foreground">
-									Notes de livraison
-								</label>
-								<textarea
-									value={editForm.deliveryNotes}
-									onChange={(e) => setEditForm({ ...editForm, deliveryNotes: e.target.value })}
-									rows={2}
-									className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-								/>
-							</div>
-							<div>
-								<label className="block text-sm font-medium text-muted-foreground">
-									Date souhaitee
-								</label>
-								<input
-									type="date"
-									value={editForm.requestedDate}
-									onChange={(e) => setEditForm({ ...editForm, requestedDate: e.target.value })}
-									className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-								/>
-							</div>
-						</div>
-					) : (
-						<div className="mt-4 grid gap-4 sm:grid-cols-2">
-							<div>
-								<p className="text-sm text-muted-foreground">Nom</p>
-								<p className="text-sm font-medium">{order.clientName}</p>
-							</div>
-							<div>
-								<p className="text-sm text-muted-foreground">Email</p>
-								<p className="text-sm font-medium">{order.clientEmail}</p>
-							</div>
-							{order.clientPhone && (
-								<div>
-									<p className="text-sm text-muted-foreground">Telephone</p>
-									<p className="text-sm font-medium">{order.clientPhone}</p>
-								</div>
-							)}
-							<div>
-								<p className="text-sm text-muted-foreground">Mode de livraison</p>
-								<p className="text-sm font-medium">
-									{order.deliveryMethod === 'pickup' ? 'Retrait' : 'Livraison'}
-								</p>
-							</div>
-							{order.deliveryAddress && (
-								<div>
-									<p className="text-sm text-muted-foreground">Adresse de livraison</p>
-									<p className="text-sm font-medium">{order.deliveryAddress}</p>
-								</div>
-							)}
-							{order.deliveryNotes && (
-								<div>
-									<p className="text-sm text-muted-foreground">Notes de livraison</p>
-									<p className="text-sm font-medium">{order.deliveryNotes}</p>
-								</div>
-							)}
-						</div>
-					)}
-				</div>
+					{/* Details Tab */}
+					<TabsContent value="details">
+						<div className="grid gap-6 lg:grid-cols-3">
+							<div className="space-y-6 lg:col-span-2">
+								{/* Status Card */}
+								<Card>
+									<CardHeader>
+										<CardTitle>{t('orderStatus')}</CardTitle>
+										<CardDescription>{t('orderStatusDesc')}</CardDescription>
+									</CardHeader>
+									<CardContent className="space-y-4">
+										<div className="grid gap-4 md:grid-cols-2">
+											<div className="space-y-2">
+												<Label>{t('newStatus')}</Label>
+												<Select
+													value={newStatus}
+													onValueChange={(value) => setNewStatus(value)}
+												>
+													<SelectTrigger className="w-full">
+														<SelectValue />
+													</SelectTrigger>
+													<SelectContent>
+														{allStatuses.map((s) => (
+															<SelectItem key={s} value={s}>
+																{to(statusLabelKey(s))}
+															</SelectItem>
+														))}
+													</SelectContent>
+												</Select>
+											</div>
+											<div className="space-y-2">
+												<Label>{t('paymentStatus')}</Label>
+												<div className="flex items-center gap-2">
+													<Badge
+														variant="outline"
+														className={getPaymentStatusColor(order.paymentStatus)}
+													>
+														{to(paymentLabelKey(order.paymentStatus))}
+													</Badge>
+													{order.paymentStatus === 'pending' && (
+														<Button
+															size="sm"
+															variant="outline"
+															onClick={handleMarkPaid}
+															disabled={isMarkingPaid}
+														>
+															<CreditCard className="mr-2 size-4" />
+															{t('markAsPaid')}
+														</Button>
+													)}
+												</div>
+											</div>
+										</div>
+										{newStatus === 'confirmed' && (
+											<div className="space-y-2">
+												<Label>{t('confirmedDate')}</Label>
+												<Input
+													type="date"
+													value={confirmedDate}
+													onChange={(e) => setConfirmedDate(e.target.value)}
+												/>
+											</div>
+										)}
+										{newStatus === 'cancelled' && order.cancellationReason && (
+											<div className="space-y-2">
+												<Label>{t('cancellationReason')}</Label>
+												<p className="text-sm text-muted-foreground">
+													{order.cancellationReason}
+												</p>
+											</div>
+										)}
+										<Button
+											onClick={handleUpdateStatus}
+											disabled={isUpdatingStatus || newStatus === order.status}
+										>
+											{isUpdatingStatus ? t('updating') : t('update')}
+										</Button>
+									</CardContent>
+								</Card>
 
-				{/* Dates */}
-				<div className="rounded-lg border bg-card p-6">
-					<h2 className="text-lg font-semibold">Dates</h2>
-					<div className="mt-4 grid gap-4 sm:grid-cols-2">
-						<div>
-							<p className="text-sm text-muted-foreground">Creee le</p>
-							<p className="text-sm font-medium">
-								{new Date(order.createdAt).toLocaleString('fr-FR')}
-							</p>
-						</div>
-						{order.requestedDate && (
-							<div>
-								<p className="text-sm text-muted-foreground">Date souhaitee</p>
-								<p className="text-sm font-medium">
-									{new Date(order.requestedDate).toLocaleDateString('fr-FR')}
-								</p>
-							</div>
-						)}
-						{order.confirmedDate && (
-							<div>
-								<p className="text-sm text-muted-foreground">Date confirmee</p>
-								<p className="text-sm font-medium">
-									{new Date(order.confirmedDate).toLocaleDateString('fr-FR')}
-								</p>
-							</div>
-						)}
-						{order.confirmedAt && (
-							<div>
-								<p className="text-sm text-muted-foreground">Confirmee le</p>
-								<p className="text-sm font-medium">
-									{new Date(order.confirmedAt).toLocaleString('fr-FR')}
-								</p>
-							</div>
-						)}
-						{order.completedAt && (
-							<div>
-								<p className="text-sm text-muted-foreground">Terminee le</p>
-								<p className="text-sm font-medium">
-									{new Date(order.completedAt).toLocaleString('fr-FR')}
-								</p>
-							</div>
-						)}
-						{order.cancelledAt && (
-							<div>
-								<p className="text-sm text-muted-foreground">Annulee le</p>
-								<p className="text-sm font-medium">
-									{new Date(order.cancelledAt).toLocaleString('fr-FR')}
-								</p>
-							</div>
-						)}
-						<div>
-							<p className="text-sm text-muted-foreground">Paiement</p>
-							<div className="mt-1 flex items-center gap-2">
-								<span
-									className={`rounded-full px-2 py-0.5 text-xs font-medium ${paymentStatusColors[order.paymentStatus] || 'bg-gray-100'}`}
-								>
-									{paymentStatusLabels[order.paymentStatus] || order.paymentStatus}
-								</span>
-								{order.paymentStatus === 'pending' && (
-									<button
-										type="button"
-										onClick={handleMarkPaid}
-										disabled={isMarkingPaid}
-										className="rounded-md border border-green-300 bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 hover:bg-green-100 disabled:opacity-50"
-									>
-										{isMarkingPaid ? 'Mise à jour...' : 'Marquer comme payé'}
-									</button>
+								{/* Items table for catalogue orders */}
+								{order.type === 'catalogue' && order.items && order.items.length > 0 && (
+									<Card>
+										<CardHeader>
+											<CardTitle>{t('orderItems')}</CardTitle>
+										</CardHeader>
+										<CardContent>
+											<Table>
+												<TableHeader>
+													<TableRow>
+														<TableHead>{t('product')}</TableHead>
+														<TableHead className="text-right">{t('qty')}</TableHead>
+														<TableHead className="text-right">
+															{t('unitPrice')}
+														</TableHead>
+														<TableHead className="text-right">
+															{t('itemTotal')}
+														</TableHead>
+													</TableRow>
+												</TableHeader>
+												<TableBody>
+													{order.items.map((item) => (
+														<TableRow key={item.id}>
+															<TableCell>
+																<p className="font-medium">{item.productName}</p>
+																{item.specialInstructions && (
+																	<p className="text-sm text-muted-foreground">
+																		{item.specialInstructions}
+																	</p>
+																)}
+															</TableCell>
+															<TableCell className="text-right">
+																{item.quantity}
+															</TableCell>
+															<TableCell className="text-right">
+																{formatCurrency(item.unitPrice)}
+															</TableCell>
+															<TableCell className="text-right font-medium">
+																{formatCurrency(item.total)}
+															</TableCell>
+														</TableRow>
+													))}
+												</TableBody>
+											</Table>
+											{order.subtotal != null && (
+												<div className="mt-4 flex justify-end border-t pt-4">
+													<div className="space-y-1 text-right">
+														<div className="flex justify-between gap-8">
+															<span className="text-sm text-muted-foreground">
+																{t('subtotal')}
+															</span>
+															<span className="text-sm">
+																{formatCurrency(order.subtotal)}
+															</span>
+														</div>
+														{order.total != null && (
+															<div className="flex justify-between gap-8">
+																<span className="text-sm font-semibold">
+																	{t('totalLabel')}
+																</span>
+																<span className="text-lg font-bold">
+																	{formatCurrency(order.total)}
+																</span>
+															</div>
+														)}
+													</div>
+												</div>
+											)}
+										</CardContent>
+									</Card>
 								)}
-							</div>
-						</div>
-					</div>
-				</div>
 
-				{/* Items list for catalogue orders */}
-				{order.type === 'catalogue' && order.items && order.items.length > 0 && (
-					<div className="rounded-lg border bg-card p-6">
-						<h2 className="text-lg font-semibold">Articles</h2>
-						<div className="mt-4">
-							<table className="w-full">
-								<thead>
-									<tr className="border-b">
-										<th className="pb-2 text-left text-sm font-medium text-muted-foreground">
-											Produit
-										</th>
-										<th className="pb-2 text-center text-sm font-medium text-muted-foreground">
-											Qte
-										</th>
-										<th className="pb-2 text-right text-sm font-medium text-muted-foreground">
-											Prix unit.
-										</th>
-										<th className="pb-2 text-right text-sm font-medium text-muted-foreground">
-											Total
-										</th>
-									</tr>
-								</thead>
-								<tbody>
-									{order.items.map((item) => (
-										<tr key={item.id} className="border-b last:border-0">
-											<td className="py-3 text-sm">
-												{item.productName}
-												{item.specialInstructions && (
-													<p className="mt-0.5 text-xs text-muted-foreground">
-														{item.specialInstructions}
-													</p>
-												)}
-											</td>
-											<td className="py-3 text-center text-sm">{item.quantity}</td>
-											<td className="py-3 text-right text-sm">{item.unitPrice} &euro;</td>
-											<td className="py-3 text-right text-sm font-medium">{item.total} &euro;</td>
-										</tr>
-									))}
-								</tbody>
-							</table>
-						</div>
-						<div className="mt-4 flex justify-end border-t pt-4">
-							<div className="text-right">
-								{order.subtotal != null && (
-									<div className="flex justify-between gap-8">
-										<p className="text-sm text-muted-foreground">Sous-total</p>
-										<p className="text-sm">{order.subtotal} &euro;</p>
+								{/* Custom order details */}
+								{order.type === 'custom' && (
+									<Card>
+										<CardHeader>
+											<CardTitle>{t('customDetails')}</CardTitle>
+										</CardHeader>
+										<CardContent className="space-y-4">
+											{isEditing ? (
+												<div className="grid gap-4 md:grid-cols-2">
+													<div className="space-y-2">
+														<Label>{t('pastryType')}</Label>
+														<Input
+															value={editForm.customType}
+															onChange={(e) =>
+																setEditForm({
+																	...editForm,
+																	customType: e.target.value,
+																})
+															}
+														/>
+													</div>
+													<div className="space-y-2">
+														<Label>{t('numberOfPeople')}</Label>
+														<Input
+															type="number"
+															value={editForm.customNbPersonnes}
+															onChange={(e) =>
+																setEditForm({
+																	...editForm,
+																	customNbPersonnes: e.target.value,
+																})
+															}
+														/>
+													</div>
+													<div className="space-y-2">
+														<Label>{t('requestedDate')}</Label>
+														<Input
+															type="date"
+															value={editForm.customDateSouhaitee}
+															onChange={(e) =>
+																setEditForm({
+																	...editForm,
+																	customDateSouhaitee: e.target.value,
+																})
+															}
+														/>
+													</div>
+													<div className="space-y-2">
+														<Label>{t('theme')}</Label>
+														<Input
+															value={editForm.customTheme}
+															onChange={(e) =>
+																setEditForm({
+																	...editForm,
+																	customTheme: e.target.value,
+																})
+															}
+														/>
+													</div>
+													<div className="space-y-2">
+														<Label>{t('allergies')}</Label>
+														<Input
+															value={editForm.customAllergies}
+															onChange={(e) =>
+																setEditForm({
+																	...editForm,
+																	customAllergies: e.target.value,
+																})
+															}
+														/>
+													</div>
+													<div className="space-y-2 md:col-span-2">
+														<Label>{t('inspirationPhotos')}</Label>
+														{/* Existing photos */}
+														{order.customPhotoUrls &&
+															order.customPhotoUrls.length > 0 && (
+																<div className="mt-2 flex flex-wrap gap-3">
+																	{order.customPhotoUrls
+																		.filter(
+																			(url) => !photosToRemove.includes(url)
+																		)
+																		.map((url) => (
+																			<div key={url} className="group relative">
+																				<img
+																					src={url}
+																					alt="Inspiration"
+																					className="h-20 w-20 cursor-pointer rounded-md object-cover ring-1 ring-border"
+																					onClick={() => setLightboxUrl(url)}
+																				/>
+																				<button
+																					type="button"
+																					onClick={() =>
+																						setPhotosToRemove((prev) => [
+																							...prev,
+																							url,
+																						])
+																					}
+																					className="absolute -right-1.5 -top-1.5 rounded-full bg-red-500 p-0.5 text-white opacity-0 transition-opacity group-hover:opacity-100"
+																				>
+																					<XCircle className="size-3" />
+																				</button>
+																			</div>
+																		))}
+																</div>
+															)}
+														{photosToRemove.length > 0 && (
+															<button
+																type="button"
+																onClick={() => setPhotosToRemove([])}
+																className="mt-1 text-xs text-primary hover:underline"
+															>
+																{t('cancelEditPhotos')} ({photosToRemove.length})
+															</button>
+														)}
+														{/* New photo previews */}
+														{newPhotoPreviews.length > 0 && (
+															<div className="mt-2 flex flex-wrap gap-3">
+																{newPhotoPreviews.map((preview, i) => (
+																	<div key={preview} className="group relative">
+																		<img
+																			src={preview}
+																			alt="New"
+																			className="h-20 w-20 rounded-md object-cover ring-1 ring-primary"
+																		/>
+																		<button
+																			type="button"
+																			onClick={() => handleRemoveNewPhoto(i)}
+																			className="absolute -right-1.5 -top-1.5 rounded-full bg-red-500 p-0.5 text-white opacity-0 transition-opacity group-hover:opacity-100"
+																		>
+																			<XCircle className="size-3" />
+																		</button>
+																	</div>
+																))}
+															</div>
+														)}
+														<input
+															type="file"
+															multiple
+															accept="image/jpeg,image/png,image/webp,image/avif"
+															onChange={(e) => {
+																if (e.target.files && e.target.files.length > 0) {
+																	handleAddPhotos(e.target.files)
+																}
+																e.target.value = ''
+															}}
+															className="mt-2 block w-full text-sm text-muted-foreground file:mr-4 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-primary-foreground hover:file:bg-primary/90"
+														/>
+													</div>
+													<div className="space-y-2 md:col-span-2">
+														<Label>{t('clientMessage')}</Label>
+														<Textarea
+															value={editForm.customMessage}
+															onChange={(e) =>
+																setEditForm({
+																	...editForm,
+																	customMessage: e.target.value,
+																})
+															}
+															rows={3}
+														/>
+													</div>
+												</div>
+											) : (
+												<div className="grid gap-4 md:grid-cols-2">
+													{order.customType && (
+														<div>
+															<p className="text-sm text-muted-foreground">
+																{t('pastryType')}
+															</p>
+															<p className="font-medium">{order.customType}</p>
+														</div>
+													)}
+													{order.customNbPersonnes && (
+														<div>
+															<p className="text-sm text-muted-foreground">
+																{t('numberOfPeople')}
+															</p>
+															<p className="font-medium">
+																{order.customNbPersonnes}
+															</p>
+														</div>
+													)}
+													{order.customDateSouhaitee && (
+														<div>
+															<p className="text-sm text-muted-foreground">
+																{t('requestedDate')}
+															</p>
+															<p className="font-medium">
+																{new Date(
+																	order.customDateSouhaitee
+																).toLocaleDateString('fr-FR')}
+															</p>
+														</div>
+													)}
+													{order.customTheme && (
+														<div>
+															<p className="text-sm text-muted-foreground">
+																{t('theme')}
+															</p>
+															<p className="font-medium">{order.customTheme}</p>
+														</div>
+													)}
+													{order.customAllergies && (
+														<div>
+															<p className="text-sm text-muted-foreground">
+																{t('allergies')}
+															</p>
+															<p className="font-medium">
+																{order.customAllergies}
+															</p>
+														</div>
+													)}
+													{order.customPhotoUrls &&
+														order.customPhotoUrls.length > 0 && (
+															<div className="md:col-span-2">
+																<p className="text-sm text-muted-foreground">
+																	{t('inspirationPhotos')}
+																</p>
+																<div className="mt-2 flex flex-wrap gap-3">
+																	{order.customPhotoUrls.map((url) => (
+																		<img
+																			key={url}
+																			src={url}
+																			alt="Inspiration"
+																			className="h-24 w-24 cursor-pointer rounded-md object-cover ring-1 ring-border transition-shadow hover:ring-2 hover:ring-primary"
+																			onClick={() => setLightboxUrl(url)}
+																		/>
+																	))}
+																</div>
+															</div>
+														)}
+													{order.customMessage && (
+														<div className="md:col-span-2">
+															<p className="text-sm text-muted-foreground">
+																{t('clientMessage')}
+															</p>
+															<p className="font-medium">{order.customMessage}</p>
+														</div>
+													)}
+												</div>
+											)}
+										</CardContent>
+									</Card>
+								)}
+
+								{/* Quote form for custom orders */}
+								{order.type === 'custom' && (
+									<Card>
+										<CardHeader>
+											<CardTitle>{t('quote')}</CardTitle>
+										</CardHeader>
+										<CardContent>
+											<form onSubmit={handleSubmitQuote} className="space-y-4">
+												<div className="grid gap-4 md:grid-cols-2">
+													<div className="space-y-2">
+														<Label htmlFor="quotedPrice">
+															{t('proposedPrice')}
+														</Label>
+														<Input
+															id="quotedPrice"
+															type="number"
+															step="0.01"
+															min="0"
+															value={quotedPrice}
+															onChange={(e) => setQuotedPrice(e.target.value)}
+															placeholder="0.00"
+															required
+														/>
+													</div>
+													<div className="space-y-2">
+														<Label htmlFor="depositPercent">
+															{t('depositPercent')}
+														</Label>
+														<Select
+															value={depositPercent}
+															onValueChange={(value) => setDepositPercent(value)}
+														>
+															<SelectTrigger id="depositPercent" className="w-full">
+																<SelectValue />
+															</SelectTrigger>
+															<SelectContent>
+																<SelectItem value="30">
+																	{t('deposit30')}
+																</SelectItem>
+																<SelectItem value="50">
+																	{t('deposit50')}
+																</SelectItem>
+																<SelectItem value="70">
+																	{t('deposit70')}
+																</SelectItem>
+																<SelectItem value="100">
+																	{t('deposit100')}
+																</SelectItem>
+															</SelectContent>
+														</Select>
+														{quotedPrice && (
+															<p className="text-xs text-muted-foreground">
+																{t('depositPaymentLink')}{' '}
+																<strong>
+																	{(
+																		(Number(quotedPrice) *
+																			Number(depositPercent)) /
+																		100
+																	).toFixed(2)}{' '}
+																	&euro;
+																</strong>
+															</p>
+														)}
+													</div>
+												</div>
+												<div className="space-y-2">
+													<Label htmlFor="quoteConfirmedDate">
+														{t('confirmedDate')}
+													</Label>
+													<Input
+														id="quoteConfirmedDate"
+														type="date"
+														value={quoteConfirmedDate}
+														onChange={(e) =>
+															setQuoteConfirmedDate(e.target.value)
+														}
+													/>
+													{order.customDateSouhaitee && !quoteConfirmedDate && (
+														<p className="text-xs text-muted-foreground">
+															{t('clientRequestedDate')}{' '}
+															{new Date(
+																order.customDateSouhaitee
+															).toLocaleDateString('fr-FR')}
+														</p>
+													)}
+												</div>
+												<div className="space-y-2">
+													<Label htmlFor="quoteResponse">
+														{t('responseMessage')}
+													</Label>
+													<Textarea
+														id="quoteResponse"
+														value={quoteResponseMessage}
+														onChange={(e) =>
+															setQuoteResponseMessage(e.target.value)
+														}
+														rows={3}
+														placeholder={t('responsePlaceholder')}
+													/>
+												</div>
+												<Button
+													type="submit"
+													disabled={isSubmittingQuote || !quotedPrice}
+												>
+													{isSubmittingQuote
+														? t('sendingQuote')
+														: t('sendQuote')}
+												</Button>
+											</form>
+										</CardContent>
+									</Card>
+								)}
+
+								{/* Total display */}
+								{order.total != null && (
+									<div className="flex items-center justify-between rounded-lg border bg-card p-4">
+										<span className="text-sm font-semibold">{t('totalLabel')}</span>
+										<span className="text-lg font-bold">
+											{formatCurrency(order.total)}
+										</span>
 									</div>
 								)}
-								{order.total != null &&
-									(() => {
-										const platformFee = (Number(order.total) * PLATFORM_FEE_PERCENT) / 100
-										const stripeFee =
-											(Number(order.total) * STRIPE_FEE_PERCENT) / 100 + STRIPE_FEE_FIXED
-										const totalFees = platformFee + stripeFee
-										return (
+
+								{/* Notes */}
+								<Card>
+									<CardHeader>
+										<CardTitle>{t('internalNotes')}</CardTitle>
+									</CardHeader>
+									<CardContent>
+										{isEditing ? (
+											<Textarea
+												value={editForm.patissierNotes}
+												onChange={(e) =>
+													setEditForm({
+														...editForm,
+														patissierNotes: e.target.value,
+													})
+												}
+												rows={4}
+												placeholder={t('internalNotesPlaceholder')}
+											/>
+										) : (
+											<p className="text-sm text-muted-foreground">
+												{order.patissierNotes || t('internalNotesPlaceholder')}
+											</p>
+										)}
+									</CardContent>
+								</Card>
+							</div>
+
+							{/* Right sidebar */}
+							<div className="space-y-6">
+								<ClientInfoCard showEdit />
+
+								{/* Delivery Details */}
+								<Card>
+									<CardHeader>
+										<CardTitle className="flex items-center gap-2">
+											<Calendar className="size-5" />
+											{t('deliveryDetails')}
+										</CardTitle>
+									</CardHeader>
+									<CardContent className="space-y-4">
+										{isEditing ? (
+											<div className="space-y-4">
+												<div className="space-y-2">
+													<Label>{t('requestedDate')}</Label>
+													<Input
+														type="date"
+														value={editForm.requestedDate}
+														onChange={(e) =>
+															setEditForm({
+																...editForm,
+																requestedDate: e.target.value,
+															})
+														}
+													/>
+												</div>
+												<div className="space-y-2">
+													<Label>{t('deliveryMethodLabel')}</Label>
+													<Select
+														value={editForm.deliveryMethod}
+														onValueChange={(value) =>
+															setEditForm({
+																...editForm,
+																deliveryMethod: value as
+																	| 'pickup'
+																	| 'delivery',
+															})
+														}
+													>
+														<SelectTrigger className="w-full">
+															<SelectValue />
+														</SelectTrigger>
+														<SelectContent>
+															<SelectItem value="pickup">
+																{t('pickup')}
+															</SelectItem>
+															<SelectItem value="delivery">
+																{t('deliveryLabel')}
+															</SelectItem>
+														</SelectContent>
+													</Select>
+												</div>
+												{editForm.deliveryMethod === 'delivery' && (
+													<div className="space-y-2">
+														<Label>{t('deliveryAddress')}</Label>
+														<Input
+															value={editForm.deliveryAddress}
+															onChange={(e) =>
+																setEditForm({
+																	...editForm,
+																	deliveryAddress: e.target.value,
+																})
+															}
+														/>
+													</div>
+												)}
+												<div className="space-y-2">
+													<Label>{t('deliveryNotes')}</Label>
+													<Textarea
+														value={editForm.deliveryNotes}
+														onChange={(e) =>
+															setEditForm({
+																...editForm,
+																deliveryNotes: e.target.value,
+															})
+														}
+														rows={2}
+													/>
+												</div>
+											</div>
+										) : (
 											<>
-												<div className="mt-1 flex justify-between gap-8">
-													<p className="text-sm font-medium">Total client</p>
-													<p className="text-sm font-medium">
-														{Number(order.total).toFixed(2)} &euro;
-													</p>
-												</div>
-												<div className="mt-1 flex justify-between gap-8">
+												{order.requestedDate && (
+													<div>
+														<p className="text-sm text-muted-foreground">
+															{t('requestedDate')}
+														</p>
+														<p className="font-medium">
+															{new Date(
+																order.requestedDate
+															).toLocaleDateString('fr-FR')}
+														</p>
+													</div>
+												)}
+												<div>
 													<p className="text-sm text-muted-foreground">
-														Frais Patissio ({PLATFORM_FEE_PERCENT}%)
+														{t('deliveryMethodLabel')}
 													</p>
-													<p className="text-sm text-red-600">-{platformFee.toFixed(2)} &euro;</p>
+													<Badge variant="outline" className="mt-1 capitalize">
+														{order.deliveryMethod === 'pickup' ? (
+															<>
+																<Package className="mr-1 size-3" />
+																{t('pickup')}
+															</>
+														) : (
+															<>
+																<Truck className="mr-1 size-3" />
+																{t('deliveryLabel')}
+															</>
+														)}
+													</Badge>
 												</div>
-												<div className="mt-1 flex justify-between gap-8">
-													<p className="text-sm text-muted-foreground">
-														Frais Stripe ({STRIPE_FEE_PERCENT}% + {STRIPE_FEE_FIXED.toFixed(2)}{' '}
-														&euro;)
-													</p>
-													<p className="text-sm text-red-600">-{stripeFee.toFixed(2)} &euro;</p>
-												</div>
-												<div className="mt-1 flex justify-between gap-8 border-t pt-2">
-													<p className="text-sm font-semibold">Vous recevez</p>
-													<p className="text-lg font-bold text-green-600">
-														{(Number(order.total) - totalFees).toFixed(2)} &euro;
-													</p>
-												</div>
+												{order.deliveryAddress && (
+													<div>
+														<p className="text-sm text-muted-foreground">
+															{t('deliveryAddress')}
+														</p>
+														<div className="mt-1 flex items-start gap-2">
+															<MapPin className="mt-0.5 size-4 text-muted-foreground" />
+															<p className="text-sm">
+																{order.deliveryAddress}
+															</p>
+														</div>
+													</div>
+												)}
+												{order.deliveryNotes && (
+													<div>
+														<p className="text-sm text-muted-foreground">
+															{t('deliveryNotes')}
+														</p>
+														<p className="mt-1 text-sm">
+															{order.deliveryNotes}
+														</p>
+													</div>
+												)}
 											</>
-										)
-									})()}
+										)}
+									</CardContent>
+								</Card>
+
+								{/* Dates */}
+								<Card>
+									<CardHeader>
+										<CardTitle className="flex items-center gap-2">
+											<Clock className="size-5" />
+											{t('dates')}
+										</CardTitle>
+									</CardHeader>
+									<CardContent className="space-y-3">
+										<div>
+											<p className="text-sm text-muted-foreground">
+												{t('createdAt')}
+											</p>
+											<p className="text-sm font-medium">
+												{new Date(order.createdAt).toLocaleString('fr-FR')}
+											</p>
+										</div>
+										{order.confirmedDate && (
+											<div>
+												<p className="text-sm text-muted-foreground">
+													{t('confirmedDate')}
+												</p>
+												<p className="text-sm font-medium">
+													{new Date(
+														order.confirmedDate
+													).toLocaleDateString('fr-FR')}
+												</p>
+											</div>
+										)}
+										{order.confirmedAt && (
+											<div>
+												<p className="text-sm text-muted-foreground">
+													{t('confirmedAt')}
+												</p>
+												<p className="text-sm font-medium">
+													{new Date(order.confirmedAt).toLocaleString(
+														'fr-FR'
+													)}
+												</p>
+											</div>
+										)}
+										{order.completedAt && (
+											<div>
+												<p className="text-sm text-muted-foreground">
+													{t('completedAt')}
+												</p>
+												<p className="text-sm font-medium">
+													{new Date(order.completedAt).toLocaleString(
+														'fr-FR'
+													)}
+												</p>
+											</div>
+										)}
+										{order.cancelledAt && (
+											<div>
+												<p className="text-sm text-muted-foreground">
+													{t('cancelledAt')}
+												</p>
+												<p className="text-sm font-medium">
+													{new Date(order.cancelledAt).toLocaleString(
+														'fr-FR'
+													)}
+												</p>
+											</div>
+										)}
+									</CardContent>
+								</Card>
 							</div>
 						</div>
-					</div>
-				)}
+					</TabsContent>
 
-				{/* Custom order details */}
-				{order.type === 'custom' && (
-					<div className="rounded-lg border bg-card p-6">
-						<h2 className="text-lg font-semibold">Details de la demande sur mesure</h2>
-						{isEditing ? (
-							<div className="mt-4 grid gap-4 sm:grid-cols-2">
-								<div>
-									<label className="block text-sm font-medium text-muted-foreground">
-										Type de patisserie
-									</label>
-									<input
-										type="text"
-										value={editForm.customType}
-										onChange={(e) => setEditForm({ ...editForm, customType: e.target.value })}
-										className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-									/>
-								</div>
-								<div>
-									<label className="block text-sm font-medium text-muted-foreground">
-										Nombre de personnes
-									</label>
-									<input
-										type="number"
-										value={editForm.customNbPersonnes}
-										onChange={(e) =>
-											setEditForm({ ...editForm, customNbPersonnes: e.target.value })
-										}
-										className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-									/>
-								</div>
-								<div>
-									<label className="block text-sm font-medium text-muted-foreground">
-										Date souhaitee
-									</label>
-									<input
-										type="date"
-										value={editForm.customDateSouhaitee}
-										onChange={(e) =>
-											setEditForm({ ...editForm, customDateSouhaitee: e.target.value })
-										}
-										className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-									/>
-								</div>
-								<div>
-									<label className="block text-sm font-medium text-muted-foreground">Theme</label>
-									<input
-										type="text"
-										value={editForm.customTheme}
-										onChange={(e) => setEditForm({ ...editForm, customTheme: e.target.value })}
-										className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-									/>
-								</div>
-								<div>
-									<label className="block text-sm font-medium text-muted-foreground">
-										Allergies
-									</label>
-									<input
-										type="text"
-										value={editForm.customAllergies}
-										onChange={(e) => setEditForm({ ...editForm, customAllergies: e.target.value })}
-										className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-									/>
-								</div>
-								<div className="sm:col-span-2">
-									<label className="block text-sm font-medium text-muted-foreground">
-										Photos d&apos;inspiration
-									</label>
-									{/* Existing photos */}
-									{order.customPhotoUrls && order.customPhotoUrls.length > 0 && (
-										<div className="mt-2 flex flex-wrap gap-3">
-											{order.customPhotoUrls
-												.filter((url) => !photosToRemove.includes(url))
-												.map((url) => (
-													<div key={url} className="group relative">
-														<img
-															src={url}
-															alt="Inspiration"
-															className="h-20 w-20 cursor-pointer rounded-md object-cover ring-1 ring-border"
-															onClick={() => setLightboxUrl(url)}
-														/>
-														<button
-															type="button"
-															onClick={() => setPhotosToRemove((prev) => [...prev, url])}
-															className="absolute -right-1.5 -top-1.5 rounded-full bg-red-500 p-0.5 text-white opacity-0 transition-opacity group-hover:opacity-100"
+					{/* Costing Tab */}
+					<TabsContent value="costing">
+						<div className="grid gap-6 lg:grid-cols-3">
+							<div className="lg:col-span-2">
+								<OrderCosting
+									orderId={orderId}
+									currentTotal={order.total ?? 0}
+									onApplyPrice={(price) => setQuotedPrice(String(price))}
+								/>
+							</div>
+							<div className="space-y-6">
+								{/* Client card */}
+								<Card>
+									<CardHeader>
+										<CardTitle className="flex items-center gap-2">
+											<User className="size-5" />
+											{t('clientLabel')}
+										</CardTitle>
+									</CardHeader>
+									<CardContent className="space-y-4">
+										<div className="flex items-center gap-3">
+											<Avatar>
+												<AvatarFallback>
+													{order.clientName
+														.split(' ')
+														.map((n) => n[0])
+														.join('')}
+												</AvatarFallback>
+											</Avatar>
+											<div>
+												<p className="font-medium">{order.clientName}</p>
+												<p className="text-sm text-muted-foreground">
+													{order.clientEmail}
+												</p>
+											</div>
+										</div>
+									</CardContent>
+								</Card>
+
+								{/* Quote price card */}
+								<Card>
+									<CardHeader>
+										<CardTitle className="flex items-center gap-2">
+											<CreditCard className="size-5" />
+											{t('quotePriceCard')}
+										</CardTitle>
+									</CardHeader>
+									<CardContent className="space-y-3">
+										<div className="flex justify-between">
+											<span className="text-muted-foreground">
+												{t('currentPrice')}
+											</span>
+											<span className="text-2xl font-bold">
+												{formatCurrency(
+													quotedPrice
+														? Number(quotedPrice)
+														: (order.total ?? 0)
+												)}
+											</span>
+										</div>
+										{quotedPrice &&
+											Number(quotedPrice) !== (order.total ?? 0) && (
+												<p className="text-xs text-muted-foreground">
+													{t('originalPrice')}:{' '}
+													{formatCurrency(order.total ?? 0)}
+												</p>
+											)}
+									</CardContent>
+								</Card>
+							</div>
+						</div>
+					</TabsContent>
+
+					{/* Messages Tab */}
+					<TabsContent value="messages">
+						<div className="grid gap-6 lg:grid-cols-3">
+							<div className="lg:col-span-2">
+								<Card>
+									<CardHeader>
+										<CardTitle className="flex items-center gap-2">
+											<MessageSquare className="size-5" />
+											{t('messages')}
+										</CardTitle>
+										<CardDescription>{t('messagesDesc')}</CardDescription>
+									</CardHeader>
+									<CardContent className="space-y-4">
+										{order.messages && order.messages.length > 0 ? (
+											<div className="max-h-96 space-y-4 overflow-y-auto">
+												{order.messages.map((msg) => (
+													<div
+														key={msg.id}
+														className={`flex gap-3 ${msg.senderType === 'patissier' ? 'flex-row-reverse' : ''}`}
+													>
+														<Avatar className="size-8">
+															<AvatarFallback>
+																{msg.senderType === 'patissier'
+																	? 'P'
+																	: msg.senderType === 'system'
+																		? 'S'
+																		: 'C'}
+															</AvatarFallback>
+														</Avatar>
+														<div
+															className={`max-w-md flex-1 ${msg.senderType === 'patissier' ? 'text-right' : ''}`}
 														>
-															<svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor">
-																<path
-																	fillRule="evenodd"
-																	d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-																	clipRule="evenodd"
-																/>
-															</svg>
-														</button>
+															<p className="text-xs font-medium text-muted-foreground">
+																{msg.senderType === 'patissier'
+																	? t('you')
+																	: msg.senderType === 'system'
+																		? t('system')
+																		: t('clientLabel')}
+															</p>
+															<div
+																className={`inline-block rounded-lg p-3 ${
+																	msg.senderType === 'patissier'
+																		? 'bg-primary text-primary-foreground'
+																		: msg.senderType === 'system'
+																			? 'bg-muted text-center italic'
+																			: 'bg-muted'
+																}`}
+															>
+																<p className="text-sm">{msg.message}</p>
+															</div>
+															<p className="mt-1 text-xs text-muted-foreground">
+																{new Date(msg.createdAt).toLocaleString(
+																	'fr-FR'
+																)}
+															</p>
+														</div>
 													</div>
 												))}
-										</div>
-									)}
-									{photosToRemove.length > 0 && (
-										<button
-											type="button"
-											onClick={() => setPhotosToRemove([])}
-											className="mt-1 text-xs text-primary hover:underline"
+											</div>
+										) : (
+											<div className="py-12 text-center">
+												<MessageSquare className="mx-auto size-12 text-muted-foreground" />
+												<p className="mt-4 text-muted-foreground">
+													{t('noMessages')}
+												</p>
+											</div>
+										)}
+
+										<Separator />
+
+										<form
+											onSubmit={handleSendMessage}
+											className="flex gap-2"
 										>
-											Annuler les suppressions ({photosToRemove.length})
-										</button>
-									)}
-									{/* New photo previews */}
-									{newPhotoPreviews.length > 0 && (
-										<div className="mt-2 flex flex-wrap gap-3">
-											{newPhotoPreviews.map((preview, i) => (
-												<div key={preview} className="group relative">
-													<img
-														src={preview}
-														alt="Nouvelle photo"
-														className="h-20 w-20 rounded-md object-cover ring-1 ring-primary"
-													/>
-													<button
-														type="button"
-														onClick={() => handleRemoveNewPhoto(i)}
-														className="absolute -right-1.5 -top-1.5 rounded-full bg-red-500 p-0.5 text-white opacity-0 transition-opacity group-hover:opacity-100"
-													>
-														<svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor">
-															<path
-																fillRule="evenodd"
-																d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-																clipRule="evenodd"
-															/>
-														</svg>
-													</button>
-												</div>
-											))}
-										</div>
-									)}
-									<input
-										type="file"
-										multiple
-										accept="image/jpeg,image/png,image/webp,image/avif"
-										onChange={(e) => {
-											if (e.target.files && e.target.files.length > 0) {
-												handleAddPhotos(e.target.files)
-											}
-											e.target.value = ''
-										}}
-										className="mt-2 block w-full text-sm text-muted-foreground file:mr-4 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-primary-foreground hover:file:bg-primary/90"
-									/>
-								</div>
-								<div className="sm:col-span-2">
-									<label className="block text-sm font-medium text-muted-foreground">Message</label>
-									<textarea
-										value={editForm.customMessage}
-										onChange={(e) => setEditForm({ ...editForm, customMessage: e.target.value })}
-										rows={3}
-										className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-									/>
-								</div>
+											<Input
+												value={newMessage}
+												onChange={(e) => setNewMessage(e.target.value)}
+												placeholder={t('messagePlaceholder')}
+												required
+											/>
+											<Button type="submit" disabled={isSending}>
+												<Send className="mr-2 size-4" />
+												{isSending ? t('sending') : t('send')}
+											</Button>
+										</form>
+									</CardContent>
+								</Card>
 							</div>
-						) : (
-							<div className="mt-4 grid gap-4 sm:grid-cols-2">
-								{order.customType && (
-									<div>
-										<p className="text-sm text-muted-foreground">Type de patisserie</p>
-										<p className="text-sm font-medium">{order.customType}</p>
-									</div>
-								)}
-								{order.customNbPersonnes && (
-									<div>
-										<p className="text-sm text-muted-foreground">Nombre de personnes</p>
-										<p className="text-sm font-medium">{order.customNbPersonnes}</p>
-									</div>
-								)}
-								{order.customDateSouhaitee && (
-									<div>
-										<p className="text-sm text-muted-foreground">Date souhaitee</p>
-										<p className="text-sm font-medium">
-											{new Date(order.customDateSouhaitee).toLocaleDateString('fr-FR')}
-										</p>
-									</div>
-								)}
-								{order.customTheme && (
-									<div>
-										<p className="text-sm text-muted-foreground">Theme</p>
-										<p className="text-sm font-medium">{order.customTheme}</p>
-									</div>
-								)}
-								{order.customAllergies && (
-									<div>
-										<p className="text-sm text-muted-foreground">Allergies</p>
-										<p className="text-sm font-medium">{order.customAllergies}</p>
-									</div>
-								)}
-								{order.customPhotoUrls && order.customPhotoUrls.length > 0 && (
-									<div className="sm:col-span-2">
-										<p className="text-sm text-muted-foreground">Photos d&apos;inspiration</p>
-										<div className="mt-2 flex flex-wrap gap-3">
-											{order.customPhotoUrls.map((url) => (
-												<img
-													key={url}
-													src={url}
-													alt="Inspiration"
-													className="h-24 w-24 cursor-pointer rounded-md object-cover ring-1 ring-border transition-shadow hover:ring-2 hover:ring-primary"
-													onClick={() => setLightboxUrl(url)}
-												/>
-											))}
-										</div>
-									</div>
-								)}
-								{order.customMessage && (
-									<div className="sm:col-span-2">
-										<p className="text-sm text-muted-foreground">Message du client</p>
-										<p className="text-sm font-medium">{order.customMessage}</p>
-									</div>
-								)}
+							<div>
+								<ClientInfoCard />
 							</div>
-						)}
-
-						{/* Quote form */}
-						<div className="mt-6 border-t pt-6">
-							<h3 className="text-base font-semibold">Devis</h3>
-							<form onSubmit={handleSubmitQuote} className="mt-4 space-y-4">
-								<div>
-									<label htmlFor="quotedPrice" className="block text-sm font-medium">
-										Prix propose (EUR)
-									</label>
-									<input
-										id="quotedPrice"
-										type="number"
-										step="0.01"
-										min="0"
-										value={quotedPrice}
-										onChange={(e) => setQuotedPrice(e.target.value)}
-										className="mt-1 w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-										placeholder="0.00"
-										required
-									/>
-								</div>
-								<div>
-									<label htmlFor="depositPercent" className="block text-sm font-medium">
-										Acompte demande (%)
-									</label>
-									<select
-										id="depositPercent"
-										value={depositPercent}
-										onChange={(e) => setDepositPercent(e.target.value)}
-										className="mt-1 w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-									>
-										<option value="30">30%</option>
-										<option value="50">50%</option>
-										<option value="70">70%</option>
-										<option value="100">100% (paiement integral)</option>
-									</select>
-									{quotedPrice && (
-										<p className="mt-1 text-xs text-muted-foreground">
-											Le client recevra un lien de paiement de{' '}
-											<strong>
-												{((Number(quotedPrice) * Number(depositPercent)) / 100).toFixed(2)} €
-											</strong>
-										</p>
-									)}
-								</div>
-								<div>
-									<label htmlFor="quoteConfirmedDate" className="block text-sm font-medium">
-										Date confirmée
-									</label>
-									<input
-										id="quoteConfirmedDate"
-										type="date"
-										value={quoteConfirmedDate}
-										onChange={(e) => setQuoteConfirmedDate(e.target.value)}
-										className="mt-1 w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-									/>
-									{order.customDateSouhaitee && !quoteConfirmedDate && (
-										<p className="mt-1 text-xs text-muted-foreground">
-											Date souhaitée par le client :{' '}
-											{new Date(order.customDateSouhaitee).toLocaleDateString('fr-FR')}
-										</p>
-									)}
-								</div>
-								<div>
-									<label htmlFor="quoteResponse" className="block text-sm font-medium">
-										Message de reponse
-									</label>
-									<textarea
-										id="quoteResponse"
-										value={quoteResponseMessage}
-										onChange={(e) => setQuoteResponseMessage(e.target.value)}
-										rows={3}
-										className="mt-1 w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-										placeholder="Votre reponse au client..."
-									/>
-								</div>
-								<button
-									type="submit"
-									disabled={isSubmittingQuote || !quotedPrice}
-									className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-								>
-									{isSubmittingQuote ? 'Envoi...' : 'Envoyer le devis'}
-								</button>
-								{quoteError && <p className="text-sm text-red-600">{quoteError}</p>}
-								{quoteSuccess && (
-									<p
-										className={`text-sm ${quoteSuccess.includes('Stripe') || quoteSuccess.includes('échoué') ? 'text-orange-600' : 'text-green-600'}`}
-									>
-										{quoteSuccess}
-									</p>
-								)}
-							</form>
 						</div>
-
-						{/* Total display */}
-						{order.total != null &&
-							(() => {
-								const platformFee = (Number(order.total) * PLATFORM_FEE_PERCENT) / 100
-								const stripeFee =
-									(Number(order.total) * STRIPE_FEE_PERCENT) / 100 + STRIPE_FEE_FIXED
-								const totalFees = platformFee + stripeFee
-								return (
-									<div className="mt-4 border-t pt-4 space-y-1">
-										<div className="flex items-center justify-between">
-											<p className="text-sm font-medium">Total client</p>
-											<p className="text-sm font-medium">{Number(order.total).toFixed(2)} &euro;</p>
-										</div>
-										<div className="flex items-center justify-between">
-											<p className="text-sm text-muted-foreground">
-												Frais Patissio ({PLATFORM_FEE_PERCENT}%)
-											</p>
-											<p className="text-sm text-red-600">-{platformFee.toFixed(2)} &euro;</p>
-										</div>
-										<div className="flex items-center justify-between">
-											<p className="text-sm text-muted-foreground">
-												Frais Stripe ({STRIPE_FEE_PERCENT}% + {STRIPE_FEE_FIXED.toFixed(2)} &euro;)
-											</p>
-											<p className="text-sm text-red-600">-{stripeFee.toFixed(2)} &euro;</p>
-										</div>
-										<div className="flex items-center justify-between border-t pt-2">
-											<p className="text-sm font-semibold">Vous recevez</p>
-											<p className="text-xl font-bold text-green-600">
-												{(Number(order.total) - totalFees).toFixed(2)} &euro;
-											</p>
-										</div>
-									</div>
-								)
-							})()}
-					</div>
-				)}
-
-				{/* Patissier notes */}
-				{isEditing ? (
-					<div className="rounded-lg border border-yellow-200 bg-yellow-50 p-6">
-						<h2 className="text-lg font-semibold">Notes internes</h2>
-						<textarea
-							value={editForm.patissierNotes}
-							onChange={(e) => setEditForm({ ...editForm, patissierNotes: e.target.value })}
-							rows={3}
-							className="mt-2 w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-							placeholder="Notes internes (visibles uniquement par vous)..."
-						/>
-					</div>
-				) : (
-					order.patissierNotes && (
-						<div className="rounded-lg border border-yellow-200 bg-yellow-50 p-6">
-							<h2 className="text-lg font-semibold">Notes internes</h2>
-							<p className="mt-2 text-sm">{order.patissierNotes}</p>
-						</div>
-					)
-				)}
-
-				{/* Messages thread */}
-				<div className="rounded-lg border bg-card p-6">
-					<h2 className="text-lg font-semibold">Messages</h2>
-					<div className="mt-4 space-y-4">
-						{order.messages && order.messages.length > 0 ? (
-							order.messages.map((msg) => (
-								<div
-									key={msg.id}
-									className={`rounded-lg p-3 ${
-										msg.senderType === 'patissier'
-											? 'ml-8 bg-primary/10'
-											: msg.senderType === 'system'
-												? 'bg-muted text-center text-sm italic'
-												: 'mr-8 bg-muted'
-									}`}
-								>
-									<div className="flex items-center justify-between">
-										<p className="text-xs font-medium text-muted-foreground">
-											{msg.senderType === 'patissier'
-												? 'Vous'
-												: msg.senderType === 'system'
-													? 'Systeme'
-													: 'Client'}
-										</p>
-										<p className="text-xs text-muted-foreground">
-											{new Date(msg.createdAt).toLocaleString('fr-FR')}
-										</p>
-									</div>
-									<p className="mt-1 text-sm">{msg.message}</p>
-								</div>
-							))
-						) : (
-							<p className="text-sm text-muted-foreground">Aucun message</p>
-						)}
-					</div>
-
-					{/* Send message form */}
-					<form onSubmit={handleSendMessage} className="mt-4 flex gap-2">
-						<input
-							type="text"
-							value={newMessage}
-							onChange={(e) => setNewMessage(e.target.value)}
-							placeholder="Ecrire un message au client..."
-							className="flex-1 rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-							required
-						/>
-						<button
-							type="submit"
-							disabled={isSending}
-							className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-						>
-							{isSending ? 'Envoi...' : 'Envoyer'}
-						</button>
-					</form>
-				</div>
+					</TabsContent>
+				</Tabs>
 			</div>
 
 			{/* Lightbox */}
@@ -1206,17 +1574,11 @@ export default function PatissierOrderDetailPage() {
 						onClick={() => setLightboxUrl(null)}
 						className="absolute right-4 top-4 rounded-full bg-white/20 p-2 text-white hover:bg-white/40"
 					>
-						<svg width="24" height="24" viewBox="0 0 20 20" fill="currentColor">
-							<path
-								fillRule="evenodd"
-								d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-								clipRule="evenodd"
-							/>
-						</svg>
+						<XCircle className="size-6" />
 					</button>
 					<img
 						src={lightboxUrl}
-						alt="Photo agrandie"
+						alt="Photo"
 						className="max-h-[90vh] max-w-[90vw] rounded-lg object-contain"
 						onClick={(e) => e.stopPropagation()}
 					/>

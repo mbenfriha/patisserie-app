@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
 import * as Popover from '@radix-ui/react-popover'
 import { Command } from 'cmdk'
+import { useEffect, useRef, useState } from 'react'
 
 interface Category {
 	id: string
@@ -35,13 +35,9 @@ export function CategoryCombobox({
 		}
 	}, [open])
 
-	const filtered = categories.filter((c) =>
-		c.name.toLowerCase().includes(search.toLowerCase())
-	)
+	const filtered = categories.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()))
 
-	const exactMatch = categories.some(
-		(c) => c.name.toLowerCase() === search.toLowerCase()
-	)
+	const exactMatch = categories.some((c) => c.name.toLowerCase() === search.toLowerCase())
 
 	const handleCreate = async () => {
 		if (!search.trim() || creating) return
@@ -67,8 +63,18 @@ export function CategoryCombobox({
 					<span className={selectedCategory ? 'text-foreground' : 'text-muted-foreground'}>
 						{selectedCategory?.name || 'Choisir une catégorie...'}
 					</span>
-					<svg className="h-4 w-4 shrink-0 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-						<path strokeLinecap="round" strokeLinejoin="round" d="M8.25 15L12 18.75 15.75 15m-7.5-6L12 5.25 15.75 9" />
+					<svg
+						className="h-4 w-4 shrink-0 text-muted-foreground"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+						strokeWidth={2}
+					>
+						<path
+							strokeLinecap="round"
+							strokeLinejoin="round"
+							d="M8.25 15L12 18.75 15.75 15m-7.5-6L12 5.25 15.75 9"
+						/>
 					</svg>
 				</button>
 			</Popover.Trigger>
@@ -81,8 +87,18 @@ export function CategoryCombobox({
 				>
 					<Command shouldFilter={false}>
 						<div className="flex items-center border-b px-3">
-							<svg className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-								<path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+							<svg
+								className="mr-2 h-4 w-4 shrink-0 text-muted-foreground"
+								fill="none"
+								viewBox="0 0 24 24"
+								stroke="currentColor"
+								strokeWidth={2}
+							>
+								<path
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+								/>
 							</svg>
 							<Command.Input
 								ref={inputRef}
@@ -104,7 +120,13 @@ export function CategoryCombobox({
 							>
 								Aucune catégorie
 								{!value && (
-									<svg className="ml-auto h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+									<svg
+										className="ml-auto h-4 w-4"
+										fill="none"
+										viewBox="0 0 24 24"
+										stroke="currentColor"
+										strokeWidth={2}
+									>
 										<path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
 									</svg>
 								)}
@@ -122,8 +144,18 @@ export function CategoryCombobox({
 								>
 									{cat.name}
 									{value === cat.id && (
-										<svg className="ml-auto h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-											<path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+										<svg
+											className="ml-auto h-4 w-4"
+											fill="none"
+											viewBox="0 0 24 24"
+											stroke="currentColor"
+											strokeWidth={2}
+										>
+											<path
+												strokeLinecap="round"
+												strokeLinejoin="round"
+												d="M4.5 12.75l6 6 9-13.5"
+											/>
 										</svg>
 									)}
 								</Command.Item>
@@ -142,7 +174,13 @@ export function CategoryCombobox({
 									onSelect={handleCreate}
 									className="flex cursor-pointer items-center gap-2 rounded border-t px-2 py-1.5 text-sm font-medium text-primary hover:bg-muted data-[selected=true]:bg-muted"
 								>
-									<svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+									<svg
+										className="h-4 w-4"
+										fill="none"
+										viewBox="0 0 24 24"
+										stroke="currentColor"
+										strokeWidth={2}
+									>
 										<path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
 									</svg>
 									{creating ? 'Création...' : `Créer "${search.trim()}"`}

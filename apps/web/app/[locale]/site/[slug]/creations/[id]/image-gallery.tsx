@@ -48,9 +48,8 @@ export function ImageGallery({ images, title }: ImageGalleryProps) {
 							className="overflow-hidden rounded-xl transition-all duration-300"
 							style={{
 								aspectRatio: '1',
-								border: selectedImageIndex === index
-									? '2px solid var(--gold)'
-									: '2px solid transparent',
+								border:
+									selectedImageIndex === index ? '2px solid var(--gold)' : '2px solid transparent',
 								opacity: selectedImageIndex === index ? 1 : 0.6,
 							}}
 						>

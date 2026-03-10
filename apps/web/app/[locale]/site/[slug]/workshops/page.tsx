@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { SectionTitle } from '../components/section-title'
-import { getImageUrl } from '@/lib/utils/image-url'
 import { resolveSlug } from '@/lib/resolve-slug'
+import { getImageUrl } from '@/lib/utils/image-url'
+import { SectionTitle } from '../components/section-title'
 import { WorkshopsGrid } from './workshops-grid'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333'
@@ -52,10 +52,7 @@ export default async function WorkshopsPage({ params }: Props) {
 	let workshops: any[] = []
 
 	try {
-		;[profile, workshops] = await Promise.all([
-			getProfile(slug),
-			getWorkshops(slug),
-		])
+		;[profile, workshops] = await Promise.all([getProfile(slug), getWorkshops(slug)])
 	} catch {
 		return notFound()
 	}
@@ -82,9 +79,10 @@ export default async function WorkshopsPage({ params }: Props) {
 								'@type': 'Offer',
 								price: String(workshop.price),
 								priceCurrency: 'EUR',
-								availability: workshop.status === 'full'
-									? 'https://schema.org/SoldOut'
-									: 'https://schema.org/InStock',
+								availability:
+									workshop.status === 'full'
+										? 'https://schema.org/SoldOut'
+										: 'https://schema.org/InStock',
 							},
 						}
 					: {}),
@@ -124,10 +122,7 @@ export default async function WorkshopsPage({ params }: Props) {
 					}}
 				/>
 
-				<div
-					className="relative z-10 px-6"
-					style={{ animation: 'fadeInUp 0.8s ease-out' }}
-				>
+				<div className="relative z-10 px-6" style={{ animation: 'fadeInUp 0.8s ease-out' }}>
 					<SectionTitle subtitle="créer sans limite" title="Nos Ateliers" light />
 				</div>
 			</section>

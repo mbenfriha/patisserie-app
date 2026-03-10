@@ -14,9 +14,7 @@ export function StepHeader({ number, title }: StepHeaderProps) {
 			>
 				{number}
 			</div>
-			<h3
-				className="font-[family-name:'Josefin_Sans'] text-xs font-semibold uppercase tracking-[3px] text-[var(--dark)]"
-			>
+			<h3 className="font-[family-name:'Josefin_Sans'] text-xs font-semibold uppercase tracking-[3px] text-[var(--dark)]">
 				{title}
 			</h3>
 		</div>

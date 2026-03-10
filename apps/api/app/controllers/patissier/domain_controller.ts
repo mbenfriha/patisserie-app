@@ -1,9 +1,10 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import logger from '@adonisjs/core/services/logger'
+import { getActiveProfile } from '#helpers/get_active_profile'
 import PatissierProfile from '#models/patissier_profile'
 import TurnstileService from '#services/turnstile_service'
 import VercelService from '#services/vercel_service'
-import { getActiveProfile } from '#helpers/get_active_profile'
+import { setDomainValidator } from '#validators/domain_validator'
 
 export default class DomainController {
 	private vercel = new VercelService()
@@ -20,13 +21,13 @@ export default class DomainController {
 			})
 		}
 
-		const rawDomain = request.input('domain')
-		if (!rawDomain) {
-			return response.badRequest({ success: false, message: 'Domain is required' })
-		}
+		const { domain: rawDomain } = await request.validateUsing(setDomainValidator)
 
 		// Normalize: lowercase, trim, remove www. prefix
-		const domain = rawDomain.toLowerCase().trim().replace(/^www\./, '')
+		const domain = rawDomain
+			.toLowerCase()
+			.trim()
+			.replace(/^www\./, '')
 
 		// Validate: no protocol, no path, just a domain
 		if (domain.includes('://') || domain.includes('/') || domain.includes(' ')) {
@@ -80,7 +81,10 @@ export default class DomainController {
 			redirectStatusCode: 301,
 		})
 		if (!wwwResult.success) {
-			logger.warn({ domain, error: wwwResult.error }, 'Failed to add www redirect, continuing without it')
+			logger.warn(
+				{ domain, error: wwwResult.error },
+				'Failed to add www redirect, continuing without it'
+			)
 		}
 
 		profile.customDomain = domain

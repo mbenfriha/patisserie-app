@@ -176,6 +176,9 @@ export default class PatissierProfile extends BaseModel {
 	@column()
 	declare plausibleSiteId: string | null
 
+	@column()
+	declare defaultMarginCoefficient: number
+
 	@column.dateTime({ autoCreate: true })
 	declare createdAt: DateTime
 

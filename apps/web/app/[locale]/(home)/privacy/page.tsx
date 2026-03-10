@@ -53,12 +53,12 @@ export default function PrivacyPage() {
 				<h3>2.2 Données des clients (visiteurs et acheteurs)</h3>
 				<ul>
 					<li>
-						<strong>Données de commande :</strong> nom, prénom, adresse e-mail, numéro de
-						téléphone, détails de la commande.
+						<strong>Données de commande :</strong> nom, prénom, adresse e-mail, numéro de téléphone,
+						détails de la commande.
 					</li>
 					<li>
-						<strong>Données de réservation d'atelier :</strong> nom, prénom, adresse e-mail,
-						nombre de participants.
+						<strong>Données de réservation d'atelier :</strong> nom, prénom, adresse e-mail, nombre
+						de participants.
 					</li>
 					<li>
 						<strong>Messages :</strong> contenu des échanges entre clients et pâtissiers dans le
@@ -77,8 +77,7 @@ export default function PrivacyPage() {
 				<ul>
 					<li>Création et gestion de votre compte utilisateur.</li>
 					<li>
-						Fourniture des services de la Plateforme (site vitrine, gestion de commandes,
-						ateliers).
+						Fourniture des services de la Plateforme (site vitrine, gestion de commandes, ateliers).
 					</li>
 					<li>Gestion des abonnements et des paiements.</li>
 					<li>
@@ -120,17 +119,16 @@ export default function PrivacyPage() {
 						publications publiques.
 					</li>
 					<li>
-						Nous n'accédons pas à vos messages privés, vos followers ni vos données
-						personnelles Instagram au-delà de votre nom d'utilisateur et de vos publications
-						publiques.
+						Nous n'accédons pas à vos messages privés, vos followers ni vos données personnelles
+						Instagram au-delà de votre nom d'utilisateur et de vos publications publiques.
 					</li>
 					<li>
-						Vous pouvez <strong>déconnecter Instagram</strong> à tout moment depuis votre tableau
-						de bord. Le jeton d'accès sera alors immédiatement supprimé.
+						Vous pouvez <strong>déconnecter Instagram</strong> à tout moment depuis votre tableau de
+						bord. Le jeton d'accès sera alors immédiatement supprimé.
 					</li>
 					<li>
-						Les données Instagram affichées (images, légendes) sont récupérées en temps réel
-						depuis les serveurs d'Instagram et ne sont pas stockées sur nos serveurs.
+						Les données Instagram affichées (images, légendes) sont récupérées en temps réel depuis
+						les serveurs d'Instagram et ne sont pas stockées sur nos serveurs.
 					</li>
 				</ul>
 
@@ -139,11 +137,7 @@ export default function PrivacyPage() {
 					Les paiements (abonnements et transactions) sont gérés par Stripe, Inc. Nous ne stockons
 					aucune donnée bancaire sur nos serveurs. Stripe agit en tant que sous-traitant conforme au
 					RGPD. Consultez la{' '}
-					<a
-						href="https://stripe.com/fr/privacy"
-						target="_blank"
-						rel="noopener noreferrer"
-					>
+					<a href="https://stripe.com/fr/privacy" target="_blank" rel="noopener noreferrer">
 						politique de confidentialité de Stripe
 					</a>
 					.
@@ -196,15 +190,13 @@ export default function PrivacyPage() {
 						<strong>Droit d'accès :</strong> obtenir une copie de vos données personnelles.
 					</li>
 					<li>
-						<strong>Droit de rectification :</strong> corriger des données inexactes ou
-						incomplètes.
+						<strong>Droit de rectification :</strong> corriger des données inexactes ou incomplètes.
 					</li>
 					<li>
 						<strong>Droit à l'effacement :</strong> demander la suppression de vos données.
 					</li>
 					<li>
-						<strong>Droit à la portabilité :</strong> recevoir vos données dans un format
-						structuré.
+						<strong>Droit à la portabilité :</strong> recevoir vos données dans un format structuré.
 					</li>
 					<li>
 						<strong>Droit d'opposition :</strong> vous opposer au traitement de vos données.

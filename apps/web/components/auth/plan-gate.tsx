@@ -1,7 +1,7 @@
 'use client'
 
-import { useAuth } from '@/lib/providers/auth-provider'
 import Link from 'next/link'
+import { useAuth } from '@/lib/providers/auth-provider'
 
 const PLAN_LEVELS: Record<string, number> = {
 	starter: 1,

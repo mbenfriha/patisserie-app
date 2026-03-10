@@ -3,8 +3,6 @@ import type PatissierProfile from '#models/patissier_profile'
 import type User from '#models/user'
 import env from '#start/env'
 
-const PLATFORM_FEE_PERCENT = env.get('STRIPE_PLATFORM_FEE_PERCENT', 3)
-
 export default class StripeService {
 	private stripe: Stripe
 
@@ -153,7 +151,7 @@ export default class StripeService {
 		return loginLink.url
 	}
 
-	// Workshop deposit Checkout (Stripe Connect with platform fee)
+	// Workshop deposit Checkout (Stripe Connect)
 
 	async createWorkshopDepositCheckout(
 		amount: number,
@@ -165,7 +163,6 @@ export default class StripeService {
 		cancelUrl: string
 	): Promise<string> {
 		const amountInCents = Math.round(amount * 100)
-		const platformFeeInCents = Math.round(amountInCents * (PLATFORM_FEE_PERCENT / 100))
 
 		const session = await this.stripe.checkout.sessions.create({
 			mode: 'payment',
@@ -184,7 +181,6 @@ export default class StripeService {
 				},
 			],
 			payment_intent_data: {
-				application_fee_amount: platformFeeInCents,
 				transfer_data: {
 					destination: connectedAccountId,
 				},
@@ -198,7 +194,7 @@ export default class StripeService {
 		return session.url!
 	}
 
-	// Order quote Checkout (Stripe Connect with platform fee)
+	// Order quote Checkout (Stripe Connect)
 
 	async createOrderQuoteCheckout(
 		amount: number,
@@ -210,7 +206,6 @@ export default class StripeService {
 		cancelUrl: string
 	): Promise<string> {
 		const amountInCents = Math.round(amount * 100)
-		const platformFeeInCents = Math.round(amountInCents * (PLATFORM_FEE_PERCENT / 100))
 
 		const session = await this.stripe.checkout.sessions.create({
 			mode: 'payment',
@@ -229,7 +224,6 @@ export default class StripeService {
 				},
 			],
 			payment_intent_data: {
-				application_fee_amount: platformFeeInCents,
 				transfer_data: {
 					destination: connectedAccountId,
 				},
@@ -295,13 +289,4 @@ export default class StripeService {
 		return mapping[priceId] || null
 	}
 
-	// Utility
-
-	calculatePlatformFee(amount: number): number {
-		return Math.round(amount * (PLATFORM_FEE_PERCENT / 100) * 100) / 100
-	}
-
-	calculatePatissierPayout(amount: number): number {
-		return amount - this.calculatePlatformFee(amount)
-	}
 }

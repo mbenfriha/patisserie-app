@@ -1,8 +1,9 @@
 import type { HttpContext } from '@adonisjs/core/http'
-import PatissierProfile from '#models/patissier_profile'
-import Creation from '#models/creation'
 import type { CreationImage } from '#models/creation'
+import Creation from '#models/creation'
+import PatissierProfile from '#models/patissier_profile'
 import StorageService from '#services/storage_service'
+import { storeCreationValidator, updateCreationValidator } from '#validators/creation_validator'
 
 const storage = new StorageService()
 
@@ -20,9 +21,7 @@ async function uniqueSlug(title: string, patissierId: string, excludeId?: string
 	let slug = baseSlug
 	let counter = 1
 	while (true) {
-		const query = Creation.query()
-			.where('patissierId', patissierId)
-			.where('slug', slug)
+		const query = Creation.query().where('patissierId', patissierId).where('slug', slug)
 		if (excludeId) query.whereNot('id', excludeId)
 		const existing = await query.first()
 		if (!existing) break
@@ -40,9 +39,7 @@ export default class CreationsController {
 		const limit = Math.min(Number(request.input('limit', 20)) || 20, 100)
 		const categoryId = request.input('category_id')
 
-		const query = Creation.query()
-			.where('patissierId', profile.id)
-			.orderBy('sortOrder', 'asc')
+		const query = Creation.query().where('patissierId', profile.id).orderBy('sortOrder', 'asc')
 
 		if (categoryId) {
 			query.where('categoryId', categoryId)
@@ -70,22 +67,15 @@ export default class CreationsController {
 			if (total >= 50) {
 				return response.forbidden({
 					success: false,
-					message: 'Le plan Starter est limité à 50 créations. Passez au plan Pro pour des créations illimitées.',
+					message:
+						'Le plan Starter est limité à 50 créations. Passez au plan Pro pour des créations illimitées.',
 					requiredPlan: 'pro',
 					currentPlan: profile.plan,
 				})
 			}
 		}
 
-		const data = request.only([
-			'title',
-			'description',
-			'categoryId',
-			'price',
-			'isVisible',
-			'isFeatured',
-			'tags',
-		])
+		const data = await request.validateUsing(storeCreationValidator)
 
 		const maxSortOrder = await Creation.query()
 			.where('patissierId', profile.id)
@@ -108,7 +98,11 @@ export default class CreationsController {
 			sortOrder: ((maxSortOrder as any)?.$extras?.maxOrder ?? -1) + 1,
 		})
 
-		creation.slug = await uniqueSlug(title || `creation-${creation.id.slice(0, 8)}`, profile.id, creation.id)
+		creation.slug = await uniqueSlug(
+			title || `creation-${creation.id.slice(0, 8)}`,
+			profile.id,
+			creation.id
+		)
 		await creation.save()
 
 		return response.created({
@@ -141,21 +135,16 @@ export default class CreationsController {
 			.where('patissierId', profile.id)
 			.firstOrFail()
 
-		const data: Record<string, any> = request.only([
-			'title',
-			'description',
-			'categoryId',
-			'price',
-			'isVisible',
-			'isFeatured',
-			'tags',
-			'sortOrder',
-		])
+		const data: Record<string, any> = await request.validateUsing(updateCreationValidator)
 
 		if ('title' in data) {
 			data.title = data.title?.trim() || null
 			if (data.title !== creation.title) {
-				data.slug = await uniqueSlug(data.title || `creation-${creation.id.slice(0, 8)}`, profile.id, creation.id)
+				data.slug = await uniqueSlug(
+					data.title || `creation-${creation.id.slice(0, 8)}`,
+					profile.id,
+					creation.id
+				)
 			}
 		}
 
@@ -249,7 +238,7 @@ export default class CreationsController {
 		const index = Number(params.idx)
 		const images = [...(creation.images || [])]
 
-		if (isNaN(index) || index < 0 || index >= images.length) {
+		if (Number.isNaN(index) || index < 0 || index >= images.length) {
 			return response.badRequest({
 				success: false,
 				message: 'Invalid image index',
@@ -287,7 +276,7 @@ export default class CreationsController {
 		const index = Number(params.idx)
 		const images = [...(creation.images || [])]
 
-		if (isNaN(index) || index < 0 || index >= images.length) {
+		if (Number.isNaN(index) || index < 0 || index >= images.length) {
 			return response.badRequest({ success: false, message: 'Invalid image index' })
 		}
 
@@ -299,7 +288,11 @@ export default class CreationsController {
 		// Delete old image from storage
 		const oldUrl = images[index].url
 		if (oldUrl && !oldUrl.startsWith('http')) {
-			try { await storage.deleteImage(oldUrl) } catch { /* ignore */ }
+			try {
+				await storage.deleteImage(oldUrl)
+			} catch {
+				/* ignore */
+			}
 		}
 
 		// Upload new image
@@ -323,7 +316,7 @@ export default class CreationsController {
 		const index = Number(params.idx)
 		const images = [...(creation.images || [])]
 
-		if (isNaN(index) || index < 0 || index >= images.length) {
+		if (Number.isNaN(index) || index < 0 || index >= images.length) {
 			return response.badRequest({
 				success: false,
 				message: 'Invalid image index',

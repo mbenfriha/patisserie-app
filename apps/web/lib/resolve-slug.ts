@@ -15,18 +15,12 @@ export async function resolveSlug(slug: string): Promise<string> {
 	const hostWithoutPort = host.split(':')[0]
 	const mainDomain = 'patissio.com'
 
-	const isLocalhost =
-		hostWithoutPort === 'localhost' || hostWithoutPort === '127.0.0.1'
-	if (
-		!isLocalhost &&
-		!hostWithoutPort.endsWith(mainDomain) &&
-		hostWithoutPort !== mainDomain
-	) {
+	const isLocalhost = hostWithoutPort === 'localhost' || hostWithoutPort === '127.0.0.1'
+	if (!isLocalhost && !hostWithoutPort.endsWith(mainDomain) && hostWithoutPort !== mainDomain) {
 		try {
-			const res = await fetch(
-				`${API_URL}/public/domain/${hostWithoutPort}`,
-				{ next: { revalidate: 60 } },
-			)
+			const res = await fetch(`${API_URL}/public/domain/${hostWithoutPort}`, {
+				next: { revalidate: 60 },
+			})
 			if (res.ok) {
 				const data = await res.json()
 				return data.data?.slug || slug

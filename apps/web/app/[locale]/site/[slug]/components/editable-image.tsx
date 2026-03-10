@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState, useEffect, type CSSProperties, type ReactNode } from 'react'
+import { type CSSProperties, type ReactNode, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { ImageCropper } from '@/components/ui/image-cropper'
 import { useInlineEdit } from './inline-edit-provider'
@@ -87,7 +87,11 @@ export function EditableImage({
 	const dropdownMenu = showMenu && (
 		<div
 			className="absolute overflow-hidden rounded-lg border border-white/20 bg-[#1A1A1A]/95 shadow-2xl backdrop-blur-xl"
-			style={overlay ? { top: '100%', left: 0, marginTop: 8, zIndex: 60 } : { left: '50%', top: '50%', transform: 'translate(-50%, -50%)', zIndex: 60 }}
+			style={
+				overlay
+					? { top: '100%', left: 0, marginTop: 8, zIndex: 60 }
+					: { left: '50%', top: '50%', transform: 'translate(-50%, -50%)', zIndex: 60 }
+			}
 			onClick={(e) => e.stopPropagation()}
 		>
 			<button
@@ -98,7 +102,16 @@ export function EditableImage({
 				}}
 				className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-white/90 transition-colors hover:bg-white/10"
 			>
-				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+				<svg
+					width="16"
+					height="16"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					strokeWidth="1.5"
+					strokeLinecap="round"
+					strokeLinejoin="round"
+				>
 					<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
 					<polyline points="17 8 12 3 7 8" />
 					<line x1="12" y1="3" x2="12" y2="15" />
@@ -111,7 +124,16 @@ export function EditableImage({
 					onClick={handleEditExisting}
 					className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-white/90 transition-colors hover:bg-white/10"
 				>
-					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+					<svg
+						width="16"
+						height="16"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						strokeWidth="1.5"
+						strokeLinecap="round"
+						strokeLinejoin="round"
+					>
 						<rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
 						<line x1="9" y1="3" x2="9" y2="21" />
 						<line x1="15" y1="3" x2="15" y2="21" />
@@ -127,7 +149,16 @@ export function EditableImage({
 					onClick={handleDelete}
 					className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-red-400 transition-colors hover:bg-white/10"
 				>
-					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+					<svg
+						width="16"
+						height="16"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						strokeWidth="1.5"
+						strokeLinecap="round"
+						strokeLinejoin="round"
+					>
 						<polyline points="3 6 5 6 21 6" />
 						<path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
 					</svg>
@@ -148,17 +179,18 @@ export function EditableImage({
 	)
 
 	// Render cropper via portal so overflow-hidden parents can't clip it
-	const cropperModal = cropSrc && typeof document !== 'undefined'
-		? createPortal(
-				<ImageCropper
-					imageSrc={cropSrc}
-					aspect={cropAspect}
-					onCrop={handleCrop}
-					onCancel={handleCancelCrop}
-				/>,
-				document.body
-			)
-		: null
+	const cropperModal =
+		cropSrc && typeof document !== 'undefined'
+			? createPortal(
+					<ImageCropper
+						imageSrc={cropSrc}
+						aspect={cropAspect}
+						onCrop={handleCrop}
+						onCancel={handleCancelCrop}
+					/>,
+					document.body
+				)
+			: null
 
 	// ── Overlay mode: floating button ──
 	if (overlay) {
@@ -166,11 +198,7 @@ export function EditableImage({
 
 		return (
 			<>
-				<div
-					ref={containerRef}
-					className="absolute right-4 z-[60]"
-					style={{ top: '5rem' }}
-				>
+				<div ref={containerRef} className="absolute right-4 z-[60]" style={{ top: '5rem' }}>
 					<button
 						type="button"
 						onClick={(e) => {

@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { SectionTitle } from '../components/section-title'
-import { getImageUrl } from '@/lib/utils/image-url'
 import { resolveSlug } from '@/lib/resolve-slug'
+import { getImageUrl } from '@/lib/utils/image-url'
+import { SectionTitle } from '../components/section-title'
 import { CreationsGrid } from './creations-grid'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333'
@@ -55,10 +55,7 @@ export default async function CreationsGalleryPage({ params }: Props) {
 	let creations: any[] = []
 
 	try {
-		;[profile, creations] = await Promise.all([
-			getProfile(slug),
-			getCreations(slug),
-		])
+		;[profile, creations] = await Promise.all([getProfile(slug), getCreations(slug)])
 	} catch {
 		return notFound()
 	}
@@ -111,10 +108,7 @@ export default async function CreationsGalleryPage({ params }: Props) {
 					}}
 				/>
 
-				<div
-					className="relative z-10 px-6"
-					style={{ animation: 'fadeInUp 0.8s ease-out' }}
-				>
+				<div className="relative z-10 px-6" style={{ animation: 'fadeInUp 0.8s ease-out' }}>
 					<SectionTitle subtitle="galerie" title="Nos Créations" light />
 				</div>
 			</section>

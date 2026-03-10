@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import Cropper, { type Area } from 'react-easy-crop'
 
 interface ImageCropperProps {
@@ -88,23 +88,9 @@ function getCroppedImg(imageSrc: string, crop: Area): Promise<Blob | null> {
 			const ctx = canvas.getContext('2d')
 			if (!ctx) return resolve(null)
 
-			ctx.drawImage(
-				image,
-				crop.x,
-				crop.y,
-				crop.width,
-				crop.height,
-				0,
-				0,
-				crop.width,
-				crop.height,
-			)
+			ctx.drawImage(image, crop.x, crop.y, crop.width, crop.height, 0, 0, crop.width, crop.height)
 
-			canvas.toBlob(
-				(blob) => resolve(blob),
-				'image/jpeg',
-				0.92,
-			)
+			canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.92)
 		}
 		image.onerror = () => resolve(null)
 		image.src = imageSrc

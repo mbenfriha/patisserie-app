@@ -31,12 +31,9 @@ export function WorkshopBookingForm({
 
 	const total = price * form.nb_participants
 	const isFullPayment = depositPercent >= 100
-	const depositAmount = !isFullPayment && depositPercent > 0
-		? ((total * depositPercent) / 100).toFixed(2)
-		: null
-	const remainingAmount = depositAmount
-		? (total - Number(depositAmount)).toFixed(2)
-		: null
+	const depositAmount =
+		!isFullPayment && depositPercent > 0 ? ((total * depositPercent) / 100).toFixed(2) : null
+	const remainingAmount = depositAmount ? (total - Number(depositAmount)).toFixed(2) : null
 
 	function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
 		const { name, value } = e.target
@@ -93,7 +90,13 @@ export function WorkshopBookingForm({
 					className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full"
 					style={{ backgroundColor: 'rgba(34,197,94,0.1)' }}
 				>
-					<svg className="h-10 w-10 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+					<svg
+						className="h-10 w-10 text-green-500"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+						strokeWidth={2}
+					>
 						<path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
 					</svg>
 				</div>
@@ -101,7 +104,8 @@ export function WorkshopBookingForm({
 					Réservation confirmée !
 				</h3>
 				<p className="mx-auto mt-4 max-w-sm text-sm leading-relaxed text-[var(--dark-soft)]/70">
-					Votre demande de réservation a bien été envoyée. Vous recevrez une confirmation par email sous peu.
+					Votre demande de réservation a bien été envoyée. Vous recevrez une confirmation par email
+					sous peu.
 				</p>
 			</div>
 		)
@@ -234,9 +238,7 @@ export function WorkshopBookingForm({
 							>
 								&minus;
 							</button>
-							<span
-								className="min-w-[40px] text-center font-[family-name:'Cormorant_Garamond'] text-2xl font-semibold text-[var(--dark)]"
-							>
+							<span className="min-w-[40px] text-center font-[family-name:'Cormorant_Garamond'] text-2xl font-semibold text-[var(--dark)]">
 								{form.nb_participants}
 							</span>
 							<button
@@ -259,12 +261,12 @@ export function WorkshopBookingForm({
 				</div>
 
 				{/* ── Price summary ── */}
-				<div
-					className="mt-8 rounded-xl p-5"
-					style={{ backgroundColor: 'var(--cream)' }}
-				>
+				<div className="mt-8 rounded-xl p-5" style={{ backgroundColor: 'var(--cream)' }}>
 					<div className="flex items-center justify-between">
-						<span className="text-sm text-[var(--dark-soft)]/70" style={{ fontFamily: "'Josefin Sans', sans-serif" }}>
+						<span
+							className="text-sm text-[var(--dark-soft)]/70"
+							style={{ fontFamily: "'Josefin Sans', sans-serif" }}
+						>
 							{form.nb_participants} &times; {price}&nbsp;&euro;
 						</span>
 						<span
@@ -276,27 +278,41 @@ export function WorkshopBookingForm({
 					</div>
 					{isFullPayment ? (
 						<div className="mt-2 border-t border-[var(--cream-dark)] pt-3">
-							<p className="text-sm text-[var(--dark-soft)]/60" style={{ fontFamily: "'Josefin Sans', sans-serif" }}>
-								Total à payer : <span className="font-semibold text-[var(--gold)]">{total}&nbsp;&euro;</span>
+							<p
+								className="text-sm text-[var(--dark-soft)]/60"
+								style={{ fontFamily: "'Josefin Sans', sans-serif" }}
+							>
+								Total à payer :{' '}
+								<span className="font-semibold text-[var(--gold)]">{total}&nbsp;&euro;</span>
 							</p>
 						</div>
-					) : depositAmount && (
-						<div className="mt-2 border-t border-[var(--cream-dark)] pt-3">
-							<p className="text-sm text-[var(--dark-soft)]/60" style={{ fontFamily: "'Josefin Sans', sans-serif" }}>
-								Acompte à payer : <span className="font-semibold text-[var(--gold)]">{depositAmount}&nbsp;&euro;</span>
-							</p>
-							<p className="mt-1 text-sm text-[var(--dark-soft)]/60" style={{ fontFamily: "'Josefin Sans', sans-serif" }}>
-								Reste à régler sur place : <span className="font-semibold">{remainingAmount}&nbsp;&euro;</span>
-							</p>
-						</div>
+					) : (
+						depositAmount && (
+							<div className="mt-2 border-t border-[var(--cream-dark)] pt-3">
+								<p
+									className="text-sm text-[var(--dark-soft)]/60"
+									style={{ fontFamily: "'Josefin Sans', sans-serif" }}
+								>
+									Acompte à payer :{' '}
+									<span className="font-semibold text-[var(--gold)]">
+										{depositAmount}&nbsp;&euro;
+									</span>
+								</p>
+								<p
+									className="mt-1 text-sm text-[var(--dark-soft)]/60"
+									style={{ fontFamily: "'Josefin Sans', sans-serif" }}
+								>
+									Reste à régler sur place :{' '}
+									<span className="font-semibold">{remainingAmount}&nbsp;&euro;</span>
+								</p>
+							</div>
+						)
 					)}
 				</div>
 
 				{/* ── Error message ── */}
 				{error && (
-					<div className="mt-5 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
-						{error}
-					</div>
+					<div className="mt-5 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div>
 				)}
 
 				{/* ── Submit button ── */}
@@ -321,8 +337,18 @@ export function WorkshopBookingForm({
 					) : (
 						<>
 							{/* Credit card icon */}
-							<svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-								<path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
+							<svg
+								className="h-5 w-5"
+								fill="none"
+								viewBox="0 0 24 24"
+								stroke="currentColor"
+								strokeWidth={1.5}
+							>
+								<path
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z"
+								/>
 							</svg>
 							Réserver
 						</>

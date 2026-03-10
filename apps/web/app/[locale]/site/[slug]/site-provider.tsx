@@ -1,9 +1,17 @@
 'use client'
 
-import { createContext, useContext, useEffect, useMemo, useState, useCallback, type ReactNode } from 'react'
-import { SiteNavbar } from './components/site-navbar'
-import { SiteFooter } from './components/site-footer'
+import {
+	createContext,
+	type ReactNode,
+	useCallback,
+	useContext,
+	useEffect,
+	useMemo,
+	useState,
+} from 'react'
 import { InlineEditProvider } from './components/inline-edit-provider'
+import { SiteFooter } from './components/site-footer'
+import { SiteNavbar } from './components/site-navbar'
 
 export interface SiteConfig {
 	heroSubtitle?: string
@@ -140,6 +148,15 @@ function adjustColor(hex: string, amount: number): string {
 	return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`
 }
 
+/** Mix a color with white at a given ratio (0 = white, 1 = full color) */
+function tintColor(hex: string, ratio: number): string {
+	const num = parseInt(hex.replace('#', ''), 16)
+	const r = Math.round(255 + (((num >> 16) & 0xff) - 255) * ratio)
+	const g = Math.round(255 + (((num >> 8) & 0xff) - 255) * ratio)
+	const b = Math.round(255 + ((num & 0xff) - 255) * ratio)
+	return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`
+}
+
 interface SiteContextValue {
 	profile: PatissierProfile
 	basePath: string
@@ -161,10 +178,7 @@ export function useSiteBasePath() {
 
 export function useSiteConfig(): Required<SiteConfig> {
 	const profile = useSiteProfile()
-	return useMemo(
-		() => ({ ...DEFAULT_SITE_CONFIG, ...profile.siteConfig }),
-		[profile.siteConfig]
-	)
+	return useMemo(() => ({ ...DEFAULT_SITE_CONFIG, ...profile.siteConfig }), [profile.siteConfig])
 }
 
 export function SiteProvider({
@@ -178,6 +192,23 @@ export function SiteProvider({
 }) {
 	const [profile, setProfile] = useState(initialProfile)
 	const [basePath, setBasePath] = useState(`/${slug}`)
+
+	// Listen for live preview updates from the dashboard editor iframe parent
+	useEffect(() => {
+		const handleMessage = (event: MessageEvent) => {
+			if (event.data?.type !== 'PATISSIO_PREVIEW_UPDATE') return
+			const data = event.data.payload as Partial<PatissierProfile>
+			setProfile((prev) => ({
+				...prev,
+				...data,
+				siteConfig: { ...prev.siteConfig, ...data.siteConfig },
+				socialLinks: { ...prev.socialLinks, ...data.socialLinks },
+			}))
+		}
+		window.addEventListener('message', handleMessage)
+		return () => window.removeEventListener('message', handleMessage)
+	}, [])
+
 	const fontPreset = profile.siteConfig?.fontPreset || 'classic'
 	const fonts = FONT_PRESETS[fontPreset] || FONT_PRESETS.classic
 
@@ -185,11 +216,8 @@ export function SiteProvider({
 		const hostname = window.location.hostname
 		const isLocalSubdomain = hostname.endsWith('.localhost')
 		const isProdSubdomain =
-			hostname.split('.').length > 2 &&
-			hostname !== 'www.' + hostname.split('.').slice(1).join('.')
-		const isCustomDomain =
-			!hostname.includes('localhost') &&
-			!hostname.endsWith('patissio.com')
+			hostname.split('.').length > 2 && hostname !== 'www.' + hostname.split('.').slice(1).join('.')
+		const isCustomDomain = !hostname.includes('localhost') && !hostname.endsWith('patissio.com')
 		if (isLocalSubdomain || isProdSubdomain || isCustomDomain) {
 			setBasePath('')
 		}
@@ -197,9 +225,7 @@ export function SiteProvider({
 
 	return (
 		<SiteContext.Provider value={{ profile, basePath }}>
-			{fonts.cssImport && (
-				<link rel="stylesheet" href={fonts.cssImport} />
-			)}
+			{fonts.cssImport && <link rel="stylesheet" href={fonts.cssImport} />}
 			<div
 				className="min-h-screen bg-[var(--cream)]"
 				style={
@@ -207,8 +233,8 @@ export function SiteProvider({
 						'--gold': profile.primaryColor || '#C5A55A',
 						'--gold-light': adjustColor(profile.primaryColor || '#C5A55A', 40),
 						'--gold-dark': adjustColor(profile.primaryColor || '#C5A55A', -30),
-						'--cream': '#FDF8F0',
-						'--cream-dark': '#F5EDE0',
+						'--cream': tintColor(profile.secondaryColor || '#8B6F47', 0.06),
+						'--cream-dark': tintColor(profile.secondaryColor || '#8B6F47', 0.12),
 						'--dark': '#1A1A1A',
 						'--dark-soft': '#2D2D2D',
 						'--font-heading': fonts.heading,
@@ -228,7 +254,16 @@ export function SiteProvider({
 						rel="noreferrer"
 						className="fixed bottom-4 left-4 z-40 flex items-center gap-1.5 rounded-full bg-[#1A1A1A]/80 px-3 py-1.5 text-[11px] text-white/70 shadow-lg backdrop-blur-sm transition-all duration-300 hover:bg-[#1A1A1A] hover:text-white"
 					>
-						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+						<svg
+							width="14"
+							height="14"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							strokeWidth="2"
+							strokeLinecap="round"
+							strokeLinejoin="round"
+						>
 							<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
 						</svg>
 						Propulsé par <span className="font-semibold">Patissio</span>

@@ -1,6 +1,6 @@
 'use client'
 
-import { createElement, useRef, useEffect, type CSSProperties } from 'react'
+import { type CSSProperties, createElement, useEffect, useRef } from 'react'
 import { useInlineEdit } from './inline-edit-provider'
 
 interface EditableTextProps {

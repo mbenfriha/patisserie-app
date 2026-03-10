@@ -1,28 +1,152 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
+import {
+	AlertCircle,
+	Check,
+	CheckCircle2,
+	CreditCard,
+	Eye,
+	EyeOff,
+	Globe,
+	HelpCircle,
+	Loader2,
+	Lock,
+	Palette,
+	Save,
+	Trash2,
+	Upload,
+	X,
+} from 'lucide-react'
 import Image from 'next/image'
-import { Pencil, Check, X, Globe, Loader2, CheckCircle2, AlertCircle, ExternalLink, Upload, Trash2, Eye, EyeOff } from 'lucide-react'
-import { useAuth } from '@/lib/providers/auth-provider'
+import { useSearchParams } from 'next/navigation'
+import { useCallback, useEffect, useRef, useState } from 'react'
+
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Progress } from '@/components/ui/progress'
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@/components/ui/select'
+import { Separator } from '@/components/ui/separator'
+import { Switch } from '@/components/ui/switch'
 import { api } from '@/lib/api/client'
+import { useAuth } from '@/lib/providers/auth-provider'
+
+function ColorPicker({
+	label,
+	value,
+	onChange,
+}: {
+	label: string
+	value: string
+	onChange: (value: string) => void
+}) {
+	return (
+		<div className="space-y-2">
+			<Label>{label}</Label>
+			<div className="flex items-center gap-2">
+				<div
+					className="h-9 w-9 shrink-0 rounded-md border"
+					style={{ backgroundColor: value }}
+				/>
+				<Input
+					type="text"
+					value={value}
+					onChange={(e) => onChange(e.target.value)}
+					className="flex-1 font-mono text-sm"
+					placeholder="#000000"
+				/>
+				<input
+					type="color"
+					value={value}
+					onChange={(e) => onChange(e.target.value)}
+					className="h-9 w-9 shrink-0 cursor-pointer rounded-md border bg-transparent p-0.5"
+				/>
+			</div>
+		</div>
+	)
+}
+
+function PasswordStrengthIndicator({
+	rules,
+}: {
+	rules: { key: string; label: string; valid: boolean }[]
+}) {
+	const validCount = rules.filter((r) => r.valid).length
+	const percentage = (validCount / rules.length) * 100
+
+	return (
+		<div className="space-y-3 rounded-lg border bg-muted/50 p-4">
+			<div className="space-y-1.5">
+				<div className="flex items-center justify-between">
+					<p className="text-sm font-medium">Force du mot de passe</p>
+					<span className="text-xs text-muted-foreground">
+						{validCount}/{rules.length}
+					</span>
+				</div>
+				<Progress value={percentage} className="h-2" />
+			</div>
+			<div className="grid grid-cols-1 gap-1.5">
+				{rules.map((rule) => (
+					<div key={rule.key} className="flex items-center gap-2">
+						{rule.valid ? (
+							<Check className="h-3.5 w-3.5 text-green-600" />
+						) : (
+							<X className="h-3.5 w-3.5 text-muted-foreground" />
+						)}
+						<span
+							className={`text-xs ${rule.valid ? 'text-green-600' : 'text-muted-foreground'}`}
+						>
+							{rule.label}
+						</span>
+					</div>
+				))}
+			</div>
+		</div>
+	)
+}
 
 export default function SettingsPage() {
 	const { user, refreshUser, changePassword } = useAuth()
 	const searchParams = useSearchParams()
 	const [profile, setProfile] = useState<any>(null)
 	const [isLoading, setIsLoading] = useState(true)
+	const [isSaving, setIsSaving] = useState(false)
 	const [isConnecting, setIsConnecting] = useState(false)
 	const [stripeStatus, setStripeStatus] = useState<string | null>(null)
 	const callbackHandled = useRef(false)
-	const [isEditingName, setIsEditingName] = useState(false)
-	const [editedName, setEditedName] = useState('')
-	const [isSavingName, setIsSavingName] = useState(false)
+
+	// Profile form state
+	const [businessName, setBusinessName] = useState('')
+	const [slug, setSlug] = useState('')
+	const [phone, setPhone] = useState('')
+	const [addressStreet, setAddressStreet] = useState('')
+	const [addressCity, setAddressCity] = useState('')
+	const [addressZip, setAddressZip] = useState('')
+	const [addressCountry, setAddressCountry] = useState('')
+
+	// Branding state
+	const [primaryColor, setPrimaryColor] = useState('#000000')
+	const [secondaryColor, setSecondaryColor] = useState('#000000')
+	const [fontFamily, setFontFamily] = useState('default')
+	const logoInputRef = useRef<HTMLInputElement>(null)
+	const [logoUploading, setLogoUploading] = useState(false)
+
+	// Domain state
 	const [domainInput, setDomainInput] = useState('')
 	const [domainLoading, setDomainLoading] = useState(false)
 	const [domainError, setDomainError] = useState<string | null>(null)
 	const [domainStatus, setDomainStatus] = useState<{ status: string; domain: string } | null>(null)
 	const [domainVerifying, setDomainVerifying] = useState(false)
+
+	// Favicon state
 	const [faviconUploading, setFaviconUploading] = useState(false)
 	const faviconInputRef = useRef<HTMLInputElement>(null)
 
@@ -30,12 +154,13 @@ export default function SettingsPage() {
 	const [currentPassword, setCurrentPassword] = useState('')
 	const [newPassword, setNewPassword] = useState('')
 	const [newPasswordConfirmation, setNewPasswordConfirmation] = useState('')
-	const [showPasswords, setShowPasswords] = useState(false)
+	const [showCurrentPassword, setShowCurrentPassword] = useState(false)
+	const [showNewPassword, setShowNewPassword] = useState(false)
 	const [passwordError, setPasswordError] = useState('')
 	const [passwordSuccess, setPasswordSuccess] = useState(false)
 	const [isChangingPassword, setIsChangingPassword] = useState(false)
 
-	const passwordRules = [
+	const passwordStrengthRules = [
 		{ key: 'minLength', label: '8 caractères minimum', valid: newPassword.length >= 8 },
 		{ key: 'uppercase', label: 'Une majuscule', valid: /[A-Z]/.test(newPassword) },
 		{ key: 'lowercase', label: 'Une minuscule', valid: /[a-z]/.test(newPassword) },
@@ -45,17 +170,15 @@ export default function SettingsPage() {
 			label: 'Un caractère spécial',
 			valid: /[^A-Za-z0-9]/.test(newPassword),
 		},
-		{
-			key: 'match',
-			label: 'Les mots de passe correspondent',
-			valid:
-				newPassword.length > 0 &&
-				newPasswordConfirmation.length > 0 &&
-				newPassword === newPasswordConfirmation,
-		},
 	]
 
-	const allPasswordRulesValid = passwordRules.every((rule) => rule.valid)
+	const passwordsMatch =
+		newPassword.length > 0 &&
+		newPasswordConfirmation.length > 0 &&
+		newPassword === newPasswordConfirmation
+
+	const allPasswordRulesValid =
+		passwordStrengthRules.every((rule) => rule.valid) && passwordsMatch
 
 	const handleChangePassword = async (e: React.FormEvent) => {
 		e.preventDefault()
@@ -76,28 +199,23 @@ export default function SettingsPage() {
 		}
 	}
 
-	const handleSaveName = async () => {
-		const trimmed = editedName.trim()
-		if (!trimmed || trimmed === profile?.businessName) {
-			setIsEditingName(false)
-			return
-		}
-		setIsSavingName(true)
-		try {
-			await api.patch('/patissier/profile', { businessName: trimmed })
-			setProfile((p: any) => ({ ...p, businessName: trimmed }))
-			setIsEditingName(false)
-		} catch (err) {
-			console.error(err)
-		} finally {
-			setIsSavingName(false)
-		}
-	}
-
 	const loadProfile = useCallback(() => {
 		api
 			.get('/patissier/profile')
-			.then((res) => setProfile(res.data.data))
+			.then((res) => {
+				const p = res.data.data
+				setProfile(p)
+				setBusinessName(p?.businessName ?? '')
+				setSlug(p?.slug ?? '')
+				setPhone(p?.phone ?? '')
+				setAddressStreet(p?.addressStreet ?? '')
+				setAddressCity(p?.addressCity ?? '')
+				setAddressZip(p?.addressZip ?? '')
+				setAddressCountry(p?.addressCountry ?? '')
+				setPrimaryColor(p?.primaryColor ?? '#000000')
+				setSecondaryColor(p?.secondaryColor ?? '#000000')
+				setFontFamily(p?.fontFamily ?? 'default')
+			})
 			.catch(console.error)
 			.finally(() => setIsLoading(false))
 	}, [])
@@ -128,6 +246,46 @@ export default function SettingsPage() {
 			setStripeStatus('refresh')
 		}
 	}, [searchParams, loadProfile, refreshUser])
+
+	const handleSaveAll = async () => {
+		setIsSaving(true)
+		try {
+			// Save profile data
+			await api.patch('/patissier/profile', {
+				businessName: businessName.trim(),
+				phone: phone.trim(),
+				addressStreet: addressStreet.trim(),
+				addressCity: addressCity.trim(),
+				addressZip: addressZip.trim(),
+				addressCountry: addressCountry.trim(),
+			})
+
+			// Save design data
+			await api.put('/patissier/site-design', {
+				primaryColor,
+				secondaryColor,
+				fontFamily,
+			})
+
+			// Update local profile state
+			setProfile((p: any) => ({
+				...p,
+				businessName: businessName.trim(),
+				phone: phone.trim(),
+				addressStreet: addressStreet.trim(),
+				addressCity: addressCity.trim(),
+				addressZip: addressZip.trim(),
+				addressCountry: addressCountry.trim(),
+				primaryColor,
+				secondaryColor,
+				fontFamily,
+			}))
+		} catch (err) {
+			console.error(err)
+		} finally {
+			setIsSaving(false)
+		}
+	}
 
 	const handleConnectStripe = async () => {
 		setIsConnecting(true)
@@ -167,12 +325,16 @@ export default function SettingsPage() {
 	}
 
 	const handleSetDomain = async () => {
-		const domain = domainInput.trim().toLowerCase().replace(/^(https?:\/\/)?(www\.)?/, '').replace(/\/.*$/, '')
+		const domain = domainInput
+			.trim()
+			.toLowerCase()
+			.replace(/^(https?:\/\/)?(www\.)?/, '')
+			.replace(/\/.*$/, '')
 		if (!domain) return
 		setDomainLoading(true)
 		setDomainError(null)
 		try {
-			const res = await api.put('/patissier/domain', { domain })
+			await api.put('/patissier/domain', { domain })
 			setProfile((p: any) => ({ ...p, customDomain: domain, customDomainVerified: false }))
 			setDomainStatus({ status: 'pending', domain })
 			setDomainInput('')
@@ -212,6 +374,35 @@ export default function SettingsPage() {
 		}
 	}
 
+	const handleUploadLogo = async (e: React.ChangeEvent<HTMLInputElement>) => {
+		const file = e.target.files?.[0]
+		if (!file) return
+		setLogoUploading(true)
+		try {
+			const formData = new FormData()
+			formData.append('logo', file)
+			const res = await api.upload('/patissier/logo', formData)
+			setProfile((p: any) => ({ ...p, logoUrl: res.data.data.logoUrl }))
+		} catch (err) {
+			console.error(err)
+		} finally {
+			setLogoUploading(false)
+			if (logoInputRef.current) logoInputRef.current.value = ''
+		}
+	}
+
+	const handleDeleteLogo = async () => {
+		setLogoUploading(true)
+		try {
+			await api.delete('/patissier/logo')
+			setProfile((p: any) => ({ ...p, logoUrl: null }))
+		} catch (err) {
+			console.error(err)
+		} finally {
+			setLogoUploading(false)
+		}
+	}
+
 	const handleUploadFavicon = async (e: React.ChangeEvent<HTMLInputElement>) => {
 		const file = e.target.files?.[0]
 		if (!file) return
@@ -247,22 +438,39 @@ export default function SettingsPage() {
 
 	return (
 		<div className="space-y-8">
-			<h1 className="text-3xl font-bold">Paramètres</h1>
+			{/* Header */}
+			<div className="flex items-center justify-between">
+				<div>
+					<h1 className="text-2xl font-bold tracking-tight">Paramètres</h1>
+					<p className="text-muted-foreground">Configurez votre profil et votre compte</p>
+				</div>
+				<Button onClick={handleSaveAll} disabled={isSaving}>
+					{isSaving ? (
+						<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+					) : (
+						<Save className="mr-2 h-4 w-4" />
+					)}
+					Enregistrer
+				</Button>
+			</div>
 
 			{/* Stripe callback messages */}
 			{stripeStatus === 'success' && (
 				<div className="rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800">
-					Votre compte Stripe a été connecté avec succès ! Vous pouvez maintenant recevoir des paiements.
+					Votre compte Stripe a été connecté avec succès ! Vous pouvez maintenant recevoir des
+					paiements.
 				</div>
 			)}
 			{stripeStatus === 'incomplete' && (
 				<div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800">
-					La vérification de votre compte Stripe n'est pas encore terminée. Veuillez compléter toutes les étapes.
+					La vérification de votre compte Stripe n'est pas encore terminée. Veuillez compléter
+					toutes les étapes.
 				</div>
 			)}
 			{stripeStatus === 'refresh' && (
 				<div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800">
-					Le lien d'onboarding a expiré. Cliquez sur "Connecter Stripe" pour obtenir un nouveau lien.
+					Le lien d'onboarding a expiré. Cliquez sur "Connecter Stripe" pour obtenir un nouveau
+					lien.
 				</div>
 			)}
 			{stripeStatus === 'error' && (
@@ -271,243 +479,630 @@ export default function SettingsPage() {
 				</div>
 			)}
 
-			<div className="space-y-6">
-				<section className="rounded-lg border p-6">
-					<h2 className="text-xl font-semibold">Profil</h2>
-					<div className="mt-4 grid gap-4 md:grid-cols-2">
-						<div>
-							<label className="text-sm font-medium">Nom de la pâtisserie</label>
-							{isEditingName ? (
-								<div className="mt-1 flex items-center gap-2">
-									<input
-										type="text"
-										value={editedName}
-										onChange={(e) => setEditedName(e.target.value)}
-										onKeyDown={(e) => {
-											if (e.key === 'Enter') handleSaveName()
-											if (e.key === 'Escape') setIsEditingName(false)
+			{/* 2-column grid */}
+			<div className="grid gap-6 lg:grid-cols-2">
+				{/* Business Profile Card */}
+				<Card>
+					<CardHeader>
+						<CardTitle className="text-lg">Profil de l'entreprise</CardTitle>
+					</CardHeader>
+					<CardContent className="space-y-4">
+						<div className="space-y-2">
+							<Label htmlFor="businessName">Nom de la pâtisserie</Label>
+							<Input
+								id="businessName"
+								value={businessName}
+								onChange={(e) => setBusinessName(e.target.value)}
+							/>
+						</div>
+
+						<div className="space-y-2">
+							<Label>URL du site</Label>
+							{profile?.plan === 'pro' || profile?.plan === 'premium' ? (
+								<p className="text-sm text-blue-600">{slug}.patissio.com</p>
+							) : (
+								<p className="text-sm text-blue-600">patissio.com/{slug}</p>
+							)}
+						</div>
+
+						<div className="space-y-2">
+							<Label htmlFor="phone">Téléphone</Label>
+							<Input
+								id="phone"
+								type="tel"
+								value={phone}
+								onChange={(e) => setPhone(e.target.value)}
+								placeholder="+33 6 00 00 00 00"
+							/>
+						</div>
+
+						<Separator />
+
+						<div className="space-y-4">
+							<Label className="text-sm font-medium">Adresse</Label>
+							<div className="space-y-3">
+								<div className="space-y-2">
+									<Label htmlFor="addressStreet" className="text-xs text-muted-foreground">
+										Rue
+									</Label>
+									<Input
+										id="addressStreet"
+										value={addressStreet}
+										onChange={(e) => setAddressStreet(e.target.value)}
+										placeholder="123 Rue de la Pâtisserie"
+									/>
+								</div>
+								<div className="grid grid-cols-2 gap-3">
+									<div className="space-y-2">
+										<Label htmlFor="addressCity" className="text-xs text-muted-foreground">
+											Ville
+										</Label>
+										<Input
+											id="addressCity"
+											value={addressCity}
+											onChange={(e) => setAddressCity(e.target.value)}
+											placeholder="Paris"
+										/>
+									</div>
+									<div className="space-y-2">
+										<Label htmlFor="addressZip" className="text-xs text-muted-foreground">
+											Code postal
+										</Label>
+										<Input
+											id="addressZip"
+											value={addressZip}
+											onChange={(e) => setAddressZip(e.target.value)}
+											placeholder="75001"
+										/>
+									</div>
+								</div>
+								<div className="space-y-2">
+									<Label htmlFor="addressCountry" className="text-xs text-muted-foreground">
+										Pays
+									</Label>
+									<Input
+										id="addressCountry"
+										value={addressCountry}
+										onChange={(e) => setAddressCountry(e.target.value)}
+										placeholder="France"
+									/>
+								</div>
+							</div>
+						</div>
+					</CardContent>
+				</Card>
+
+				{/* Branding Card */}
+				<Card>
+					<CardHeader>
+						<CardTitle className="flex items-center gap-2 text-lg">
+							<Palette className="h-5 w-5" />
+							Identité visuelle
+						</CardTitle>
+					</CardHeader>
+					<CardContent className="space-y-4">
+						<ColorPicker
+							label="Couleur principale"
+							value={primaryColor}
+							onChange={setPrimaryColor}
+						/>
+						<ColorPicker
+							label="Couleur secondaire"
+							value={secondaryColor}
+							onChange={setSecondaryColor}
+						/>
+
+						<div className="space-y-2">
+							<Label>Police de caractères</Label>
+							<Select value={fontFamily} onValueChange={setFontFamily}>
+								<SelectTrigger className="w-full">
+									<SelectValue placeholder="Sélectionner une police" />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="default">Par défaut</SelectItem>
+									<SelectItem value="serif">Serif</SelectItem>
+									<SelectItem value="sans-serif">Sans-serif</SelectItem>
+									<SelectItem value="monospace">Monospace</SelectItem>
+								</SelectContent>
+							</Select>
+						</div>
+
+						<Separator />
+
+						{/* Logo upload */}
+						<div className="space-y-2">
+							<Label>Logo</Label>
+							<div className="flex items-center gap-4">
+								{profile?.logoUrl ? (
+									<>
+										<div className="flex h-16 w-16 items-center justify-center rounded-lg border bg-white">
+											<Image
+												src={
+													profile.logoUrl.startsWith('http')
+														? profile.logoUrl
+														: `${process.env.NEXT_PUBLIC_STORAGE_URL}/${profile.logoUrl}`
+												}
+												alt="Logo"
+												width={48}
+												height={48}
+												className="h-12 w-12 object-contain"
+											/>
+										</div>
+										<div className="flex gap-2">
+											<Button
+												type="button"
+												variant="outline"
+												size="sm"
+												onClick={() => logoInputRef.current?.click()}
+												disabled={logoUploading}
+											>
+												{logoUploading ? (
+													<Loader2 className="h-3.5 w-3.5 animate-spin" />
+												) : (
+													<>
+														<Upload className="mr-1.5 inline h-3.5 w-3.5" />
+														Changer
+													</>
+												)}
+											</Button>
+											<Button
+												type="button"
+												variant="outline"
+												size="sm"
+												onClick={handleDeleteLogo}
+												disabled={logoUploading}
+												className="text-red-500 hover:bg-red-50"
+											>
+												<Trash2 className="mr-1.5 inline h-3.5 w-3.5" />
+												Supprimer
+											</Button>
+										</div>
+									</>
+								) : (
+									<button
+										type="button"
+										onClick={() => logoInputRef.current?.click()}
+										disabled={logoUploading}
+										className="flex items-center gap-2 rounded-md border border-dashed border-input bg-background px-4 py-3 text-sm text-muted-foreground hover:border-primary hover:text-foreground disabled:opacity-50"
+									>
+										{logoUploading ? (
+											<Loader2 className="h-4 w-4 animate-spin" />
+										) : (
+											<Upload className="h-4 w-4" />
+										)}
+										Ajouter un logo
+									</button>
+								)}
+								<input
+									ref={logoInputRef}
+									type="file"
+									accept="image/png,image/jpeg,image/webp,image/avif,image/svg+xml"
+									onChange={handleUploadLogo}
+									className="hidden"
+								/>
+							</div>
+							<p className="text-xs text-muted-foreground">
+								PNG, JPG, WebP ou SVG. 512x512px recommandé.
+							</p>
+						</div>
+
+						{/* Favicon upload (Premium only) */}
+						{profile?.plan === 'premium' && (
+							<>
+								<Separator />
+								<div className="space-y-2">
+									<Label>Icône du navigateur (favicon)</Label>
+									<div className="flex items-center gap-4">
+										{profile?.faviconUrl ? (
+											<>
+												<div className="flex h-12 w-12 items-center justify-center rounded-lg border bg-white">
+													<Image
+														src={
+															profile.faviconUrl.startsWith('http')
+																? profile.faviconUrl
+																: `${process.env.NEXT_PUBLIC_STORAGE_URL}/${profile.faviconUrl}`
+														}
+														alt="Favicon"
+														width={32}
+														height={32}
+														className="h-8 w-8 object-contain"
+													/>
+												</div>
+												<div className="flex gap-2">
+													<Button
+														type="button"
+														variant="outline"
+														size="sm"
+														onClick={() => faviconInputRef.current?.click()}
+														disabled={faviconUploading}
+													>
+														{faviconUploading ? (
+															<Loader2 className="h-3.5 w-3.5 animate-spin" />
+														) : (
+															<>
+																<Upload className="mr-1.5 inline h-3.5 w-3.5" />
+																Changer
+															</>
+														)}
+													</Button>
+													<Button
+														type="button"
+														variant="outline"
+														size="sm"
+														onClick={handleDeleteFavicon}
+														disabled={faviconUploading}
+														className="text-red-500 hover:bg-red-50"
+													>
+														<Trash2 className="mr-1.5 inline h-3.5 w-3.5" />
+														Supprimer
+													</Button>
+												</div>
+											</>
+										) : (
+											<button
+												type="button"
+												onClick={() => faviconInputRef.current?.click()}
+												disabled={faviconUploading}
+												className="flex items-center gap-2 rounded-md border border-dashed border-input bg-background px-4 py-3 text-sm text-muted-foreground hover:border-primary hover:text-foreground disabled:opacity-50"
+											>
+												{faviconUploading ? (
+													<Loader2 className="h-4 w-4 animate-spin" />
+												) : (
+													<Upload className="h-4 w-4" />
+												)}
+												Ajouter une icône
+											</button>
+										)}
+										<input
+											ref={faviconInputRef}
+											type="file"
+											accept="image/png,image/jpeg,image/webp,image/x-icon,image/svg+xml"
+											onChange={handleUploadFavicon}
+											className="hidden"
+										/>
+									</div>
+									<p className="text-xs text-muted-foreground">
+										PNG, JPG, ICO ou SVG. 512x512px recommandé.
+									</p>
+								</div>
+							</>
+						)}
+					</CardContent>
+				</Card>
+
+				{/* Custom Domain Card (Premium only) */}
+				{profile?.plan === 'premium' && (
+					<Card>
+						<CardHeader>
+							<div className="flex items-center justify-between">
+								<CardTitle className="flex items-center gap-2 text-lg">
+									<Globe className="h-5 w-5" />
+									Domaine personnalisé
+								</CardTitle>
+								<Badge variant="outline" className="text-xs">
+									Premium
+								</Badge>
+							</div>
+						</CardHeader>
+						<CardContent>
+							{profile?.customDomain ? (
+								<div className="space-y-4">
+									<div className="flex items-center gap-3">
+										<Globe className="h-5 w-5 text-muted-foreground" />
+										<span className="text-sm font-medium">{profile.customDomain}</span>
+										{profile.customDomainVerified ? (
+											<span className="flex items-center gap-1 text-xs text-green-600">
+												<CheckCircle2 className="h-3.5 w-3.5" />
+												Vérifié
+											</span>
+										) : (
+											<span className="flex items-center gap-1 text-xs text-amber-600">
+												<AlertCircle className="h-3.5 w-3.5" />
+												En attente de vérification
+											</span>
+										)}
+									</div>
+
+									{!profile.customDomainVerified && (
+										<div className="rounded-md border border-amber-200 bg-amber-50 p-4 text-sm">
+											<p className="font-medium text-amber-800">Configuration DNS requise</p>
+											<p className="mt-1 text-amber-700">
+												Ajoutez les <strong>2 enregistrements</strong> suivants chez votre
+												registraire de domaine :
+											</p>
+											<div className="mt-3 overflow-x-auto rounded-md bg-white p-3 font-mono text-xs">
+												<table className="w-full">
+													<thead>
+														<tr className="text-left text-amber-600">
+															<th className="pr-6">Type</th>
+															<th className="pr-6">Nom</th>
+															<th>Valeur</th>
+														</tr>
+													</thead>
+													<tbody className="text-amber-900">
+														<tr>
+															<td className="pr-6 pt-1">A</td>
+															<td className="pr-6 pt-1">@</td>
+															<td className="pt-1">76.76.21.21</td>
+														</tr>
+														<tr>
+															<td className="pr-6 pt-1">CNAME</td>
+															<td className="pr-6 pt-1">www</td>
+															<td className="pt-1">cname.vercel-dns.com</td>
+														</tr>
+													</tbody>
+												</table>
+											</div>
+											<p className="mt-3 text-xs text-amber-600">
+												Le premier enregistrement (A) pointe votre domaine vers notre serveur. Le
+												second (CNAME) redirige automatiquement les visiteurs qui tapent www.
+												{profile.customDomain} vers {profile.customDomain}.
+											</p>
+											<div className="mt-3">
+												<Button
+													type="button"
+													onClick={handleVerifyDomain}
+													disabled={domainVerifying}
+													className="bg-amber-600 text-white hover:bg-amber-700"
+													size="sm"
+												>
+													{domainVerifying ? (
+														<span className="flex items-center gap-1.5">
+															<Loader2 className="h-3 w-3 animate-spin" />
+															Vérification...
+														</span>
+													) : (
+														'Vérifier le domaine'
+													)}
+												</Button>
+											</div>
+										</div>
+									)}
+
+									{domainStatus?.status === 'verified' && (
+										<div className="rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-800">
+											<div className="flex items-center gap-2">
+												<CheckCircle2 className="h-4 w-4" />
+												Domaine vérifié et actif
+											</div>
+										</div>
+									)}
+
+									<button
+										type="button"
+										onClick={handleRemoveDomain}
+										disabled={domainLoading}
+										className="text-xs text-red-500 hover:text-red-700 hover:underline disabled:opacity-50"
+									>
+										Supprimer le domaine
+									</button>
+								</div>
+							) : (
+								<div className="space-y-3">
+									<p className="text-sm text-muted-foreground">
+										Connectez votre propre nom de domaine pour que vos clients accèdent à votre
+										site via votre URL.
+									</p>
+									<div className="flex gap-2">
+										<Input
+											type="text"
+											value={domainInput}
+											onChange={(e) => {
+												setDomainInput(e.target.value)
+												setDomainError(null)
+											}}
+											placeholder="mon-site.com"
+											className="flex-1"
+											onKeyDown={(e) => {
+												if (e.key === 'Enter') handleSetDomain()
+											}}
+										/>
+										<Button
+											type="button"
+											onClick={handleSetDomain}
+											disabled={domainLoading || !domainInput.trim()}
+										>
+											{domainLoading ? (
+												<Loader2 className="h-4 w-4 animate-spin" />
+											) : (
+												'Vérifier'
+											)}
+										</Button>
+									</div>
+									{domainError && <p className="text-xs text-red-500">{domainError}</p>}
+								</div>
+							)}
+						</CardContent>
+					</Card>
+				)}
+
+				{/* Change Password Card */}
+				<Card>
+					<CardHeader>
+						<CardTitle className="flex items-center gap-2 text-lg">
+							<Lock className="h-5 w-5" />
+							Changer le mot de passe
+						</CardTitle>
+					</CardHeader>
+					<CardContent>
+						<form onSubmit={handleChangePassword} className="space-y-4">
+							{passwordError && (
+								<div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+									{passwordError}
+								</div>
+							)}
+							{passwordSuccess && (
+								<div className="rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-800">
+									Mot de passe modifié avec succès.
+								</div>
+							)}
+
+							<div className="space-y-2">
+								<Label htmlFor="currentPassword">Mot de passe actuel</Label>
+								<div className="relative">
+									<Input
+										id="currentPassword"
+										type={showCurrentPassword ? 'text' : 'password'}
+										value={currentPassword}
+										onChange={(e) => {
+											setCurrentPassword(e.target.value)
+											setPasswordError('')
+											setPasswordSuccess(false)
 										}}
-										autoFocus
-										disabled={isSavingName}
-										className="h-8 w-full rounded-md border border-input bg-background px-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50"
+										className="pr-10"
+										required
 									/>
 									<button
 										type="button"
-										onClick={handleSaveName}
-										disabled={isSavingName}
-										className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-green-600 hover:bg-green-50 disabled:opacity-50"
+										onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+										className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
 									>
-										<Check className="h-4 w-4" />
-									</button>
-									<button
-										type="button"
-										onClick={() => setIsEditingName(false)}
-										disabled={isSavingName}
-										className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent"
-									>
-										<X className="h-4 w-4" />
+										{showCurrentPassword ? (
+											<EyeOff className="h-4 w-4" />
+										) : (
+											<Eye className="h-4 w-4" />
+										)}
 									</button>
 								</div>
-							) : (
-								<div className="mt-1 flex items-center gap-2">
-									<p className="text-sm">{profile?.businessName}</p>
-									<button
-										type="button"
-										onClick={() => {
-											setEditedName(profile?.businessName ?? '')
-											setIsEditingName(true)
+							</div>
+
+							<div className="space-y-2">
+								<Label htmlFor="newPassword">Nouveau mot de passe</Label>
+								<div className="relative">
+									<Input
+										id="newPassword"
+										type={showNewPassword ? 'text' : 'password'}
+										value={newPassword}
+										onChange={(e) => {
+											setNewPassword(e.target.value)
+											setPasswordSuccess(false)
 										}}
-										className="inline-flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
+										placeholder="••••••••"
+										className="pr-10"
+										required
+									/>
+									<button
+										type="button"
+										onClick={() => setShowNewPassword(!showNewPassword)}
+										className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
 									>
-										<Pencil className="h-3.5 w-3.5" />
+										{showNewPassword ? (
+											<EyeOff className="h-4 w-4" />
+										) : (
+											<Eye className="h-4 w-4" />
+										)}
 									</button>
 								</div>
-							)}
-						</div>
-						<div>
-							<label className="text-sm font-medium">URL du site</label>
-							{profile?.plan === 'pro' || profile?.plan === 'premium' ? (
-								<p className="mt-1 text-sm text-blue-600">{profile?.slug}.patissio.com</p>
-							) : (
-								<p className="mt-1 text-sm text-blue-600">patissio.com/{profile?.slug}</p>
-							)}
-						</div>
-						<div>
-							<label className="text-sm font-medium">Téléphone</label>
-							<p className="mt-1 text-sm">{profile?.phone || '-'}</p>
-						</div>
-						<div>
-							<label className="text-sm font-medium">Plan</label>
-							<p className="mt-1 text-sm capitalize">{profile?.plan}</p>
-						</div>
-					</div>
-				</section>
-
-				<section className="rounded-lg border p-6">
-					<h2 className="text-xl font-semibold">Changer le mot de passe</h2>
-					<p className="mt-2 text-sm text-muted-foreground">
-						Mettez à jour votre mot de passe pour sécuriser votre compte.
-					</p>
-
-					<form onSubmit={handleChangePassword} className="mt-4 max-w-md space-y-4">
-						{passwordError && (
-							<div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-								{passwordError}
 							</div>
-						)}
-						{passwordSuccess && (
-							<div className="rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-800">
-								Mot de passe modifié avec succès.
-							</div>
-						)}
 
-						<div className="space-y-2">
-							<label htmlFor="currentPassword" className="text-sm font-medium">
-								Mot de passe actuel
-							</label>
-							<div className="flex gap-2">
-								<input
-									id="currentPassword"
-									type={showPasswords ? 'text' : 'password'}
-									value={currentPassword}
+							{newPassword && (
+								<PasswordStrengthIndicator rules={passwordStrengthRules} />
+							)}
+
+							<div className="space-y-2">
+								<Label htmlFor="newPasswordConfirmation">Confirmer le nouveau mot de passe</Label>
+								<Input
+									id="newPasswordConfirmation"
+									type={showNewPassword ? 'text' : 'password'}
+									value={newPasswordConfirmation}
 									onChange={(e) => {
-										setCurrentPassword(e.target.value)
-										setPasswordError('')
+										setNewPasswordConfirmation(e.target.value)
 										setPasswordSuccess(false)
 									}}
-									className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+									placeholder="••••••••"
 									required
 								/>
-								<button
-									type="button"
-									onClick={() => setShowPasswords(!showPasswords)}
-									className="rounded-md border border-input bg-background px-3 py-2 hover:bg-accent"
-								>
-									{showPasswords ? (
-										<EyeOff className="h-4 w-4 text-muted-foreground" />
-									) : (
-										<Eye className="h-4 w-4 text-muted-foreground" />
-									)}
-								</button>
+								{newPasswordConfirmation.length > 0 && (
+									<div className="flex items-center gap-2">
+										{passwordsMatch ? (
+											<>
+												<Check className="h-3.5 w-3.5 text-green-600" />
+												<span className="text-xs text-green-600">
+													Les mots de passe correspondent
+												</span>
+											</>
+										) : (
+											<>
+												<X className="h-3.5 w-3.5 text-red-500" />
+												<span className="text-xs text-red-500">
+													Les mots de passe ne correspondent pas
+												</span>
+											</>
+										)}
+									</div>
+								)}
 							</div>
-						</div>
 
-						<div className="space-y-2">
-							<label htmlFor="newPassword" className="text-sm font-medium">
-								Nouveau mot de passe
-							</label>
-							<input
-								id="newPassword"
-								type={showPasswords ? 'text' : 'password'}
-								value={newPassword}
-								onChange={(e) => {
-									setNewPassword(e.target.value)
-									setPasswordSuccess(false)
-								}}
-								placeholder="••••••••"
-								className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-								required
-							/>
-						</div>
+							<Button
+								type="submit"
+								disabled={isChangingPassword || !allPasswordRulesValid || !currentPassword}
+							>
+								{isChangingPassword ? 'Modification...' : 'Modifier le mot de passe'}
+							</Button>
+						</form>
+					</CardContent>
+				</Card>
 
-						<div className="space-y-2">
-							<label htmlFor="newPasswordConfirmation" className="text-sm font-medium">
-								Confirmer le nouveau mot de passe
-							</label>
-							<input
-								id="newPasswordConfirmation"
-								type={showPasswords ? 'text' : 'password'}
-								value={newPasswordConfirmation}
-								onChange={(e) => {
-									setNewPasswordConfirmation(e.target.value)
-									setPasswordSuccess(false)
-								}}
-								placeholder="••••••••"
-								className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-								required
-							/>
-						</div>
+				{/* Stripe Connect Card */}
+				<Card>
+					<CardHeader>
+						<CardTitle className="flex items-center gap-2 text-lg">
+							<CreditCard className="h-5 w-5" />
+							Stripe Connect
+						</CardTitle>
+					</CardHeader>
+					<CardContent>
+						<p className="text-sm text-muted-foreground">
+							{profile?.stripeOnboardingComplete
+								? 'Votre compte Stripe est connecté. Vous recevez les paiements de vos ateliers et commandes.'
+								: 'Connectez votre compte Stripe pour recevoir les paiements en ligne de vos clients (ateliers, commandes).'}
+						</p>
 
-						{newPassword && (
-							<div className="space-y-2 rounded-lg border bg-muted/50 p-3">
-								<p className="mb-2 text-sm font-medium">Sécurité du mot de passe</p>
-								<div className="grid grid-cols-1 gap-1">
-									{passwordRules.map((rule) => (
-										<div key={rule.key} className="flex items-center gap-2">
-											{rule.valid ? (
-												<Check className="h-4 w-4 text-green-600" />
-											) : (
-												<X className="h-4 w-4 text-muted-foreground" />
-											)}
-											<span
-												className={`text-xs ${rule.valid ? 'text-green-600' : 'text-muted-foreground'}`}
-											>
-												{rule.label}
-											</span>
+						<div className="mt-4">
+							{profile?.stripeOnboardingComplete ? (
+								<div className="flex items-center justify-between">
+									<div className="flex items-center gap-2">
+										<div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100">
+											<Check className="h-4 w-4 text-green-600" />
 										</div>
-									))}
+										<span className="text-sm font-medium text-green-700">Connecté</span>
+									</div>
+									<Button type="button" variant="outline" onClick={handleStripeDashboard}>
+										Gérer
+									</Button>
 								</div>
-							</div>
-						)}
-
-						<button
-							type="submit"
-							disabled={isChangingPassword || !allPasswordRulesValid || !currentPassword}
-							className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-						>
-							{isChangingPassword ? 'Modification...' : 'Modifier le mot de passe'}
-						</button>
-					</form>
-				</section>
-
-				<section className="rounded-lg border p-6">
-					<h2 className="text-xl font-semibold">Design du site</h2>
-					<div className="mt-4 grid gap-4 md:grid-cols-2">
-						<div>
-							<label className="text-sm font-medium">Couleur principale</label>
-							<div className="mt-1 flex items-center gap-2">
-								<div
-									className="h-6 w-6 rounded-full border"
-									style={{ backgroundColor: profile?.primaryColor }}
-								/>
-								<span className="text-sm">{profile?.primaryColor}</span>
-							</div>
+							) : (
+								<Button type="button" onClick={handleConnectStripe} disabled={isConnecting}>
+									{isConnecting
+										? 'Connexion en cours...'
+										: profile?.stripeAccountId
+											? 'Reprendre la vérification'
+											: 'Connecter Stripe'}
+								</Button>
+							)}
 						</div>
-						<div>
-							<label className="text-sm font-medium">Couleur secondaire</label>
-							<div className="mt-1 flex items-center gap-2">
-								<div
-									className="h-6 w-6 rounded-full border"
-									style={{ backgroundColor: profile?.secondaryColor }}
-								/>
-								<span className="text-sm">{profile?.secondaryColor}</span>
-							</div>
-						</div>
-					</div>
-				</section>
+					</CardContent>
+				</Card>
 
-				<section className="rounded-lg border p-6">
-					<div className="flex items-start justify-between">
-						<div>
-							<h2 className="text-xl font-semibold">Assistance</h2>
-							<p className="mt-2 text-sm text-muted-foreground">
-								Autorisez l'equipe Patissio a acceder a votre site pour vous aider a le configurer.
-								Vous pouvez desactiver cet acces a tout moment.
-							</p>
-						</div>
-						{profile?.allowSupportAccess && (
-							<span className="shrink-0 rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-800">
-								Actif
-							</span>
-						)}
-					</div>
-					<div className="mt-4">
-						<label className="flex cursor-pointer items-center gap-3">
-							<input
-								type="checkbox"
+				{/* Support Access Card */}
+				<Card>
+					<CardHeader>
+						<CardTitle className="flex items-center gap-2 text-lg">
+							<HelpCircle className="h-5 w-5" />
+							Accès au support
+						</CardTitle>
+					</CardHeader>
+					<CardContent>
+						<p className="text-sm text-muted-foreground">
+							Autorisez l'équipe Patissio à accéder à votre site pour vous aider à le
+							configurer. Vous pouvez désactiver cet accès à tout moment.
+						</p>
+						<div className="mt-4 flex items-center justify-between">
+							<Label htmlFor="supportAccess">Autoriser l'accès au support Patissio</Label>
+							<Switch
+								id="supportAccess"
 								checked={profile?.allowSupportAccess ?? false}
-								onChange={async (e) => {
-									const checked = e.target.checked
+								onCheckedChange={async (checked) => {
 									setProfile((p: any) => ({ ...p, allowSupportAccess: checked }))
 									try {
 										await api.patch('/patissier/profile', { allowSupportAccess: checked })
@@ -516,256 +1111,10 @@ export default function SettingsPage() {
 										setProfile((p: any) => ({ ...p, allowSupportAccess: !checked }))
 									}
 								}}
-								className="h-4 w-4 rounded border"
-							/>
-							<span className="text-sm font-medium">
-								Autoriser l'acces au support Patissio
-							</span>
-						</label>
-					</div>
-				</section>
-
-				<section className="rounded-lg border p-6">
-					<div className="flex items-start justify-between">
-						<div>
-							<h2 className="text-xl font-semibold">Paiements - Stripe Connect</h2>
-							<p className="mt-2 text-sm text-muted-foreground">
-								{profile?.stripeOnboardingComplete
-									? 'Votre compte Stripe est connecté. Vous recevez les paiements de vos ateliers et commandes.'
-									: 'Connectez votre compte Stripe pour recevoir les paiements en ligne de vos clients (ateliers, commandes).'}
-							</p>
-						</div>
-						{profile?.stripeOnboardingComplete && (
-							<span className="shrink-0 rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-800">
-								Actif
-							</span>
-						)}
-					</div>
-
-					<div className="mt-4 flex gap-3">
-						{profile?.stripeOnboardingComplete ? (
-							<button
-								type="button"
-								onClick={handleStripeDashboard}
-								className="rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent"
-							>
-								Ouvrir le dashboard Stripe
-							</button>
-						) : (
-							<button
-								type="button"
-								onClick={handleConnectStripe}
-								disabled={isConnecting}
-								className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-							>
-								{isConnecting
-									? 'Connexion en cours...'
-									: profile?.stripeAccountId
-										? 'Reprendre la vérification'
-										: 'Connecter Stripe'}
-							</button>
-						)}
-					</div>
-				</section>
-				{profile?.plan === 'premium' && (
-					<section className="rounded-lg border p-6">
-						<div className="flex items-start justify-between">
-							<div>
-								<h2 className="text-xl font-semibold">Domaine personnalisé</h2>
-								<p className="mt-2 text-sm text-muted-foreground">
-									Connectez votre propre nom de domaine pour que vos clients accèdent à votre site via votre URL.
-								</p>
-							</div>
-							{profile?.customDomainVerified && (
-								<span className="shrink-0 rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-800">
-									Actif
-								</span>
-							)}
-						</div>
-
-						{profile?.customDomain ? (
-							<div className="mt-4 space-y-4">
-								<div className="flex items-center gap-3">
-									<Globe className="h-5 w-5 text-muted-foreground" />
-									<span className="text-sm font-medium">{profile.customDomain}</span>
-									{profile.customDomainVerified ? (
-										<span className="flex items-center gap-1 text-xs text-green-600">
-											<CheckCircle2 className="h-3.5 w-3.5" />
-											Vérifié
-										</span>
-									) : (
-										<span className="flex items-center gap-1 text-xs text-amber-600">
-											<AlertCircle className="h-3.5 w-3.5" />
-											En attente de vérification
-										</span>
-									)}
-								</div>
-
-								{!profile.customDomainVerified && (
-									<div className="rounded-md border border-amber-200 bg-amber-50 p-4 text-sm">
-										<p className="font-medium text-amber-800">Configuration DNS requise</p>
-										<p className="mt-1 text-amber-700">
-											Ajoutez les <strong>2 enregistrements</strong> suivants chez votre registraire de domaine :
-										</p>
-										<div className="mt-3 overflow-x-auto rounded-md bg-white p-3 font-mono text-xs">
-											<table className="w-full">
-												<thead>
-													<tr className="text-left text-amber-600">
-														<th className="pr-6">Type</th>
-														<th className="pr-6">Nom</th>
-														<th>Valeur</th>
-													</tr>
-												</thead>
-												<tbody className="text-amber-900">
-													<tr>
-														<td className="pr-6 pt-1">A</td>
-														<td className="pr-6 pt-1">@</td>
-														<td className="pt-1">76.76.21.21</td>
-													</tr>
-													<tr>
-														<td className="pr-6 pt-1">CNAME</td>
-														<td className="pr-6 pt-1">www</td>
-														<td className="pt-1">cname.vercel-dns.com</td>
-													</tr>
-												</tbody>
-											</table>
-										</div>
-										<p className="mt-3 text-xs text-amber-600">
-											Le premier enregistrement (A) pointe votre domaine vers notre serveur. Le second (CNAME) redirige automatiquement les visiteurs qui tapent www.{profile.customDomain} vers {profile.customDomain}.
-										</p>
-										<div className="mt-3 flex gap-2">
-											<button
-												type="button"
-												onClick={handleVerifyDomain}
-												disabled={domainVerifying}
-												className="rounded-md bg-amber-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-700 disabled:opacity-50"
-											>
-												{domainVerifying ? (
-													<span className="flex items-center gap-1.5">
-														<Loader2 className="h-3 w-3 animate-spin" />
-														Vérification...
-													</span>
-												) : (
-													'Vérifier le domaine'
-												)}
-											</button>
-										</div>
-									</div>
-								)}
-
-								<button
-									type="button"
-									onClick={handleRemoveDomain}
-									disabled={domainLoading}
-									className="text-xs text-red-500 hover:text-red-700 hover:underline disabled:opacity-50"
-								>
-									Supprimer le domaine
-								</button>
-							</div>
-						) : (
-							<div className="mt-4 space-y-3">
-								<div className="flex gap-2">
-									<input
-										type="text"
-										value={domainInput}
-										onChange={(e) => {
-											setDomainInput(e.target.value)
-											setDomainError(null)
-										}}
-										placeholder="mon-site.com"
-										className="h-9 flex-1 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-										onKeyDown={(e) => {
-											if (e.key === 'Enter') handleSetDomain()
-										}}
-									/>
-									<button
-										type="button"
-										onClick={handleSetDomain}
-										disabled={domainLoading || !domainInput.trim()}
-										className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-									>
-										{domainLoading ? (
-											<Loader2 className="h-4 w-4 animate-spin" />
-										) : (
-											'Ajouter'
-										)}
-									</button>
-								</div>
-								{domainError && (
-									<p className="text-xs text-red-500">{domainError}</p>
-								)}
-							</div>
-						)}
-					</section>
-				)}
-				{profile?.plan === 'premium' && (
-					<section className="rounded-lg border p-6">
-						<div>
-							<h2 className="text-xl font-semibold">Icône du navigateur</h2>
-							<p className="mt-2 text-sm text-muted-foreground">
-								La petite image qui s'affiche dans l'onglet du navigateur de vos visiteurs.
-							</p>
-						</div>
-
-						<div className="mt-4 flex items-center gap-4">
-							{profile?.faviconUrl ? (
-								<>
-									<div className="flex h-12 w-12 items-center justify-center rounded-lg border bg-white">
-										<Image
-											src={profile.faviconUrl.startsWith('http') ? profile.faviconUrl : `${process.env.NEXT_PUBLIC_STORAGE_URL}/${profile.faviconUrl}`}
-											alt="Favicon"
-											width={32}
-											height={32}
-											className="h-8 w-8 object-contain"
-										/>
-									</div>
-									<div className="flex gap-2">
-										<button
-											type="button"
-											onClick={() => faviconInputRef.current?.click()}
-											disabled={faviconUploading}
-											className="rounded-md border border-input bg-background px-3 py-1.5 text-xs font-medium hover:bg-accent disabled:opacity-50"
-										>
-											{faviconUploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <><Upload className="mr-1.5 inline h-3.5 w-3.5" />Changer</>}
-										</button>
-										<button
-											type="button"
-											onClick={handleDeleteFavicon}
-											disabled={faviconUploading}
-											className="rounded-md border border-input bg-background px-3 py-1.5 text-xs font-medium text-red-500 hover:bg-red-50 disabled:opacity-50"
-										>
-											<Trash2 className="mr-1.5 inline h-3.5 w-3.5" />Supprimer
-										</button>
-									</div>
-								</>
-							) : (
-								<button
-									type="button"
-									onClick={() => faviconInputRef.current?.click()}
-									disabled={faviconUploading}
-									className="flex items-center gap-2 rounded-md border border-dashed border-input bg-background px-4 py-3 text-sm text-muted-foreground hover:border-primary hover:text-foreground disabled:opacity-50"
-								>
-									{faviconUploading ? (
-										<Loader2 className="h-4 w-4 animate-spin" />
-									) : (
-										<Upload className="h-4 w-4" />
-									)}
-									Ajouter une icône
-								</button>
-							)}
-							<input
-								ref={faviconInputRef}
-								type="file"
-								accept="image/png,image/jpeg,image/webp,image/x-icon,image/svg+xml"
-								onChange={handleUploadFavicon}
-								className="hidden"
 							/>
 						</div>
-						<p className="mt-2 text-xs text-muted-foreground">
-							PNG, JPG, ICO ou SVG. 512x512px recommandé.
-						</p>
-					</section>
-				)}
+					</CardContent>
+				</Card>
 			</div>
 		</div>
 	)

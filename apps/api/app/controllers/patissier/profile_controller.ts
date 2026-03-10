@@ -1,8 +1,13 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import logger from '@adonisjs/core/services/logger'
+import { getActiveProfile } from '#helpers/get_active_profile'
 import PatissierProfile from '#models/patissier_profile'
 import StorageService from '#services/storage_service'
-import { getActiveProfile } from '#helpers/get_active_profile'
+import {
+	updateDesignValidator,
+	updateProfileValidator,
+	updateSiteValidator,
+} from '#validators/profile_validator'
 
 const storage = new StorageService()
 
@@ -21,20 +26,7 @@ export default class ProfileController {
 		const { request, response } = ctx
 		const profile = await getActiveProfile(ctx)
 
-		const data = request.only([
-			'businessName',
-			'description',
-			'phone',
-			'addressStreet',
-			'addressCity',
-			'addressZip',
-			'addressCountry',
-			'socialLinks',
-			'operatingHours',
-			'acceptsCustomOrders',
-			'defaultDepositPercent',
-			'allowSupportAccess',
-		])
+		const data = await request.validateUsing(updateProfileValidator)
 
 		profile.merge(data)
 		await profile.save()
@@ -49,12 +41,7 @@ export default class ProfileController {
 		const user = auth.user!
 		const profile = await PatissierProfile.findByOrFail('userId', user.id)
 
-		const data = request.only([
-			'primaryColor',
-			'secondaryColor',
-			'fontFamily',
-			'heroImageUrl',
-		])
+		const data = await request.validateUsing(updateDesignValidator)
 
 		profile.merge(data)
 		await profile.save()
@@ -133,16 +120,7 @@ export default class ProfileController {
 		const { request, response } = ctx
 		const profile = await getActiveProfile(ctx)
 
-		const data = request.only([
-			'primaryColor',
-			'secondaryColor',
-			'fontFamily',
-			'heroImageUrl',
-			'siteConfig',
-			'storyImageUrl',
-			'ordersEnabled',
-			'workshopsEnabled',
-		])
+		const data = await request.validateUsing(updateSiteValidator)
 
 		profile.merge(data)
 		await profile.save()
@@ -172,7 +150,12 @@ export default class ProfileController {
 
 		if (!image.isValid) {
 			logger.warn(
-				{ profileId: profile.id, errors: image.errors, fileName: image.clientName, size: image.size },
+				{
+					profileId: profile.id,
+					errors: image.errors,
+					fileName: image.clientName,
+					size: image.size,
+				},
 				'Hero image upload: invalid file'
 			)
 			return response.badRequest({
@@ -195,7 +178,10 @@ export default class ProfileController {
 			profile.heroImageUrl = key
 			await profile.save()
 		} catch (err) {
-			logger.error({ err, profileId: profile.id, fileName: image.clientName }, 'Hero image upload: storage failed')
+			logger.error(
+				{ err, profileId: profile.id, fileName: image.clientName },
+				'Hero image upload: storage failed'
+			)
 			return response.internalServerError({
 				success: false,
 				message: 'Failed to upload image',
@@ -248,7 +234,12 @@ export default class ProfileController {
 
 		if (!image.isValid) {
 			logger.warn(
-				{ profileId: profile.id, errors: image.errors, fileName: image.clientName, size: image.size },
+				{
+					profileId: profile.id,
+					errors: image.errors,
+					fileName: image.clientName,
+					size: image.size,
+				},
 				'Story image upload: invalid file'
 			)
 			return response.badRequest({
@@ -272,7 +263,10 @@ export default class ProfileController {
 			profile.storyImageUrl = key
 			await profile.save()
 		} catch (err) {
-			logger.error({ err, profileId: profile.id, fileName: image.clientName }, 'Story image upload: storage failed')
+			logger.error(
+				{ err, profileId: profile.id, fileName: image.clientName },
+				'Story image upload: storage failed'
+			)
 			return response.internalServerError({
 				success: false,
 				message: 'Failed to upload image',
@@ -311,7 +305,10 @@ export default class ProfileController {
 		const profile = await getActiveProfile(ctx)
 
 		if (profile.plan !== 'premium') {
-			return response.forbidden({ success: false, message: 'Favicon is only available on the Premium plan' })
+			return response.forbidden({
+				success: false,
+				message: 'Favicon is only available on the Premium plan',
+			})
 		}
 
 		const image = request.file('favicon', {
@@ -369,7 +366,8 @@ export default class ProfileController {
 
 	async uploadPageHeroImage({ auth, request, response, params }: HttpContext) {
 		const page = params.page as string
-		const field = ProfileController.pageHeroFields[page as keyof typeof ProfileController.pageHeroFields]
+		const field =
+			ProfileController.pageHeroFields[page as keyof typeof ProfileController.pageHeroFields]
 		if (!field) {
 			return response.badRequest({ success: false, message: 'Invalid page' })
 		}
@@ -408,7 +406,8 @@ export default class ProfileController {
 
 	async deletePageHeroImage({ auth, response, params }: HttpContext) {
 		const page = params.page as string
-		const field = ProfileController.pageHeroFields[page as keyof typeof ProfileController.pageHeroFields]
+		const field =
+			ProfileController.pageHeroFields[page as keyof typeof ProfileController.pageHeroFields]
 		if (!field) {
 			return response.badRequest({ success: false, message: 'Invalid page' })
 		}

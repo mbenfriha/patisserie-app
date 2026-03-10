@@ -8,6 +8,13 @@ import NotificationService from '#services/notification_service'
 import StorageService from '#services/storage_service'
 import StripeService from '#services/stripe_service'
 import env from '#start/env'
+import {
+	createBookingValidator,
+	storeWorkshopValidator,
+	updateBookingStatusValidator,
+	updateWorkshopStatusValidator,
+	updateWorkshopValidator,
+} from '#validators/workshop_validator'
 
 function toSlug(title: string): string {
 	return title
@@ -62,23 +69,7 @@ export default class WorkshopsController {
 		const user = auth.user!
 		const profile = await PatissierProfile.findByOrFail('userId', user.id)
 
-		const data = request.only([
-			'title',
-			'description',
-			'images',
-			'price',
-			'depositPercent',
-			'capacity',
-			'durationMinutes',
-			'location',
-			'date',
-			'startTime',
-			'status',
-			'whatIncluded',
-			'level',
-			'categoryId',
-			'isVisible',
-		])
+		const data = await request.validateUsing(storeWorkshopValidator)
 
 		const slug = await uniqueSlug(data.title, profile.id)
 
@@ -134,22 +125,7 @@ export default class WorkshopsController {
 			.where('patissierId', profile.id)
 			.firstOrFail()
 
-		const data: Record<string, any> = request.only([
-			'title',
-			'description',
-			'images',
-			'price',
-			'depositPercent',
-			'capacity',
-			'durationMinutes',
-			'location',
-			'date',
-			'startTime',
-			'whatIncluded',
-			'level',
-			'categoryId',
-			'isVisible',
-		])
+		const data: Record<string, any> = await request.validateUsing(updateWorkshopValidator)
 
 		if (data.title && data.title !== workshop.title) {
 			data.slug = await uniqueSlug(data.title, profile.id, workshop.id)
@@ -190,22 +166,7 @@ export default class WorkshopsController {
 			.where('patissierId', profile.id)
 			.firstOrFail()
 
-		const { status, reason } = request.only(['status', 'reason'])
-
-		const validStatuses: Workshop['status'][] = [
-			'draft',
-			'published',
-			'full',
-			'cancelled',
-			'completed',
-		]
-
-		if (!validStatuses.includes(status)) {
-			return response.badRequest({
-				success: false,
-				message: `Invalid status. Must be one of: ${validStatuses.join(', ')}`,
-			})
-		}
+		const { status, reason } = await request.validateUsing(updateWorkshopStatusValidator)
 
 		workshop.status = status
 		await workshop.save()
@@ -280,25 +241,9 @@ export default class WorkshopsController {
 			.where('workshopId', workshop.id)
 			.firstOrFail()
 
-		const { status, cancellationReason, refundType } = request.only([
-			'status',
-			'cancellationReason',
-			'refundType',
-		])
-
-		const validStatuses: WorkshopBooking['status'][] = [
-			'pending_payment',
-			'confirmed',
-			'cancelled',
-			'completed',
-		]
-
-		if (!validStatuses.includes(status)) {
-			return response.badRequest({
-				success: false,
-				message: `Invalid status. Must be one of: ${validStatuses.join(', ')}`,
-			})
-		}
+		const { status, cancellationReason, refundType } = await request.validateUsing(
+			updateBookingStatusValidator
+		)
 
 		// Handle cancellation with optional refund
 		if (status === 'cancelled') {
@@ -402,26 +347,12 @@ export default class WorkshopsController {
 			.where('patissierId', profile.id)
 			.firstOrFail()
 
-		const body = request.only([
-			'client_name',
-			'client_email',
-			'client_phone',
-			'nb_participants',
-			'message',
-		])
-
+		const body = await request.validateUsing(createBookingValidator)
 		const clientName = body.client_name
 		const clientEmail = body.client_email || null
 		const clientPhone = body.client_phone || null
 		const nbParticipants = body.nb_participants
 		const message = body.message || null
-
-		if (!clientName || !nbParticipants) {
-			return response.badRequest({
-				success: false,
-				message: 'client_name and nb_participants are required',
-			})
-		}
 
 		// Check capacity
 		const existingBookings = await WorkshopBooking.query()

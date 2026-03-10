@@ -23,8 +23,7 @@ export default function DataDeletionPage() {
 				<h3>Option 1 : Depuis votre tableau de bord Patissio</h3>
 				<ol>
 					<li>
-						Connectez-vous à votre compte sur{' '}
-						<a href="https://patissio.com">patissio.com</a>.
+						Connectez-vous à votre compte sur <a href="https://patissio.com">patissio.com</a>.
 					</li>
 					<li>
 						Rendez-vous dans <strong>Mon site</strong>, onglet <strong>Contact & réseaux</strong>.
@@ -32,15 +31,12 @@ export default function DataDeletionPage() {
 					<li>
 						Cliquez sur <strong>Déconnecter</strong> à côté de votre compte Instagram connecté.
 					</li>
-					<li>
-						Votre jeton d'accès Instagram sera immédiatement supprimé de nos serveurs.
-					</li>
+					<li>Votre jeton d'accès Instagram sera immédiatement supprimé de nos serveurs.</li>
 				</ol>
 
 				<h3>Option 2 : Par e-mail</h3>
 				<p>
-					Envoyez un e-mail à{' '}
-					<a href="mailto:contact@patissio.com">contact@patissio.com</a> avec :
+					Envoyez un e-mail à <a href="mailto:contact@patissio.com">contact@patissio.com</a> avec :
 				</p>
 				<ul>
 					<li>
@@ -57,9 +53,7 @@ export default function DataDeletionPage() {
 				</p>
 
 				<h3>Option 3 : Depuis les paramètres Instagram</h3>
-				<p>
-					Vous pouvez également révoquer l'accès de Patissio directement depuis Instagram :
-				</p>
+				<p>Vous pouvez également révoquer l'accès de Patissio directement depuis Instagram :</p>
 				<ol>
 					<li>
 						Ouvrez l'application Instagram et allez dans{' '}
@@ -94,8 +88,7 @@ export default function DataDeletionPage() {
 
 				<h2>Contact</h2>
 				<p>
-					Pour toute question :{' '}
-					<a href="mailto:contact@patissio.com">contact@patissio.com</a>
+					Pour toute question : <a href="mailto:contact@patissio.com">contact@patissio.com</a>
 				</p>
 			</div>
 		</div>

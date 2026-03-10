@@ -190,7 +190,6 @@ export interface Order {
   deliveryAddress: string | null
   deliveryDate: string | null
   subtotalInCents: number
-  platformFeeInCents: number
   totalInCents: number
   paymentStatus: PaymentStatus
   paymentIntentId: string | null

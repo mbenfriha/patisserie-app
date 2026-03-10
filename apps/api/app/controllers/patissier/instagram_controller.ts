@@ -1,7 +1,7 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import logger from '@adonisjs/core/services/logger'
-import env from '#start/env'
 import { getActiveProfile } from '#helpers/get_active_profile'
+import env from '#start/env'
 
 const GRAPH_BASE = 'https://graph.instagram.com'
 const GRAPH_API = 'https://graph.instagram.com/v21.0'
@@ -53,7 +53,10 @@ export default class InstagramController {
 		const frontendUrl = (env.get('FRONTEND_URL') || '').replace(/\/+$/, '')
 		const redirectUri = `${frontendUrl}/instagram/callback`
 
-		logger.info({ redirectUri, frontendUrl, codeLength: code.length, profileId: profile.id }, 'Instagram exchange attempt')
+		logger.info(
+			{ redirectUri, frontendUrl, codeLength: code.length, profileId: profile.id },
+			'Instagram exchange attempt'
+		)
 
 		try {
 			// Step 1: Exchange code for short-lived token
@@ -71,7 +74,10 @@ export default class InstagramController {
 
 			if (!tokenResponse.ok) {
 				const errText = await tokenResponse.text()
-				logger.error({ err: errText, redirectUri, profileId: profile.id }, 'Instagram token exchange failed')
+				logger.error(
+					{ err: errText, redirectUri, profileId: profile.id },
+					'Instagram token exchange failed'
+				)
 				return response.badRequest({ success: false, message: 'Failed to exchange code' })
 			}
 
@@ -79,7 +85,10 @@ export default class InstagramController {
 			const shortLivedToken = tokenData.access_token
 			const userId = String(tokenData.user_id)
 
-			logger.info({ userId, tokenPrefix: shortLivedToken?.substring(0, 10), profileId: profile.id }, 'Instagram short-lived token obtained')
+			logger.info(
+				{ userId, tokenPrefix: shortLivedToken?.substring(0, 10), profileId: profile.id },
+				'Instagram short-lived token obtained'
+			)
 
 			// Save user ID
 			profile.instagramUserId = userId
@@ -98,19 +107,28 @@ export default class InstagramController {
 
 				if (!longLivedResponse.ok) {
 					const err = await longLivedResponse.text()
-					logger.warn({ err, profileId: profile.id }, 'Instagram long-lived token exchange failed, using short-lived token')
+					logger.warn(
+						{ err, profileId: profile.id },
+						'Instagram long-lived token exchange failed, using short-lived token'
+					)
 					profile.instagramAccessToken = shortLivedToken
 				} else {
 					const longLivedData: any = await longLivedResponse.json()
 					if (longLivedData.access_token) {
 						profile.instagramAccessToken = longLivedData.access_token
-						logger.info({ expiresIn: longLivedData.expires_in, profileId: profile.id }, 'Instagram long-lived token obtained')
+						logger.info(
+							{ expiresIn: longLivedData.expires_in, profileId: profile.id },
+							'Instagram long-lived token obtained'
+						)
 					} else {
 						profile.instagramAccessToken = shortLivedToken
 					}
 				}
 			} catch (llErr: any) {
-				logger.warn({ err: llErr?.message || llErr, profileId: profile.id }, 'Instagram long-lived token exchange error, using short-lived token')
+				logger.warn(
+					{ err: llErr?.message || llErr, profileId: profile.id },
+					'Instagram long-lived token exchange error, using short-lived token'
+				)
 				profile.instagramAccessToken = shortLivedToken
 			}
 
@@ -120,7 +138,10 @@ export default class InstagramController {
 			return response.ok({ success: true, message: 'Instagram connected' })
 		} catch (err) {
 			logger.error({ err, profileId: profile.id }, 'Instagram OAuth exchange error')
-			return response.internalServerError({ success: false, message: 'Failed to connect Instagram' })
+			return response.internalServerError({
+				success: false,
+				message: 'Failed to connect Instagram',
+			})
 		}
 	}
 

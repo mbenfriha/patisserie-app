@@ -2,6 +2,7 @@ import type { HttpContext } from '@adonisjs/core/http'
 import Subscription from '#models/subscription'
 import StripeService from '#services/stripe_service'
 import env from '#start/env'
+import { subscribeValidator } from '#validators/billing_validator'
 
 const PLANS = [
 	{
@@ -9,7 +10,7 @@ const PLANS = [
 		name: 'Starter',
 		monthlyPrice: 0,
 		yearlyPrice: 0,
-		features: ['Vitrine en ligne', 'Jusqu\'a 10 creations', 'Commandes manuelles'],
+		features: ['Vitrine en ligne', "Jusqu'a 10 creations", 'Commandes manuelles'],
 	},
 	{
 		id: 'pro',
@@ -65,15 +66,7 @@ export default class BillingController {
 
 	async subscribe({ auth, request, response }: HttpContext) {
 		const user = auth.user!
-		const { plan, interval } = request.only(['plan', 'interval'])
-
-		if (!['pro', 'premium'].includes(plan)) {
-			return response.badRequest({ success: false, message: 'Invalid plan. Use pro or premium.' })
-		}
-
-		if (!['monthly', 'yearly'].includes(interval)) {
-			return response.badRequest({ success: false, message: 'Invalid billing interval' })
-		}
+		const { plan, interval } = await request.validateUsing(subscribeValidator)
 
 		const priceId = this.stripeService.getPriceId(plan, interval)
 		if (!priceId) {
@@ -98,7 +91,7 @@ export default class BillingController {
 			priceId,
 			`${frontendUrl}/billing?success=true`,
 			`${frontendUrl}/billing?cancelled=true`,
-			user.id,
+			user.id
 		)
 
 		return response.ok({
@@ -210,7 +203,7 @@ export default class BillingController {
 		const frontendUrl = env.get('FRONTEND_URL')
 		const portalUrl = await this.stripeService.createBillingPortalSession(
 			subscription.stripeCustomerId,
-			`${frontendUrl}/billing`,
+			`${frontendUrl}/billing`
 		)
 
 		return response.ok({

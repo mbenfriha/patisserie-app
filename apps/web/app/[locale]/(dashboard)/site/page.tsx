@@ -1,103 +1,43 @@
 'use client'
 
-import { useEffect, useState, useCallback, useRef } from 'react'
-import { api } from '@/lib/api/client'
-import { getImageUrl } from '@/lib/utils/image-url'
-import { RichTextEditor } from '@/components/ui/rich-text-editor'
+import {
+	AlertCircle,
+	ExternalLink,
+	Eye,
+	FileText,
+	LayoutGrid,
+	Monitor,
+	Palette,
+	Phone,
+	RefreshCw,
+	Save,
+	Smartphone,
+	Undo2,
+} from 'lucide-react'
+import { useTranslations } from 'next-intl'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { toast } from 'sonner'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
 import { ImageCropper } from '@/components/ui/image-cropper'
-
-interface SiteConfig {
-	heroSubtitle?: string
-	heroCtaLabel?: string
-	heroCtaHref?: string
-	storyTitle?: string
-	storySubtitle?: string
-	storyText?: string
-	marqueeItems?: string[]
-	creationsTitle?: string
-	creationsSubtitle?: string
-	workshopsCtaTitle?: string
-	workshopsCtaSubtitle?: string
-	workshopsCtaDescription?: string
-	workshopsCtaLabel?: string
-	showStorySection?: boolean
-	showMarquee?: boolean
-	showCreationsOnHomepage?: boolean
-	showWorkshopsCta?: boolean
-	showCatalogueTab?: boolean
-	showCustomOrderTab?: boolean
-	showInstagramSection?: boolean
-	instagramSectionTitle?: string
-	instagramSectionSubtitle?: string
-	fontPreset?: 'classic' | 'modern' | 'elegant' | 'playful'
-}
-
-interface Profile {
-	id: string
-	slug: string
-	businessName: string
-	logoUrl: string | null
-	description: string | null
-	phone: string | null
-	addressStreet: string | null
-	addressCity: string | null
-	addressZip: string | null
-	addressCountry: string | null
-	socialLinks: { instagram?: string; facebook?: string; tiktok?: string; snapchat?: string; linkedin?: string; youtube?: string; customUrl?: string; customLabel?: string }
-	primaryColor: string
-	secondaryColor: string
-	fontFamily: string
-	heroImageUrl: string | null
-	creationsHeroImageUrl: string | null
-	workshopsHeroImageUrl: string | null
-	productsHeroImageUrl: string | null
-	ordersHeroImageUrl: string | null
-	storyImageUrl: string | null
-	siteConfig: SiteConfig
-	ordersEnabled: boolean
-	workshopsEnabled: boolean
-	plan: 'starter' | 'pro' | 'premium'
-	operatingHours: Record<string, { open: string; close: string; closed?: boolean }> | null
-}
-
-const FONT_PRESETS = [
-	{ value: 'classic', label: 'Classique', fonts: 'Cormorant Garamond + Josefin Sans' },
-	{ value: 'modern', label: 'Moderne', fonts: 'Montserrat + Inter' },
-	{ value: 'elegant', label: 'Elegant', fonts: 'Playfair Display + Lato' },
-	{ value: 'playful', label: 'Fantaisie', fonts: 'Pacifico + Nunito' },
-] as const
-
-const DAYS = [
-	{ key: 'monday', label: 'Lundi' },
-	{ key: 'tuesday', label: 'Mardi' },
-	{ key: 'wednesday', label: 'Mercredi' },
-	{ key: 'thursday', label: 'Jeudi' },
-	{ key: 'friday', label: 'Vendredi' },
-	{ key: 'saturday', label: 'Samedi' },
-	{ key: 'sunday', label: 'Dimanche' },
-]
-
-const DEFAULT_MARQUEE = [
-	'Macarons',
-	'Cake Design',
-	'Entremets',
-	'Wedding Cake',
-	'Cupcakes',
-	'Viennoiseries',
-	'Number Cake',
-	'Layer Cake',
-]
-
-type Tab = 'apparence' | 'contenu' | 'pages' | 'contact'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { api } from '@/lib/api/client'
+import { BrandingTab } from './_components/branding-tab'
+import { ContactTab } from './_components/contact-tab'
+import { ContentTab } from './_components/content-tab'
+import { SectionsTab } from './_components/sections-tab'
+import type { Profile, SiteConfig } from './_components/types'
 
 export default function SiteEditorPage() {
+	const t = useTranslations('siteEditor')
+	const tc = useTranslations('common')
+
 	const [profile, setProfile] = useState<Profile | null>(null)
 	const [isLoading, setIsLoading] = useState(true)
 	const [isSaving, setIsSaving] = useState(false)
-	const [activeTab, setActiveTab] = useState<Tab>('apparence')
-	const [toast, setToast] = useState<string | null>(null)
+	const [activeTab, setActiveTab] = useState<string>('branding')
 	const [showPreview, setShowPreview] = useState(false)
-	const [previewDevice, setPreviewDevice] = useState<'mobile' | 'desktop'>('mobile')
+	const [previewDevice, setPreviewDevice] = useState<'mobile' | 'desktop'>('desktop')
 	const iframeRef = useRef<HTMLIFrameElement>(null)
 	const [previewKey, setPreviewKey] = useState(0)
 
@@ -118,19 +58,19 @@ export default function SiteEditorPage() {
 	const [addressCountry, setAddressCountry] = useState('France')
 	const [socialLinks, setSocialLinks] = useState<Profile['socialLinks']>({})
 	const [operatingHours, setOperatingHours] = useState<Profile['operatingHours']>(null)
-	const [instagramStatus, setInstagramStatus] = useState<{ connected: boolean; valid?: boolean; username?: string } | null>(null)
+	const [instagramStatus, setInstagramStatus] = useState<{
+		connected: boolean
+		valid?: boolean
+		username?: string
+	} | null>(null)
 	const [instagramLoading, setInstagramLoading] = useState(false)
 
 	// Image cropper state
-	const [cropState, setCropState] = useState<{ src: string; file?: File; target: 'hero' | string } | null>(null)
-
-	// Marquee chip input
-	const [newMarqueeItem, setNewMarqueeItem] = useState('')
-
-	// Accordion state for content tab
-	const [openSections, setOpenSections] = useState<Record<string, boolean>>({
-		hero: true,
-	})
+	const [cropState, setCropState] = useState<{
+		src: string
+		file?: File
+		target: 'hero' | string
+	} | null>(null)
 
 	const siteUrl = profile ? `/${profile.slug}` : null
 
@@ -159,6 +99,50 @@ export default function SiteEditorPage() {
 		window.addEventListener('beforeunload', handler)
 		return () => window.removeEventListener('beforeunload', handler)
 	}, [hasChanges])
+
+	// Send live preview updates to the iframe
+	useEffect(() => {
+		if (!iframeRef.current?.contentWindow || !showPreview) return
+		const configWithFont: typeof siteConfig = {
+			...siteConfig,
+			fontPreset: fontPreset as 'classic' | 'modern' | 'elegant' | 'playful',
+		}
+		iframeRef.current.contentWindow.postMessage(
+			{
+				type: 'PATISSIO_PREVIEW_UPDATE',
+				payload: {
+					primaryColor,
+					secondaryColor,
+					siteConfig: configWithFont,
+					ordersEnabled,
+					workshopsEnabled,
+					phone: phone || null,
+					addressStreet: addressStreet || null,
+					addressCity: addressCity || null,
+					addressZip: addressZip || null,
+					addressCountry: addressCountry || null,
+					socialLinks,
+					operatingHours,
+				},
+			},
+			'*'
+		)
+	}, [
+		showPreview,
+		primaryColor,
+		secondaryColor,
+		fontPreset,
+		siteConfig,
+		ordersEnabled,
+		workshopsEnabled,
+		phone,
+		addressStreet,
+		addressCity,
+		addressZip,
+		addressCountry,
+		socialLinks,
+		operatingHours,
+	])
 
 	const loadProfile = useCallback(async () => {
 		try {
@@ -211,18 +195,17 @@ export default function SiteEditorPage() {
 		const igResult = params.get('instagram')
 		const igCode = params.get('instagram_code')
 
-		// Exchange code received from Instagram redirect
 		if (igCode && !igExchanged.current) {
 			igExchanged.current = true
-			setActiveTab('pages')
+			setActiveTab('sections')
 			api
 				.post('/patissier/instagram/exchange', { code: igCode })
 				.then(() => {
 					loadInstagramStatus()
-					showToast('Instagram connecté avec succès !')
+					toast.success(t('instagramSuccess'))
 				})
 				.catch(() => {
-					showToast('Erreur lors de la connexion Instagram')
+					toast.error(t('instagramError'))
 				})
 				.finally(() => {
 					const url = new URL(window.location.href)
@@ -233,18 +216,18 @@ export default function SiteEditorPage() {
 		}
 
 		if (igResult) {
-			setActiveTab('pages')
+			setActiveTab('sections')
 			if (igResult === 'success') {
 				loadInstagramStatus()
-				showToast('Instagram connecté avec succès !')
+				toast.success(t('instagramSuccess'))
 			} else {
-				showToast('Erreur lors de la connexion Instagram')
+				toast.error(t('instagramError'))
 			}
 			const url = new URL(window.location.href)
 			url.searchParams.delete('instagram')
 			window.history.replaceState({}, '', url.pathname)
 		}
-	}, [loadInstagramStatus])
+	}, [loadInstagramStatus, t])
 
 	const handleInstagramConnect = async () => {
 		setInstagramLoading(true)
@@ -253,7 +236,7 @@ export default function SiteEditorPage() {
 			const url = res.data.data.url
 			window.location.href = url
 		} catch {
-			showToast('Erreur: integration Instagram non configuree')
+			toast.error(t('instagramNotConfigured'))
 			setInstagramLoading(false)
 		}
 	}
@@ -263,17 +246,12 @@ export default function SiteEditorPage() {
 		try {
 			await api.delete('/patissier/instagram/disconnect')
 			setInstagramStatus({ connected: false })
-			showToast('Instagram deconnecte')
+			toast(t('instagramDisconnected'))
 		} catch {
-			showToast('Erreur lors de la deconnexion')
+			toast.error(t('instagramDisconnectError'))
 		} finally {
 			setInstagramLoading(false)
 		}
-	}
-
-	const showToast = (msg: string) => {
-		setToast(msg)
-		setTimeout(() => setToast(null), 3000)
 	}
 
 	const updateSiteConfigField = <K extends keyof SiteConfig>(key: K, value: SiteConfig[K]) => {
@@ -284,7 +262,10 @@ export default function SiteEditorPage() {
 		if (!profile) return
 		setIsSaving(true)
 		try {
-			const configToSave: SiteConfig = { ...siteConfig, fontPreset: fontPreset as SiteConfig['fontPreset'] }
+			const configToSave: SiteConfig = {
+				...siteConfig,
+				fontPreset: fontPreset as SiteConfig['fontPreset'],
+			}
 
 			await api.put('/patissier/site', {
 				primaryColor,
@@ -305,15 +286,33 @@ export default function SiteEditorPage() {
 				operatingHours,
 			})
 
-			showToast('Modifications enregistrees avec succes !')
+			toast.success(t('saved'))
 			await loadProfile()
 			setPreviewKey((k) => k + 1)
 		} catch (e) {
 			console.error(e)
-			showToast('Erreur lors de la sauvegarde')
+			toast.error(t('saveError'))
 		} finally {
 			setIsSaving(false)
 		}
+	}
+
+	const discardChanges = () => {
+		if (!profile) return
+		setPrimaryColor(profile.primaryColor)
+		setSecondaryColor(profile.secondaryColor)
+		setFontPreset(profile.siteConfig?.fontPreset || 'classic')
+		setHeroImageUrl(profile.heroImageUrl)
+		setSiteConfig(profile.siteConfig || {})
+		setOrdersEnabled(profile.ordersEnabled)
+		setWorkshopsEnabled(profile.workshopsEnabled)
+		setPhone(profile.phone || '')
+		setAddressStreet(profile.addressStreet || '')
+		setAddressCity(profile.addressCity || '')
+		setAddressZip(profile.addressZip || '')
+		setAddressCountry(profile.addressCountry || 'France')
+		setSocialLinks(profile.socialLinks || {})
+		setOperatingHours(profile.operatingHours)
 	}
 
 	const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -323,20 +322,20 @@ export default function SiteEditorPage() {
 		formData.append('logo', file)
 		try {
 			await api.upload('/patissier/logo', formData)
-			showToast('Logo mis a jour')
+			toast.success(t('logoUpdated'))
 			await loadProfile()
 		} catch {
-			showToast('Erreur lors du telechargement du logo')
+			toast.error(t('logoError'))
 		}
 	}
 
 	const handleLogoDelete = async () => {
 		try {
 			await api.delete('/patissier/logo')
-			showToast('Logo supprime')
+			toast(t('logoDeleted'))
 			await loadProfile()
 		} catch {
-			showToast('Erreur lors de la suppression du logo')
+			toast.error(t('logoError'))
 		}
 	}
 
@@ -351,10 +350,10 @@ export default function SiteEditorPage() {
 	const handleHeroImageDelete = async () => {
 		try {
 			await api.delete('/patissier/hero-image')
-			showToast('Image de bannière supprimée')
+			toast(t('heroImageDeleted'))
 			await loadProfile()
 		} catch {
-			showToast('Erreur lors de la suppression')
+			toast.error(t('imageDeleteError'))
 		}
 	}
 
@@ -365,20 +364,20 @@ export default function SiteEditorPage() {
 		formData.append('image', file)
 		try {
 			await api.upload('/patissier/story-image', formData)
-			showToast('Image mise a jour')
+			toast.success(t('imageUpdated'))
 			await loadProfile()
 		} catch {
-			showToast('Erreur lors du telechargement')
+			toast.error(t('imageUploadError'))
 		}
 	}
 
 	const handleStoryImageDelete = async () => {
 		try {
 			await api.delete('/patissier/story-image')
-			showToast('Image supprimee')
+			toast(t('imageDeleted'))
 			await loadProfile()
 		} catch {
-			showToast('Erreur lors de la suppression')
+			toast.error(t('imageDeleteError'))
 		}
 	}
 
@@ -393,10 +392,10 @@ export default function SiteEditorPage() {
 	const handlePageHeroDelete = async (page: string) => {
 		try {
 			await api.delete(`/patissier/page-hero/${page}`)
-			showToast('Image de couverture supprimée')
+			toast(t('coverImageDeleted'))
 			await loadProfile()
 		} catch {
-			showToast('Erreur lors de la suppression')
+			toast.error(t('imageDeleteError'))
 		}
 	}
 
@@ -413,10 +412,10 @@ export default function SiteEditorPage() {
 			} else {
 				await api.upload(`/patissier/page-hero/${target}`, formData)
 			}
-			showToast('Image mise à jour')
+			toast.success(t('imageUpdated'))
 			await loadProfile()
 		} catch {
-			showToast('Erreur lors du telechargement')
+			toast.error(t('imageUploadError'))
 		}
 	}
 
@@ -425,31 +424,11 @@ export default function SiteEditorPage() {
 		setCropState(null)
 	}
 
-	const toggleSection = (key: string) => {
-		setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }))
-	}
-
-	const addMarqueeItem = () => {
-		const item = newMarqueeItem.trim()
-		if (!item) return
-		const current = siteConfig.marqueeItems || DEFAULT_MARQUEE
-		updateSiteConfigField('marqueeItems', [...current, item])
-		setNewMarqueeItem('')
-	}
-
-	const removeMarqueeItem = (index: number) => {
-		const current = siteConfig.marqueeItems || DEFAULT_MARQUEE
-		updateSiteConfigField(
-			'marqueeItems',
-			current.filter((_, i) => i !== index)
-		)
-	}
-
-	const resetMarquee = () => {
-		updateSiteConfigField('marqueeItems', DEFAULT_MARQUEE)
-	}
-
-	const updateOperatingHour = (day: string, field: 'open' | 'close' | 'closed', value: string | boolean) => {
+	const updateOperatingHour = (
+		day: string,
+		field: 'open' | 'close' | 'closed',
+		value: string | boolean
+	) => {
 		setOperatingHours((prev) => {
 			const current = prev || {}
 			const dayData = current[day] || { open: '09:00', close: '18:00' }
@@ -460,982 +439,212 @@ export default function SiteEditorPage() {
 		})
 	}
 
+	const refreshPreview = () => setPreviewKey((k) => k + 1)
+
 	if (isLoading) {
-		return <p className="text-muted-foreground">Chargement...</p>
+		return <p className="text-muted-foreground">{tc('loading')}</p>
 	}
 
 	if (!profile) {
-		return <p className="text-destructive">Impossible de charger le profil</p>
+		return <p className="text-destructive">{t('profileLoadError')}</p>
 	}
 
-	const tabs: { key: Tab; label: string }[] = [
-		{ key: 'apparence', label: 'Apparence' },
-		{ key: 'contenu', label: 'Contenu' },
-		{ key: 'pages', label: 'Pages' },
-		{ key: 'contact', label: 'Contact' },
-	]
-
-	const marqueeItems = siteConfig.marqueeItems || DEFAULT_MARQUEE
-
-	const refreshPreview = () => setPreviewKey((k) => k + 1)
+	const isPro = profile.plan !== 'starter'
 
 	return (
-		<div className="space-y-6">
-			<div className="flex flex-wrap items-center justify-between gap-4">
-				<h1 className="text-3xl font-bold">Mon site</h1>
-				<div className="flex items-center gap-2">
-					{siteUrl && (
-						<a
-							href={siteUrl}
-							target="_blank"
-							rel="noopener noreferrer"
-							className="rounded-md border px-3 py-2 text-sm text-muted-foreground hover:bg-muted"
-						>
-							Voir mon site
-						</a>
-					)}
-					<button
-						type="button"
-						onClick={() => setShowPreview(!showPreview)}
-						className={`rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
-							showPreview
-								? 'border-primary bg-primary/10 text-primary'
-								: 'text-muted-foreground hover:bg-muted'
-						}`}
-					>
-						{showPreview ? 'Masquer' : 'Previsualiser'}
-					</button>
-				</div>
-			</div>
-
-			{/* Preview panel */}
-			{showPreview && siteUrl && (
-				<div className="rounded-lg border bg-muted/30 p-4">
-					<div className="mb-3 flex items-center justify-between">
-						<div className="flex items-center gap-1 rounded-md border bg-background p-0.5">
-							<button
-								type="button"
-								onClick={() => setPreviewDevice('mobile')}
-								className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${
-									previewDevice === 'mobile' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
-								}`}
-							>
-								Mobile
-							</button>
-							<button
-								type="button"
-								onClick={() => setPreviewDevice('desktop')}
-								className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${
-									previewDevice === 'desktop' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
-								}`}
-							>
-								Desktop
-							</button>
-						</div>
-						<button
-							type="button"
-							onClick={refreshPreview}
-							className="flex items-center gap-1.5 rounded-md border bg-background px-2.5 py-1 text-xs text-muted-foreground hover:text-foreground"
-						>
-							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-								<path d="M21 2v6h-6" />
-								<path d="M3 12a9 9 0 0115-6.7L21 8" />
-								<path d="M3 22v-6h6" />
-								<path d="M21 12a9 9 0 01-15 6.7L3 16" />
-							</svg>
-							Rafraichir
-						</button>
+		<div className="flex h-[calc(100vh-4rem)] flex-col">
+			{/* Header */}
+			<div className="flex-none border-b bg-background">
+				<div className="flex items-center justify-between px-6 py-4">
+					<div>
+						<h1 className="text-xl font-semibold">{t('title')}</h1>
+						<p className="text-sm text-muted-foreground">{t('subtitle')}</p>
 					</div>
-					<div className="flex justify-center">
-						<div
-							className={`overflow-hidden rounded-lg border-2 border-foreground/20 bg-white shadow-lg transition-all duration-300 ${
-								previewDevice === 'mobile' ? 'h-[600px] w-[375px]' : 'h-[500px] w-full max-w-[900px]'
-							}`}
+					<div className="flex items-center gap-2">
+						{siteUrl && (
+							<Button variant="outline" size="sm" asChild>
+								<a href={siteUrl} target="_blank" rel="noopener noreferrer">
+									<ExternalLink className="mr-2 size-4" />
+									{t('previewSite')}
+								</a>
+							</Button>
+						)}
+						<Button
+							variant={showPreview ? 'secondary' : 'outline'}
+							size="sm"
+							onClick={() => setShowPreview(!showPreview)}
 						>
-							<iframe
-								ref={iframeRef}
-								key={previewKey}
-								src={siteUrl}
-								className="h-full w-full"
-								title="Previsualisation du site"
-							/>
-						</div>
+							<Eye className="mr-2 size-4" />
+							{t('preview')}
+						</Button>
+						<Button size="sm" disabled={!hasChanges || isSaving} onClick={handleSave}>
+							{isSaving ? (
+								<RefreshCw className="mr-2 size-4 animate-spin" />
+							) : (
+								<Save className="mr-2 size-4" />
+							)}
+							{isSaving ? t('saving') : t('saveChanges')}
+						</Button>
 					</div>
-					<p className="mt-2 text-center text-xs text-muted-foreground">
-						Cliquez sur « Enregistrer » en bas de page, puis sur « Rafraîchir » ci-dessus pour voir vos changements
-					</p>
 				</div>
-			)}
 
-			{/* Tabs */}
-			<div className="flex gap-1 overflow-x-auto rounded-lg border bg-muted p-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-				{tabs.map((tab) => (
-					<button
-						key={tab.key}
-						type="button"
-						onClick={() => setActiveTab(tab.key)}
-						className={`shrink-0 flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-							activeTab === tab.key
-								? 'bg-background text-foreground shadow-sm'
-								: 'text-muted-foreground hover:text-foreground'
-						}`}
-					>
-						{tab.label}
-					</button>
-				))}
-			</div>
-
-			{/* Tab content */}
-			<div className="space-y-6">
-				{/* ─── APPARENCE ─────────────────────────────── */}
-				{activeTab === 'apparence' && (
-					<>
-						{/* Logo */}
-						<section className="rounded-lg border p-6">
-							<h2 className="text-lg font-semibold">Logo</h2>
-							<p className="mt-1 text-sm text-muted-foreground">Affiché dans la barre de navigation et le pied de page de votre site</p>
-							<div className="mt-4 flex items-center gap-4">
-								{profile.logoUrl ? (
-									<img
-										src={getImageUrl(profile.logoUrl)!}
-										alt="Logo"
-										className="h-16 w-16 rounded-lg border object-contain"
-									/>
-								) : (
-									<div className="flex h-16 w-16 items-center justify-center rounded-lg border bg-muted text-xs text-muted-foreground">
-										Aucun
-									</div>
-								)}
+				{/* Unsaved changes banner */}
+				{hasChanges && (
+					<div className="px-6 pb-4">
+						<Alert className="border-amber-200 bg-amber-50">
+							<AlertCircle className="size-4 text-amber-600" />
+							<AlertDescription className="flex w-full items-center justify-between">
+								<span className="text-amber-800">{t('unsavedChanges')}</span>
 								<div className="flex gap-2">
-									<label className="cursor-pointer rounded-md border px-3 py-2 text-sm hover:bg-muted">
-										Changer
-										<input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
-									</label>
-									{profile.logoUrl && (
-										<button
-											type="button"
-											onClick={handleLogoDelete}
-											className="rounded-md border px-3 py-2 text-sm text-destructive hover:bg-destructive/10"
-										>
-											Supprimer
-										</button>
-									)}
+									<Button variant="ghost" size="sm" onClick={discardChanges}>
+										<Undo2 className="mr-1 size-4" />
+										{t('discard')}
+									</Button>
+									<Button size="sm" onClick={handleSave} disabled={isSaving}>
+										{isSaving ? t('saving') : t('saveChanges')}
+									</Button>
 								</div>
-							</div>
-						</section>
-
-						{/* Colors */}
-						<section className="rounded-lg border p-6">
-							<h2 className="text-lg font-semibold">Couleurs</h2>
-							<p className="mt-1 text-sm text-muted-foreground">Les couleurs utilisées sur l'ensemble de votre site (boutons, titres, accents)</p>
-							<div className="mt-4 grid gap-4 md:grid-cols-2">
-								<div>
-									<label className="text-sm font-medium">Couleur principale</label>
-									<div className="mt-1 flex items-center gap-3">
-										<input
-											type="color"
-											value={primaryColor}
-											onChange={(e) => setPrimaryColor(e.target.value)}
-											className="h-10 w-10 cursor-pointer rounded border"
-										/>
-										<input
-											type="text"
-											value={primaryColor}
-											onChange={(e) => setPrimaryColor(e.target.value)}
-											className="rounded-md border px-3 py-2 text-sm"
-										/>
-									</div>
-								</div>
-								<div>
-									<label className="text-sm font-medium">Couleur secondaire</label>
-									<div className="mt-1 flex items-center gap-3">
-										<input
-											type="color"
-											value={secondaryColor}
-											onChange={(e) => setSecondaryColor(e.target.value)}
-											className="h-10 w-10 cursor-pointer rounded border"
-										/>
-										<input
-											type="text"
-											value={secondaryColor}
-											onChange={(e) => setSecondaryColor(e.target.value)}
-											className="rounded-md border px-3 py-2 text-sm"
-										/>
-									</div>
-								</div>
-							</div>
-						</section>
-
-						{/* Font preset */}
-						<section className="rounded-lg border p-6">
-							<h2 className="text-lg font-semibold">Police</h2>
-							<p className="mt-1 text-sm text-muted-foreground">Le style de texte utilisé sur votre site</p>
-							<div className="mt-4 grid gap-3 sm:grid-cols-2">
-								{FONT_PRESETS.map((preset) => (
-									<label
-										key={preset.value}
-										className={`flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition-colors ${
-											fontPreset === preset.value
-												? 'border-primary bg-primary/5'
-												: 'hover:bg-muted'
-										}`}
-									>
-										<input
-											type="radio"
-											name="fontPreset"
-											value={preset.value}
-											checked={fontPreset === preset.value}
-											onChange={(e) => setFontPreset(e.target.value)}
-											className="accent-primary"
-										/>
-										<div>
-											<span className="text-sm font-medium">{preset.label}</span>
-											<span className="block text-xs text-muted-foreground">{preset.fonts}</span>
-										</div>
-									</label>
-								))}
-							</div>
-						</section>
-
-						{/* Hero image */}
-						<section className="rounded-lg border p-6">
-							<h2 className="text-lg font-semibold">Image de bannière</h2>
-							<p className="mt-1 text-sm text-muted-foreground">
-								La grande image d'arrière-plan en haut de votre page d'accueil (20 Mo max)
-							</p>
-							<div className="mt-4 flex items-center gap-4">
-								{profile.heroImageUrl ? (
-									<img
-										src={getImageUrl(profile.heroImageUrl)!}
-										alt="Hero"
-										className="h-32 rounded-lg border object-cover"
-									/>
-								) : (
-									<div className="flex h-32 w-48 items-center justify-center rounded-lg border-2 border-dashed bg-muted text-xs text-muted-foreground">
-										Aucune image
-									</div>
-								)}
-								<div className="flex flex-col gap-2">
-									<label className="cursor-pointer rounded-md border px-3 py-2 text-center text-sm hover:bg-muted">
-										{profile.heroImageUrl ? 'Changer' : 'Ajouter'}
-										<input type="file" accept="image/*" onChange={handleHeroImageUpload} className="hidden" />
-									</label>
-									{profile.heroImageUrl && (
-										<button
-											type="button"
-											onClick={handleHeroImageDelete}
-											className="rounded-md border px-3 py-2 text-sm text-destructive hover:bg-destructive/10"
-										>
-											Supprimer
-										</button>
-									)}
-								</div>
-							</div>
-						</section>
-					</>
+							</AlertDescription>
+						</Alert>
+					</div>
 				)}
+			</div>
 
-				{/* ─── CONTENU ─────────────────────────────── */}
-				{activeTab === 'contenu' && (
-					<>
-						{/* Hero section */}
-						<Accordion
-							title="Bannière principale"
-							description="La première chose que vos visiteurs voient en arrivant sur votre site"
-							isOpen={openSections.hero}
-							onToggle={() => toggleSection('hero')}
-						>
-							<div className="grid gap-4">
-								<div>
-									<label className="text-sm font-medium">Sous-titre</label>
-									<p className="text-xs text-muted-foreground">Texte affiché sous le nom de votre pâtisserie</p>
-									<input
-										type="text"
-										value={siteConfig.heroSubtitle || ''}
-										onChange={(e) => updateSiteConfigField('heroSubtitle', e.target.value)}
-										placeholder="patisserie & ateliers"
-										className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
-									/>
-								</div>
-								<div>
-									<label className="text-sm font-medium">Texte du bouton</label>
-									<p className="text-xs text-muted-foreground">Le bouton principal affiché sur votre bannière d'accueil</p>
-									<input
-										type="text"
-										value={siteConfig.heroCtaLabel || ''}
-										onChange={(e) => updateSiteConfigField('heroCtaLabel', e.target.value)}
-										placeholder={ordersEnabled ? 'Commander' : 'Voir nos creations'}
-										className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
-									/>
-								</div>
-								<div>
-									<label className="text-sm font-medium">Lien du bouton</label>
-									<p className="text-xs text-muted-foreground">Vers quelle page vos visiteurs seront redirigés en cliquant</p>
-									<select
-										value={siteConfig.heroCtaHref || ''}
-										onChange={(e) => updateSiteConfigField('heroCtaHref', e.target.value)}
-										className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
-									>
-										<option value="">Automatique ({ordersEnabled ? 'Commandes' : 'Créations'})</option>
-										<optgroup label="Pages">
-											<option value="/creations">Créations</option>
-											<option value="/commandes">Commandes</option>
-											<option value="/workshops">Ateliers</option>
-										</optgroup>
-										<optgroup label="Sections de la page d'accueil">
-											<option value="#story">Notre histoire</option>
-											<option value="#creations">Créations</option>
-											<option value="#workshops-cta">Ateliers</option>
-										</optgroup>
-									</select>
-								</div>
-							</div>
-						</Accordion>
+			{/* Main Content */}
+			<div className="flex flex-1 overflow-hidden">
+				{/* Editor Panel */}
+				<div className={`flex-1 overflow-y-auto ${showPreview ? 'max-w-2xl' : ''}`}>
+					<div className="p-6">
+						<Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+							<TabsList className="grid w-full grid-cols-4">
+								<TabsTrigger value="branding" className="gap-2">
+									<Palette className="size-4" />
+									<span className="hidden sm:inline">{t('branding')}</span>
+								</TabsTrigger>
+								<TabsTrigger value="content" className="gap-2">
+									<FileText className="size-4" />
+									<span className="hidden sm:inline">{t('content')}</span>
+								</TabsTrigger>
+								<TabsTrigger value="sections" className="gap-2">
+									<LayoutGrid className="size-4" />
+									<span className="hidden sm:inline">{t('sections')}</span>
+								</TabsTrigger>
+								<TabsTrigger value="contact" className="gap-2">
+									<Phone className="size-4" />
+									<span className="hidden sm:inline">{t('contact')}</span>
+								</TabsTrigger>
+							</TabsList>
 
-						{/* Story section */}
-						<Accordion
-							title="Notre histoire"
-							description="Présentez votre parcours et votre passion — visible sur la page d'accueil"
-							isOpen={openSections.story}
-							onToggle={() => toggleSection('story')}
-						>
-							<div className="grid gap-4">
-								<div>
-									<label className="text-sm font-medium">Titre</label>
-									<input
-										type="text"
-										value={siteConfig.storyTitle || ''}
-										onChange={(e) => updateSiteConfigField('storyTitle', e.target.value)}
-										placeholder="Notre histoire"
-										className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
-									/>
-								</div>
-								<div>
-									<label className="text-sm font-medium">Sous-titre</label>
-									<input
-										type="text"
-										value={siteConfig.storySubtitle || ''}
-										onChange={(e) => updateSiteConfigField('storySubtitle', e.target.value)}
-										placeholder="qui sommes-nous"
-										className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
-									/>
-								</div>
-								<div>
-									<label className="text-sm font-medium">Texte</label>
-									<div className="mt-1">
-										<RichTextEditor
-											content={siteConfig.storyText || ''}
-											onChange={(html) => updateSiteConfigField('storyText', html)}
-											placeholder={profile.description || 'Votre histoire...'}
-										/>
-									</div>
-								</div>
-								<div>
-									<label className="text-sm font-medium">Image</label>
-									<div className="mt-2 flex items-center gap-4">
-										{profile.storyImageUrl ? (
-											<img
-												src={getImageUrl(profile.storyImageUrl)!}
-												alt="Notre histoire"
-												className="h-24 rounded-lg border object-cover"
-											/>
-										) : (
-											<div className="flex h-24 w-24 items-center justify-center rounded-lg border-2 border-dashed bg-muted text-xs text-muted-foreground">
-												Aucune
-											</div>
-										)}
-										<div className="flex flex-col gap-2">
-											<label className="cursor-pointer rounded-md border px-3 py-2 text-center text-sm hover:bg-muted">
-												{profile.storyImageUrl ? 'Changer' : 'Ajouter'}
-												<input type="file" accept="image/*" onChange={handleStoryImageUpload} className="hidden" />
-											</label>
-											{profile.storyImageUrl && (
-												<button
-													type="button"
-													onClick={handleStoryImageDelete}
-													className="rounded-md border px-3 py-2 text-sm text-destructive hover:bg-destructive/10"
-												>
-													Supprimer
-												</button>
-											)}
-										</div>
-									</div>
-								</div>
-							</div>
-						</Accordion>
+							<TabsContent value="branding">
+								<BrandingTab
+									profile={profile}
+									primaryColor={primaryColor}
+									setPrimaryColor={setPrimaryColor}
+									secondaryColor={secondaryColor}
+									setSecondaryColor={setSecondaryColor}
+									fontPreset={fontPreset}
+									setFontPreset={setFontPreset}
+									onLogoUpload={handleLogoUpload}
+									onLogoDelete={handleLogoDelete}
+									onHeroImageUpload={handleHeroImageUpload}
+									onHeroImageDelete={handleHeroImageDelete}
+								/>
+							</TabsContent>
 
-						{/* Marquee */}
-						<Accordion
-							title="Texte défilant"
-							description="Les mots qui défilent en continu sur votre page d'accueil (ex: Macarons, Entremets...)"
-							isOpen={openSections.marquee}
-							onToggle={() => toggleSection('marquee')}
-						>
-							<div className="space-y-4">
-								<div className="flex flex-wrap gap-2">
-									{marqueeItems.map((item, i) => (
-										<span
-											key={i}
-											className="inline-flex items-center gap-1.5 rounded-full border bg-muted px-3 py-1 text-sm"
-										>
-											{item}
-											<button
-												type="button"
-												onClick={() => removeMarqueeItem(i)}
-												className="text-muted-foreground hover:text-destructive"
-											>
-												<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-													<path d="M18 6L6 18M6 6l12 12" />
-												</svg>
-											</button>
-										</span>
-									))}
-								</div>
-								<div className="flex gap-2">
-									<input
-										type="text"
-										value={newMarqueeItem}
-										onChange={(e) => setNewMarqueeItem(e.target.value)}
-										onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addMarqueeItem())}
-										placeholder="Ajouter un mot..."
-										className="flex-1 rounded-md border px-3 py-2 text-sm"
-									/>
-									<button
-										type="button"
-										onClick={addMarqueeItem}
-										className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-									>
-										Ajouter
-									</button>
-								</div>
-								<button
-									type="button"
-									onClick={resetMarquee}
-									className="text-sm text-muted-foreground underline hover:text-foreground"
+							<TabsContent value="content">
+								<ContentTab
+									profile={profile}
+									siteConfig={siteConfig}
+									ordersEnabled={ordersEnabled}
+									updateSiteConfigField={updateSiteConfigField}
+									onStoryImageUpload={handleStoryImageUpload}
+									onStoryImageDelete={handleStoryImageDelete}
+									onPageHeroUpload={handlePageHeroUpload}
+									onPageHeroDelete={handlePageHeroDelete}
+								/>
+							</TabsContent>
+
+							<TabsContent value="sections">
+								<SectionsTab
+									isPro={isPro}
+									siteConfig={siteConfig}
+									ordersEnabled={ordersEnabled}
+									workshopsEnabled={workshopsEnabled}
+									setOrdersEnabled={setOrdersEnabled}
+									setWorkshopsEnabled={setWorkshopsEnabled}
+									updateSiteConfigField={updateSiteConfigField}
+									instagramStatus={instagramStatus}
+									instagramLoading={instagramLoading}
+									onInstagramConnect={handleInstagramConnect}
+									onInstagramDisconnect={handleInstagramDisconnect}
+								/>
+							</TabsContent>
+
+							<TabsContent value="contact">
+								<ContactTab
+									phone={phone}
+									setPhone={setPhone}
+									addressStreet={addressStreet}
+									setAddressStreet={setAddressStreet}
+									addressCity={addressCity}
+									setAddressCity={setAddressCity}
+									addressZip={addressZip}
+									setAddressZip={setAddressZip}
+									addressCountry={addressCountry}
+									setAddressCountry={setAddressCountry}
+									socialLinks={socialLinks}
+									setSocialLinks={setSocialLinks}
+									operatingHours={operatingHours}
+									updateOperatingHour={updateOperatingHour}
+								/>
+							</TabsContent>
+						</Tabs>
+					</div>
+				</div>
+
+				{/* Preview Panel — side by side */}
+				{showPreview && siteUrl && (
+					<div className="flex flex-1 flex-col border-l bg-muted/30">
+						<div className="flex items-center justify-between border-b bg-background p-4">
+							<div className="flex items-center gap-2">
+								<Button
+									variant={previewDevice === 'mobile' ? 'secondary' : 'ghost'}
+									size="sm"
+									onClick={() => setPreviewDevice('mobile')}
 								>
-									Reinitialiser par defaut
-								</button>
+									<Smartphone className="size-4" />
+								</Button>
+								<Button
+									variant={previewDevice === 'desktop' ? 'secondary' : 'ghost'}
+									size="sm"
+									onClick={() => setPreviewDevice('desktop')}
+								>
+									<Monitor className="size-4" />
+								</Button>
 							</div>
-						</Accordion>
-
-						{/* Creations section */}
-						<Accordion
-							title="Créations en vedette"
-							description="Vos dernières créations mises en avant sur la page d'accueil"
-							isOpen={openSections.creations}
-							onToggle={() => toggleSection('creations')}
-						>
-							<div className="grid gap-4">
-								<div>
-									<label className="text-sm font-medium">Titre</label>
-									<input
-										type="text"
-										value={siteConfig.creationsTitle || ''}
-										onChange={(e) => updateSiteConfigField('creationsTitle', e.target.value)}
-										placeholder="Nos Creations"
-										className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
-									/>
-								</div>
-								<div>
-									<label className="text-sm font-medium">Sous-titre</label>
-									<input
-										type="text"
-										value={siteConfig.creationsSubtitle || ''}
-										onChange={(e) => updateSiteConfigField('creationsSubtitle', e.target.value)}
-										placeholder="nos specialites"
-										className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
-									/>
-								</div>
+							<Button variant="ghost" size="sm" onClick={refreshPreview}>
+								<RefreshCw className="size-4" />
+							</Button>
+						</div>
+						<div className="flex flex-1 items-center justify-center overflow-hidden p-4">
+							<div
+								className={`overflow-hidden rounded-lg bg-white shadow-xl transition-all ${
+									previewDevice === 'mobile'
+										? 'h-[600px] w-[375px]'
+										: 'h-[500px] w-full max-w-[900px]'
+								}`}
+							>
+								<iframe
+									ref={iframeRef}
+									key={previewKey}
+									src={siteUrl}
+									className="size-full"
+									title="Site preview"
+								/>
 							</div>
-						</Accordion>
-
-						{/* Workshops CTA section */}
-						<Accordion
-							title={
-								profile?.plan === 'starter'
-									? 'Mise en avant des ateliers — Pro'
-									: 'Mise en avant des ateliers'
-							}
-							description="Cette section sur votre page d'accueil incite vos visiteurs à découvrir vos ateliers"
-							isOpen={openSections.workshopsCta}
-							onToggle={() => toggleSection('workshopsCta')}
-						>
-							<div className="grid gap-4">
-								<div>
-									<label className="text-sm font-medium">Titre</label>
-									<input
-										type="text"
-										value={siteConfig.workshopsCtaTitle || ''}
-										onChange={(e) => updateSiteConfigField('workshopsCtaTitle', e.target.value)}
-										placeholder="Des cours de patisserie pour tous"
-										className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
-									/>
-								</div>
-								<div>
-									<label className="text-sm font-medium">Sous-titre</label>
-									<input
-										type="text"
-										value={siteConfig.workshopsCtaSubtitle || ''}
-										onChange={(e) => updateSiteConfigField('workshopsCtaSubtitle', e.target.value)}
-										placeholder="master class"
-										className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
-									/>
-								</div>
-								<div>
-									<label className="text-sm font-medium">Description</label>
-									<div className="mt-1">
-										<RichTextEditor
-											content={siteConfig.workshopsCtaDescription || ''}
-											onChange={(html) => updateSiteConfigField('workshopsCtaDescription', html)}
-											placeholder="La patisserie n'aura plus de secret pour vous..."
-										/>
-									</div>
-								</div>
-								<div>
-									<label className="text-sm font-medium">Texte du bouton</label>
-									<input
-										type="text"
-										value={siteConfig.workshopsCtaLabel || ''}
-										onChange={(e) => updateSiteConfigField('workshopsCtaLabel', e.target.value)}
-										placeholder="Reserver votre atelier"
-										className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
-									/>
-								</div>
-							</div>
-						</Accordion>
-
-						{/* Page Hero Images */}
-						<Accordion
-							title="Images de couverture"
-							description="La grande image affichée en haut de chaque page de votre site"
-							isOpen={openSections.pageHeroes}
-							onToggle={() => toggleSection('pageHeroes')}
-						>
-							<p className="mb-4 text-sm text-muted-foreground">
-								Personnalisez l'image de couverture de chaque page
-							</p>
-							<div className="grid gap-6">
-								{([
-									{ page: 'creations', label: 'Page Creations', field: 'creationsHeroImageUrl' },
-									{ page: 'workshops', label: 'Page Ateliers', field: 'workshopsHeroImageUrl' },
-									{ page: 'products', label: 'Page Produits', field: 'productsHeroImageUrl' },
-									{ page: 'orders', label: 'Page Commandes', field: 'ordersHeroImageUrl' },
-								] as const).map(({ page, label, field }) => (
-									<div key={page}>
-										<label className="text-sm font-medium">{label}</label>
-										<div className="mt-2 flex items-center gap-4">
-											{profile[field] ? (
-												<img
-													src={getImageUrl(profile[field])!}
-													alt={label}
-													className="h-24 rounded-lg border object-cover"
-												/>
-											) : (
-												<div className="flex h-24 w-36 items-center justify-center rounded-lg border-2 border-dashed bg-muted text-xs text-muted-foreground">
-													Aucune
-												</div>
-											)}
-											<div className="flex flex-col gap-2">
-												<label className="cursor-pointer rounded-md border px-3 py-2 text-center text-sm hover:bg-muted">
-													{profile[field] ? 'Changer' : 'Ajouter'}
-													<input type="file" accept="image/*" onChange={(e) => handlePageHeroUpload(page, e)} className="hidden" />
-												</label>
-												{profile[field] && (
-													<button
-														type="button"
-														onClick={() => handlePageHeroDelete(page)}
-														className="rounded-md border px-3 py-2 text-sm text-destructive hover:bg-destructive/10"
-													>
-														Supprimer
-													</button>
-												)}
-											</div>
-										</div>
-									</div>
-								))}
-							</div>
-						</Accordion>
-					</>
+						</div>
+					</div>
 				)}
-
-				{/* ─── PAGES ─────────────────────────────── */}
-				{activeTab === 'pages' && (
-					<section className="rounded-lg border p-6">
-						<h2 className="text-lg font-semibold">Gérer les sections de votre site</h2>
-						<p className="mt-1 text-sm text-muted-foreground">
-							Choisissez ce que vos visiteurs peuvent voir sur votre site
-						</p>
-						{(() => {
-							const isPro = profile && profile.plan !== 'starter'
-							return (
-								<div className="mt-6 space-y-4">
-									<ToggleRow
-										label='Section "Notre histoire"'
-										checked={siteConfig.showStorySection !== false}
-										onChange={(v) => updateSiteConfigField('showStorySection', v)}
-									/>
-									<ToggleRow
-										label="Texte défilant"
-										checked={siteConfig.showMarquee !== false}
-										onChange={(v) => updateSiteConfigField('showMarquee', v)}
-									/>
-									<ToggleRow
-										label="Créations sur la page d'accueil"
-										checked={siteConfig.showCreationsOnHomepage !== false}
-										onChange={(v) => updateSiteConfigField('showCreationsOnHomepage', v)}
-									/>
-									<ToggleRow
-										label="Mise en avant des ateliers sur la page d'accueil"
-										checked={isPro ? siteConfig.showWorkshopsCta !== false : false}
-										onChange={(v) => updateSiteConfigField('showWorkshopsCta', v)}
-										locked={!isPro}
-										badge={!isPro ? 'pro' : undefined}
-									/>
-									<ToggleRow
-										label="Section Instagram"
-										checked={siteConfig.showInstagramSection === true}
-										onChange={(v) => updateSiteConfigField('showInstagramSection', v)}
-									/>
-									{siteConfig.showInstagramSection && (
-										<div className="ml-6 rounded-md border bg-muted/30 p-4">
-											{instagramStatus?.connected ? (
-												<div className="flex items-center justify-between">
-													<div className="flex items-center gap-2">
-														<span className="h-2 w-2 rounded-full bg-green-500" />
-														<span className="text-sm font-medium">
-															{instagramStatus.username ? `@${instagramStatus.username}` : 'Connecté'}
-														</span>
-														{instagramStatus.valid === false && (
-															<span className="rounded bg-yellow-100 px-1.5 py-0.5 text-xs text-yellow-700">Token expiré</span>
-														)}
-													</div>
-													<div className="flex gap-2">
-														{instagramStatus.valid === false && (
-															<button
-																type="button"
-																onClick={handleInstagramConnect}
-																disabled={instagramLoading}
-																className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-															>
-																Reconnecter
-															</button>
-														)}
-														<button
-															type="button"
-															onClick={handleInstagramDisconnect}
-															disabled={instagramLoading}
-															className="rounded-md border px-3 py-1.5 text-xs text-destructive hover:bg-destructive/10 disabled:opacity-50"
-														>
-															Déconnecter
-														</button>
-													</div>
-												</div>
-											) : (
-												<div className="space-y-2">
-													<p className="text-sm text-muted-foreground">
-														Connectez votre compte Instagram pour afficher votre feed sur votre site.
-													</p>
-													<button
-														type="button"
-														onClick={handleInstagramConnect}
-														disabled={instagramLoading}
-														className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-													>
-														{instagramLoading ? 'Connexion...' : 'Connecter Instagram'}
-													</button>
-												</div>
-											)}
-										</div>
-									)}
-									<div className="border-t pt-4">
-										<ToggleRow
-											label="Page Ateliers"
-											checked={isPro ? workshopsEnabled : false}
-											onChange={setWorkshopsEnabled}
-											locked={!isPro}
-											badge={!isPro ? 'pro' : undefined}
-										/>
-									</div>
-									<ToggleRow
-										label="Page Commandes"
-										checked={isPro ? ordersEnabled : false}
-										onChange={setOrdersEnabled}
-										locked={!isPro}
-										badge={!isPro ? 'pro' : undefined}
-									/>
-									{ordersEnabled && isPro && (
-										<div className="ml-6 space-y-4 border-l pl-4">
-											<ToggleRow
-												label="Onglet Catalogue"
-												checked={siteConfig.showCatalogueTab !== false}
-												onChange={(v) => updateSiteConfigField('showCatalogueTab', v)}
-											/>
-											<ToggleRow
-												label="Onglet Sur-mesure"
-												checked={siteConfig.showCustomOrderTab !== false}
-												onChange={(v) => updateSiteConfigField('showCustomOrderTab', v)}
-											/>
-										</div>
-									)}
-								</div>
-							)
-						})()}
-					</section>
-				)}
-
-				{/* ─── CONTACT ─────────────────────────────── */}
-				{activeTab === 'contact' && (
-					<>
-						<section className="rounded-lg border p-6">
-							<h2 className="text-lg font-semibold">Coordonnees</h2>
-							<div className="mt-4 grid gap-4 md:grid-cols-2">
-								<div>
-									<label className="text-sm font-medium">Telephone</label>
-									<input
-										type="tel"
-										value={phone}
-										onChange={(e) => setPhone(e.target.value)}
-										placeholder="06 12 34 56 78"
-										className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
-									/>
-								</div>
-							</div>
-						</section>
-
-						<section className="rounded-lg border p-6">
-							<h2 className="text-lg font-semibold">Adresse</h2>
-							<div className="mt-4 grid gap-4 md:grid-cols-2">
-								<div className="md:col-span-2">
-									<label className="text-sm font-medium">Rue</label>
-									<input
-										type="text"
-										value={addressStreet}
-										onChange={(e) => setAddressStreet(e.target.value)}
-										placeholder="12 rue de la Patisserie"
-										className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
-									/>
-								</div>
-								<div>
-									<label className="text-sm font-medium">Ville</label>
-									<input
-										type="text"
-										value={addressCity}
-										onChange={(e) => setAddressCity(e.target.value)}
-										placeholder="Paris"
-										className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
-									/>
-								</div>
-								<div>
-									<label className="text-sm font-medium">Code postal</label>
-									<input
-										type="text"
-										value={addressZip}
-										onChange={(e) => setAddressZip(e.target.value)}
-										placeholder="75001"
-										className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
-									/>
-								</div>
-								<div>
-									<label className="text-sm font-medium">Pays</label>
-									<input
-										type="text"
-										value={addressCountry}
-										onChange={(e) => setAddressCountry(e.target.value)}
-										placeholder="France"
-										className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
-									/>
-								</div>
-							</div>
-						</section>
-
-						<section className="rounded-lg border p-6">
-							<h2 className="text-lg font-semibold">Reseaux sociaux</h2>
-							<div className="mt-4 grid gap-4 md:grid-cols-2">
-								<div>
-									<label className="text-sm font-medium">Instagram</label>
-									<input
-										type="url"
-										value={socialLinks.instagram || ''}
-										onChange={(e) => setSocialLinks((prev) => ({ ...prev, instagram: e.target.value }))}
-										placeholder="https://instagram.com/votre-page"
-										className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
-									/>
-								</div>
-								<div>
-									<label className="text-sm font-medium">Feed Instagram</label>
-									<div className="mt-1">
-										{instagramStatus?.connected ? (
-											<div className="flex items-center gap-3">
-												<div className="flex items-center gap-2 rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm">
-													<span className="h-2 w-2 rounded-full bg-green-500" />
-													<span className="text-green-700">
-														{instagramStatus.username ? `@${instagramStatus.username}` : 'Connecte'}
-													</span>
-													{instagramStatus.valid === false && (
-														<span className="text-xs text-amber-600">(token expire)</span>
-													)}
-												</div>
-												<button
-													type="button"
-													onClick={handleInstagramDisconnect}
-													disabled={instagramLoading}
-													className="rounded-md border px-3 py-2 text-xs text-red-600 hover:bg-red-50 disabled:opacity-50"
-												>
-													Deconnecter
-												</button>
-											</div>
-										) : (
-											<button
-												type="button"
-												onClick={handleInstagramConnect}
-												disabled={instagramLoading}
-												className="flex items-center gap-2 rounded-md border bg-gradient-to-r from-purple-500 to-pink-500 px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
-											>
-												<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-													<rect x="2" y="2" width="20" height="20" rx="5" />
-													<circle cx="12" cy="12" r="5" />
-													<circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" stroke="none" />
-												</svg>
-												{instagramLoading ? 'Connexion...' : 'Connecter Instagram'}
-											</button>
-										)}
-										<p className="mt-1.5 text-xs text-muted-foreground">
-											Connectez votre compte pour afficher votre feed sur votre site.
-										</p>
-									</div>
-								</div>
-								<div>
-									<label className="text-sm font-medium">Facebook</label>
-									<input
-										type="url"
-										value={socialLinks.facebook || ''}
-										onChange={(e) => setSocialLinks((prev) => ({ ...prev, facebook: e.target.value }))}
-										placeholder="https://facebook.com/votre-page"
-										className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
-									/>
-								</div>
-								<div>
-									<label className="text-sm font-medium">TikTok</label>
-									<input
-										type="url"
-										value={socialLinks.tiktok || ''}
-										onChange={(e) => setSocialLinks((prev) => ({ ...prev, tiktok: e.target.value }))}
-										placeholder="https://tiktok.com/@votre-page"
-										className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
-									/>
-								</div>
-								<div>
-									<label className="text-sm font-medium">Snapchat</label>
-									<input
-										type="url"
-										value={socialLinks.snapchat || ''}
-										onChange={(e) => setSocialLinks((prev) => ({ ...prev, snapchat: e.target.value }))}
-										placeholder="https://snapchat.com/add/votre-pseudo"
-										className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
-									/>
-								</div>
-								<div>
-									<label className="text-sm font-medium">LinkedIn</label>
-									<input
-										type="url"
-										value={socialLinks.linkedin || ''}
-										onChange={(e) => setSocialLinks((prev) => ({ ...prev, linkedin: e.target.value }))}
-										placeholder="https://linkedin.com/in/votre-profil"
-										className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
-									/>
-								</div>
-								<div>
-									<label className="text-sm font-medium">YouTube</label>
-									<input
-										type="url"
-										value={socialLinks.youtube || ''}
-										onChange={(e) => setSocialLinks((prev) => ({ ...prev, youtube: e.target.value }))}
-										placeholder="https://youtube.com/@votre-chaine"
-										className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
-									/>
-								</div>
-							</div>
-							<div className="mt-4 border-t pt-4">
-								<h3 className="text-sm font-medium">Lien personnalise</h3>
-								<div className="mt-2 grid gap-4 md:grid-cols-2">
-									<div>
-										<label className="text-sm text-muted-foreground">Nom du lien</label>
-										<input
-											type="text"
-											value={socialLinks.customLabel || ''}
-											onChange={(e) => setSocialLinks((prev) => ({ ...prev, customLabel: e.target.value }))}
-											placeholder="Mon autre site"
-											className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
-										/>
-									</div>
-									<div>
-										<label className="text-sm text-muted-foreground">URL</label>
-										<input
-											type="url"
-											value={socialLinks.customUrl || ''}
-											onChange={(e) => setSocialLinks((prev) => ({ ...prev, customUrl: e.target.value }))}
-											placeholder="https://..."
-											className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
-										/>
-									</div>
-								</div>
-							</div>
-						</section>
-
-						<section className="rounded-lg border p-6">
-							<h2 className="text-lg font-semibold">Horaires d'ouverture</h2>
-							<div className="mt-4 space-y-3">
-								{DAYS.map((day) => {
-									const hours = operatingHours?.[day.key]
-									const isClosed = hours?.closed === true
-									return (
-										<div key={day.key} className="flex flex-wrap items-center gap-2 sm:gap-4">
-											<span className="w-20 text-sm font-medium sm:w-24">{day.label}</span>
-											<label className="flex items-center gap-2 text-sm">
-												<input
-													type="checkbox"
-													checked={!isClosed}
-													onChange={(e) => updateOperatingHour(day.key, 'closed', !e.target.checked)}
-													className="accent-primary"
-												/>
-												Ouvert
-											</label>
-											{!isClosed && (
-												<>
-													<input
-														type="time"
-														value={hours?.open || '09:00'}
-														onChange={(e) => updateOperatingHour(day.key, 'open', e.target.value)}
-														className="rounded-md border px-2 py-1 text-sm"
-													/>
-													<span className="text-sm text-muted-foreground">-</span>
-													<input
-														type="time"
-														value={hours?.close || '18:00'}
-														onChange={(e) => updateOperatingHour(day.key, 'close', e.target.value)}
-														className="rounded-md border px-2 py-1 text-sm"
-													/>
-												</>
-											)}
-										</div>
-									)
-								})}
-							</div>
-						</section>
-					</>
-				)}
-			</div>
-
-			{/* Save button */}
-			<div className="sticky bottom-0 border-t bg-background py-4">
-				<button
-					type="button"
-					onClick={handleSave}
-					disabled={isSaving}
-					className="w-full rounded-md bg-primary px-8 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 sm:w-auto"
-				>
-					{isSaving ? 'Enregistrement...' : 'Enregistrer'}
-				</button>
 			</div>
 
 			{/* Image Cropper */}
@@ -1447,113 +656,6 @@ export default function SiteEditorPage() {
 					aspect={16 / 9}
 				/>
 			)}
-
-			{/* Toast */}
-			{toast && (
-				<div className="fixed right-4 bottom-4 z-50 rounded-lg border bg-background px-4 py-3 text-sm shadow-lg">
-					{toast}
-				</div>
-			)}
-		</div>
-	)
-}
-
-// ─── Accordion Component ────────────────────────────────────────
-
-function Accordion({
-	title,
-	description,
-	isOpen,
-	onToggle,
-	children,
-}: {
-	title: string
-	description?: string
-	isOpen: boolean
-	onToggle: () => void
-	children: React.ReactNode
-}) {
-	return (
-		<section className="rounded-lg border">
-			<button
-				type="button"
-				onClick={onToggle}
-				className="flex w-full items-center justify-between p-6 text-left"
-			>
-				<div>
-					<h2 className="text-lg font-semibold">{title}</h2>
-					{description && (
-						<p className="mt-0.5 text-sm text-muted-foreground">{description}</p>
-					)}
-				</div>
-				<svg
-					width="20"
-					height="20"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					strokeWidth="2"
-					className={`shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-				>
-					<polyline points="6 9 12 15 18 9" />
-				</svg>
-			</button>
-			{isOpen && <div className="border-t px-6 pb-6 pt-4">{children}</div>}
-		</section>
-	)
-}
-
-// ─── Toggle Row Component ────────────────────────────────────────
-
-function ToggleRow({
-	label,
-	checked,
-	onChange,
-	locked,
-	badge,
-}: {
-	label: string
-	checked: boolean
-	onChange: (value: boolean) => void
-	locked?: boolean
-	badge?: 'pro' | 'premium'
-}) {
-	return (
-		<div className="flex items-center justify-between">
-			<span className={`text-sm font-medium ${locked ? 'text-muted-foreground' : ''}`}>
-				{label}
-				{badge && (
-					<span
-						className={`ml-2 inline-block rounded-full px-1.5 py-0.5 text-[10px] font-semibold leading-none ${
-							badge === 'premium'
-								? 'bg-amber-100 text-amber-700'
-								: 'bg-blue-100 text-blue-700'
-						}`}
-					>
-						{badge === 'premium' ? 'Premium' : 'Pro'}
-					</span>
-				)}
-			</span>
-			<button
-				type="button"
-				role="switch"
-				aria-checked={checked}
-				disabled={locked}
-				onClick={() => onChange(!checked)}
-				className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-					locked
-						? 'cursor-not-allowed opacity-40 bg-muted-foreground/30'
-						: checked
-							? 'bg-primary'
-							: 'bg-muted-foreground/30'
-				}`}
-			>
-				<span
-					className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${
-						checked ? 'translate-x-6' : 'translate-x-1'
-					}`}
-				/>
-			</button>
 		</div>
 	)
 }

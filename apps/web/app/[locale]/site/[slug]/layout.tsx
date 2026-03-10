@@ -3,8 +3,8 @@ import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
 import Script from 'next/script'
 import type React from 'react'
-import { SiteProvider } from './site-provider'
 import { getImageUrl } from '@/lib/utils/image-url'
+import { SiteProvider } from './site-provider'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333'
 
@@ -56,7 +56,11 @@ type Props = {
 	params: Promise<{ slug: string }>
 }
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+export async function generateMetadata({
+	params,
+}: {
+	params: Promise<{ slug: string }>
+}): Promise<Metadata> {
 	const { slug } = await params
 	const domain = await getDomain()
 	const profile = await resolveProfile(slug, domain)

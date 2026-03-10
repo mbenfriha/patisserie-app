@@ -1,11 +1,55 @@
 'use client'
 
+import {
+	Calendar,
+	Clock,
+	Copy,
+	ExternalLink,
+	Eye,
+	EyeOff,
+	Globe,
+	ImagePlus,
+	MoreVertical,
+	Pencil,
+	Plus,
+	Search,
+	Trash2,
+	Users,
+} from 'lucide-react'
 import Link from 'next/link'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { PlanGate } from '@/components/auth/plan-gate'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
 import { CategoryCombobox } from '@/components/ui/category-combobox'
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from '@/components/ui/dialog'
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { ImageCropper } from '@/components/ui/image-cropper'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { RichEditor } from '@/components/ui/rich-editor'
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@/components/ui/select'
+import { Switch } from '@/components/ui/switch'
 import { api } from '@/lib/api/client'
 import { useDashboardPrefix } from '@/lib/hooks/use-custom-domain'
 import { useAuth } from '@/lib/providers/auth-provider'
@@ -35,6 +79,7 @@ interface Workshop {
 	categoryId: string | null
 	category: Category | null
 	isVisible: boolean
+	bookingsCount?: number
 }
 
 interface WorkshopForm {
@@ -101,12 +146,33 @@ const LEVELS = [
 	{ value: 'avance', label: 'Avancé' },
 ]
 
-const STATUS_LABELS: Record<string, { label: string; className: string }> = {
-	draft: { label: 'Brouillon', className: 'bg-muted text-muted-foreground' },
-	published: { label: 'Publié', className: 'bg-green-100 text-green-700' },
-	full: { label: 'Complet', className: 'bg-orange-100 text-orange-700' },
-	cancelled: { label: 'Annulé', className: 'bg-red-100 text-red-600' },
-	completed: { label: 'Terminé', className: 'bg-blue-100 text-blue-700' },
+const STATUS_BADGES: Record<
+	string,
+	{
+		label: string
+		className: string
+	}
+> = {
+	draft: {
+		label: 'Brouillon',
+		className: 'text-slate-600 bg-slate-50 border-slate-200',
+	},
+	published: {
+		label: 'Publié',
+		className: 'text-green-600 bg-green-50 border-green-200',
+	},
+	full: {
+		label: 'Complet',
+		className: 'text-amber-600 bg-amber-50 border-amber-200',
+	},
+	completed: {
+		label: 'Terminé',
+		className: 'text-blue-600 bg-blue-50 border-blue-200',
+	},
+	cancelled: {
+		label: 'Annulé',
+		className: 'text-red-600 bg-red-50 border-red-200',
+	},
 }
 
 function getSiteUrl(profile: { slug: string; plan: string; customDomain?: string | null }) {
@@ -131,13 +197,13 @@ export default function WorkshopsPage() {
 	const [form, setForm] = useState<WorkshopForm>(emptyForm)
 	const [saving, setSaving] = useState(false)
 	const [toast, setToast] = useState('')
-	const [openMenuId, setOpenMenuId] = useState<string | null>(null)
+	const [searchQuery, setSearchQuery] = useState('')
+	const [statusFilter, setStatusFilter] = useState('all')
 	const [cropState, setCropState] = useState<{
 		workshopId: string
 		src: string
 		file?: File
 	} | null>(null)
-	const menuRef = useRef<HTMLDivElement>(null)
 	const dashboardPrefix = useDashboardPrefix()
 	const { user } = useAuth()
 
@@ -167,15 +233,19 @@ export default function WorkshopsPage() {
 		loadData()
 	}, [loadData])
 
-	useEffect(() => {
-		const handleClickOutside = (e: MouseEvent) => {
-			if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-				setOpenMenuId(null)
-			}
-		}
-		document.addEventListener('mousedown', handleClickOutside)
-		return () => document.removeEventListener('mousedown', handleClickOutside)
-	}, [])
+	const filteredWorkshops = useMemo(() => {
+		return workshops.filter((w) => {
+			const matchesSearch =
+				!searchQuery ||
+				w.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+				w.category?.name.toLowerCase().includes(searchQuery.toLowerCase())
+			const matchesStatus = statusFilter === 'all' || w.status === statusFilter
+			return matchesSearch && matchesStatus
+		})
+	}, [workshops, searchQuery, statusFilter])
+
+	const publishedCount = workshops.filter((w) => w.status === 'published').length
+	const totalBookings = workshops.reduce((sum, w) => sum + (w.bookingsCount ?? 0), 0)
 
 	const openCreate = () => {
 		setEditingId(null)
@@ -212,7 +282,7 @@ export default function WorkshopsPage() {
 		setSaving(true)
 		try {
 			const totalDurationMinutes = Number(form.durationHours) * 60 + Number(form.durationMinutes)
-			const body: Record<string, any> = {
+			const body: Record<string, unknown> = {
 				title: form.title,
 				description: form.description || null,
 				price: Number(form.price),
@@ -305,7 +375,6 @@ export default function WorkshopsPage() {
 			isVisible: w.isVisible,
 		})
 		setShowModal(true)
-		setOpenMenuId(null)
 	}
 
 	const handleIllustrationSelect = (workshopId: string, e: React.ChangeEvent<HTMLInputElement>) => {
@@ -356,508 +425,583 @@ export default function WorkshopsPage() {
 	return (
 		<PlanGate minPlan="pro">
 			<div className="space-y-6">
+				{/* ── Header ── */}
 				<div className="flex items-center justify-between">
-					<h1 className="text-3xl font-bold">Ateliers</h1>
-					<button
-						type="button"
-						onClick={openCreate}
-						className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-					>
-						+ Nouvel atelier
-					</button>
-				</div>
-
-				{isLoading ? (
-					<p className="text-muted-foreground">Chargement...</p>
-				) : workshops.length === 0 ? (
-					<div className="rounded-lg border border-dashed p-12 text-center">
-						<p className="text-muted-foreground">Aucun atelier pour le moment</p>
-						<p className="mt-1 text-sm text-muted-foreground">
-							Créez votre premier atelier pour le proposer à vos clients
+					<div>
+						<div className="flex items-center gap-2">
+							<h1 className="text-2xl font-bold tracking-tight">Ateliers</h1>
+							<Badge className="bg-primary/10 text-primary border-transparent">Pro</Badge>
+						</div>
+						<p className="text-muted-foreground">
+							Gérez vos ateliers et réservations
 						</p>
 					</div>
+					<Button onClick={openCreate}>
+						<Plus />
+						Nouvel atelier
+					</Button>
+				</div>
+
+				{/* ── Stat Cards ── */}
+				<div className="grid gap-4 sm:grid-cols-3">
+					<Card>
+						<CardContent className="flex items-center gap-4 p-4">
+							<div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-50">
+								<Globe className="h-5 w-5 text-green-600" />
+							</div>
+							<div>
+								<p className="text-sm text-muted-foreground">Publiés</p>
+								<p className="text-2xl font-bold">{publishedCount}</p>
+							</div>
+						</CardContent>
+					</Card>
+					<Card>
+						<CardContent className="flex items-center gap-4 p-4">
+							<div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50">
+								<Calendar className="h-5 w-5 text-blue-600" />
+							</div>
+							<div>
+								<p className="text-sm text-muted-foreground">Total ateliers</p>
+								<p className="text-2xl font-bold">{workshops.length}</p>
+							</div>
+						</CardContent>
+					</Card>
+					<Card>
+						<CardContent className="flex items-center gap-4 p-4">
+							<div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-purple-50">
+								<Users className="h-5 w-5 text-purple-600" />
+							</div>
+							<div>
+								<p className="text-sm text-muted-foreground">Total réservations</p>
+								<p className="text-2xl font-bold">{totalBookings}</p>
+							</div>
+						</CardContent>
+					</Card>
+				</div>
+
+				{/* ── Search + Filter ── */}
+				<div className="flex flex-col gap-3 sm:flex-row">
+					<div className="relative flex-1">
+						<Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+						<Input
+							placeholder="Rechercher un atelier..."
+							value={searchQuery}
+							onChange={(e) => setSearchQuery(e.target.value)}
+							className="pl-9"
+						/>
+					</div>
+					<Select value={statusFilter} onValueChange={setStatusFilter}>
+						<SelectTrigger className="w-full sm:w-[180px]">
+							<SelectValue placeholder="Tous les statuts" />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value="all">Tous les statuts</SelectItem>
+							<SelectItem value="draft">Brouillon</SelectItem>
+							<SelectItem value="published">Publié</SelectItem>
+							<SelectItem value="full">Complet</SelectItem>
+							<SelectItem value="completed">Terminé</SelectItem>
+							<SelectItem value="cancelled">Annulé</SelectItem>
+						</SelectContent>
+					</Select>
+				</div>
+
+				{/* ── Workshop Grid ── */}
+				{isLoading ? (
+					<p className="text-muted-foreground">Chargement...</p>
+				) : filteredWorkshops.length === 0 ? (
+					<Card className="border-dashed">
+						<CardContent className="py-12 text-center">
+							<Calendar className="mx-auto h-10 w-10 text-muted-foreground" />
+							<p className="mt-3 text-muted-foreground">Aucun atelier pour le moment</p>
+							<p className="mt-1 text-sm text-muted-foreground">
+								Créez votre premier atelier pour le proposer à vos clients
+							</p>
+							<Button className="mt-4" onClick={openCreate}>
+								<Plus className="h-4 w-4" />
+								Créer un atelier
+							</Button>
+						</CardContent>
+					</Card>
 				) : (
-					<div className="grid gap-4 md:grid-cols-2">
-						{workshops.map((workshop) => {
-							const statusInfo = STATUS_LABELS[workshop.status] || STATUS_LABELS.draft
+					<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+						{filteredWorkshops.map((workshop) => {
+							const statusInfo = STATUS_BADGES[workshop.status] || STATUS_BADGES.draft
+							const participants = workshop.bookingsCount ?? 0
+							const capacityPercent = workshop.capacity > 0
+								? Math.min(100, Math.round((participants / workshop.capacity) * 100))
+								: 0
 							return (
-								<div key={workshop.id} className="rounded-lg border bg-card p-6">
-									<div className="flex items-start justify-between">
-										<div>
-											<h3 className="text-lg font-medium">{workshop.title}</h3>
-											<p className="mt-1 text-sm text-muted-foreground">
-												{formatDate(workshop.date)} de {workshop.startTime} à{' '}
-												{computeEndTime(
-													workshop.startTime.split(':')[0],
-													workshop.startTime.split(':')[1],
-													workshop.durationMinutes
-												)}
-											</p>
-										</div>
-										<span className="rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary">
-											{workshop.price}&nbsp;&euro;/pers
-										</span>
-									</div>
-									<div className="mt-3 flex flex-wrap gap-2">
-										<span
-											className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${statusInfo.className}`}
+								<Card key={workshop.id} className="group overflow-hidden p-0">
+									{/* Image area */}
+									<div className="relative aspect-video bg-muted">
+										{workshop.images?.[0]?.url ? (
+											<img
+												src={getImageUrl(workshop.images[0].url) || ''}
+												alt={workshop.title}
+												className="h-full w-full object-cover"
+											/>
+										) : (
+											<div className="flex h-full w-full items-center justify-center text-muted-foreground/40">
+												<ImagePlus className="h-12 w-12" />
+											</div>
+										)}
+										{/* Status badge top-left */}
+										<Badge
+											variant="outline"
+											className={`absolute top-2 left-2 ${statusInfo.className}`}
 										>
 											{statusInfo.label}
-										</span>
-										{workshop.category && (
-											<span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
-												{workshop.category.name}
-											</span>
-										)}
-										<span className="rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">
-											{LEVELS.find((l) => l.value === workshop.level)?.label || workshop.level}
-										</span>
-										<span className="rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">
-											{workshop.capacity} places
-										</span>
-										<span className="rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">
-											{formatDuration(workshop.durationMinutes)}
-										</span>
-										{!workshop.isVisible && (
-											<span className="rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">
-												Masqué
-											</span>
-										)}
+										</Badge>
+										{/* Dropdown top-right */}
+										<div className="absolute top-2 right-2">
+											<DropdownMenu>
+												<DropdownMenuTrigger asChild>
+													<Button
+														variant="secondary"
+														size="icon"
+														className="h-8 w-8 bg-white/80 backdrop-blur-sm hover:bg-white"
+													>
+														<MoreVertical className="h-4 w-4" />
+													</Button>
+												</DropdownMenuTrigger>
+												<DropdownMenuContent align="end" className="w-48">
+													<DropdownMenuItem onClick={() => openEdit(workshop)}>
+														<Pencil className="h-3.5 w-3.5" />
+														Modifier
+													</DropdownMenuItem>
+													{user?.profile && workshop.slug && (
+														<DropdownMenuItem asChild>
+															<a
+																href={`${getSiteUrl(user.profile)}/workshops/${workshop.slug}`}
+																target="_blank"
+																rel="noopener noreferrer"
+															>
+																<ExternalLink className="h-3.5 w-3.5" />
+																Voir sur le site
+															</a>
+														</DropdownMenuItem>
+													)}
+													{workshop.status === 'draft' && (
+														<DropdownMenuItem
+															onClick={() => handleStatusChange(workshop.id, 'published')}
+															className="text-green-600"
+														>
+															<Eye className="h-3.5 w-3.5" />
+															Publier
+														</DropdownMenuItem>
+													)}
+													{workshop.status === 'published' && (
+														<DropdownMenuItem
+															onClick={() => handleStatusChange(workshop.id, 'draft')}
+														>
+															<EyeOff className="h-3.5 w-3.5" />
+															Dépublier
+														</DropdownMenuItem>
+													)}
+													<DropdownMenuItem asChild>
+														<label className="cursor-pointer">
+															<ImagePlus className="h-3.5 w-3.5" />
+															{workshop.images?.[0]
+																? 'Changer illustration'
+																: 'Ajouter illustration'}
+															<input
+																type="file"
+																accept="image/*"
+																className="hidden"
+																onChange={(e) => handleIllustrationSelect(workshop.id, e)}
+															/>
+														</label>
+													</DropdownMenuItem>
+													{workshop.images?.[0]?.url && (
+														<DropdownMenuItem
+															onClick={() => handleIllustrationDelete(workshop.id)}
+														>
+															<Trash2 className="h-3.5 w-3.5" />
+															Supprimer illustration
+														</DropdownMenuItem>
+													)}
+													<DropdownMenuItem onClick={() => handleDuplicate(workshop)}>
+														<Copy className="h-3.5 w-3.5" />
+														Dupliquer
+													</DropdownMenuItem>
+													<DropdownMenuSeparator />
+													<DropdownMenuItem
+														variant="destructive"
+														onClick={() => handleDelete(workshop.id)}
+													>
+														<Trash2 className="h-3.5 w-3.5" />
+														Supprimer
+													</DropdownMenuItem>
+												</DropdownMenuContent>
+											</DropdownMenu>
+										</div>
 									</div>
-									{/* Illustration */}
-									{workshop.images?.[0]?.url ? (
+
+									{/* Card content */}
+									<CardContent className="p-4">
+										<h3 className="font-semibold">{workshop.title}</h3>
+										{workshop.category && (
+											<p className="mt-0.5 text-xs text-muted-foreground">
+												{workshop.category.name}
+											</p>
+										)}
+
+										{/* Date + time */}
+										<div className="mt-2 flex items-center gap-1 text-sm text-muted-foreground">
+											<Calendar className="h-3.5 w-3.5" />
+											{formatDate(workshop.date)} &middot; {workshop.startTime} -{' '}
+											{computeEndTime(
+												workshop.startTime.split(':')[0],
+												workshop.startTime.split(':')[1],
+												workshop.durationMinutes
+											)}
+										</div>
+
+										{/* Capacity bar */}
 										<div className="mt-3">
-											<div className="h-16 w-24 shrink-0 overflow-hidden rounded">
-												<img
-													src={getImageUrl(workshop.images[0].url) || ''}
-													alt=""
-													className="h-full w-full object-cover"
+											<div className="flex items-center justify-between text-xs text-muted-foreground">
+												<span>Participants</span>
+												<span>
+													{participants}/{workshop.capacity}
+												</span>
+											</div>
+											<div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-muted">
+												<div
+													className="h-full rounded-full bg-primary transition-all"
+													style={{ width: `${capacityPercent}%` }}
 												/>
 											</div>
 										</div>
-									) : null}
 
-									{/* Actions */}
-									<div className="mt-4 flex items-center gap-2 border-t pt-4">
-										<Link
-											href={`${dashboardPrefix}/workshops/${workshop.id}`}
-											className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"
-										>
-											Voir détails
-										</Link>
-										<button
-											type="button"
-											onClick={() => openEdit(workshop)}
-											className="rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-muted"
-										>
-											Modifier
-										</button>
-										<div
-											className="relative ml-auto"
-											ref={openMenuId === workshop.id ? menuRef : undefined}
-										>
-											<button
-												type="button"
-												onClick={() =>
-													setOpenMenuId(openMenuId === workshop.id ? null : workshop.id)
-												}
-												className="rounded-md border p-1.5 hover:bg-muted"
-											>
-												<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-													<circle cx="12" cy="5" r="2" />
-													<circle cx="12" cy="12" r="2" />
-													<circle cx="12" cy="19" r="2" />
-												</svg>
-											</button>
-											{openMenuId === workshop.id && (
-												<div className="absolute right-0 z-10 mt-1 w-48 rounded-md border bg-card py-1 shadow-lg">
-													{user?.profile && workshop.slug && (
-														<a
-															href={`${getSiteUrl(user.profile)}/workshops/${workshop.slug}`}
-															target="_blank"
-															rel="noopener noreferrer"
-															onClick={() => setOpenMenuId(null)}
-															className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs hover:bg-muted"
-														>
-															<svg
-																className="h-3.5 w-3.5"
-																fill="none"
-																viewBox="0 0 24 24"
-																stroke="currentColor"
-																strokeWidth={2}
-															>
-																<path
-																	strokeLinecap="round"
-																	strokeLinejoin="round"
-																	d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
-																/>
-															</svg>
-															Voir sur le site
-														</a>
-													)}
-													{workshop.status === 'draft' && (
-														<button
-															type="button"
-															onClick={() => {
-																handleStatusChange(workshop.id, 'published')
-																setOpenMenuId(null)
-															}}
-															className="flex w-full items-center px-3 py-2 text-left text-xs text-green-600 hover:bg-muted"
-														>
-															Publier
-														</button>
-													)}
-													{workshop.status === 'published' && (
-														<button
-															type="button"
-															onClick={() => {
-																handleStatusChange(workshop.id, 'draft')
-																setOpenMenuId(null)
-															}}
-															className="flex w-full items-center px-3 py-2 text-left text-xs hover:bg-muted"
-														>
-															Dépublier
-														</button>
-													)}
-													<label className="flex w-full cursor-pointer items-center px-3 py-2 text-left text-xs hover:bg-muted">
-														{workshop.images?.[0] ? 'Changer illustration' : 'Ajouter illustration'}
-														<input
-															type="file"
-															accept="image/*"
-															className="hidden"
-															onChange={(e) => {
-																handleIllustrationSelect(workshop.id, e)
-																setOpenMenuId(null)
-															}}
-														/>
-													</label>
-													{workshop.images?.[0]?.url && (
-														<button
-															type="button"
-															onClick={() => {
-																handleIllustrationDelete(workshop.id)
-																setOpenMenuId(null)
-															}}
-															className="flex w-full items-center px-3 py-2 text-left text-xs hover:bg-muted"
-														>
-															Supprimer illustration
-														</button>
-													)}
-													<button
-														type="button"
-														onClick={() => handleDuplicate(workshop)}
-														className="flex w-full items-center px-3 py-2 text-left text-xs hover:bg-muted"
-													>
-														Dupliquer
-													</button>
-													<div className="my-1 border-t" />
-													<button
-														type="button"
-														onClick={() => {
-															handleDelete(workshop.id)
-															setOpenMenuId(null)
-														}}
-														className="flex w-full items-center px-3 py-2 text-left text-xs text-red-600 hover:bg-red-50"
-													>
-														Supprimer
-													</button>
-												</div>
+										{/* Price */}
+										<p className="mt-3 text-lg font-bold text-primary">
+											{workshop.price}&nbsp;&euro;
+											<span className="text-sm font-normal text-muted-foreground">/pers</span>
+										</p>
+
+										{/* Badges: level + duration + hidden */}
+										<div className="mt-2 flex flex-wrap gap-1.5">
+											<Badge variant="outline">
+												{LEVELS.find((l) => l.value === workshop.level)?.label || workshop.level}
+											</Badge>
+											<Badge variant="outline">
+												<Clock className="h-3 w-3" />
+												{formatDuration(workshop.durationMinutes)}
+											</Badge>
+											{!workshop.isVisible && (
+												<Badge variant="outline">
+													<EyeOff className="h-3 w-3" />
+													Masqué
+												</Badge>
 											)}
 										</div>
-									</div>
-								</div>
+
+										{/* Action button */}
+										<Button variant="outline" size="sm" className="mt-3 w-full" asChild>
+											<Link href={`${dashboardPrefix}/workshops/${workshop.id}`}>
+												<Eye className="h-3.5 w-3.5" />
+												Voir les réservations
+											</Link>
+										</Button>
+									</CardContent>
+								</Card>
 							)
 						})}
 					</div>
 				)}
 
-				{/* ── Modal Create/Edit ── */}
-				{showModal && (
-					<div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center">
-						<div className="max-h-[90vh] w-full overflow-y-auto rounded-t-xl bg-white p-4 shadow-xl sm:max-w-2xl sm:rounded-lg sm:p-6">
-							<h2 className="text-xl font-bold">
+				{/* ── Create/Edit Dialog ── */}
+				<Dialog open={showModal} onOpenChange={setShowModal}>
+					<DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+						<DialogHeader>
+							<DialogTitle>
 								{editingId ? "Modifier l'atelier" : 'Nouvel atelier'}
-							</h2>
+							</DialogTitle>
+							<DialogDescription>
+								{editingId
+									? 'Modifiez les informations de votre atelier.'
+									: 'Remplissez les informations pour créer un nouvel atelier.'}
+							</DialogDescription>
+						</DialogHeader>
 
-							<div className="mt-4 space-y-4">
-								{/* Title */}
-								<div>
-									<label className="mb-1 block text-sm font-medium">Titre *</label>
-									<input
-										type="text"
-										value={form.title}
-										onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-										className="w-full rounded border px-3 py-2 text-sm"
-										placeholder="Nom de l'atelier"
+						<div className="space-y-4">
+							{/* Title */}
+							<div className="space-y-2">
+								<Label>Titre *</Label>
+								<Input
+									type="text"
+									value={form.title}
+									onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+									placeholder="Nom de l'atelier"
+								/>
+							</div>
+
+							{/* Description */}
+							<div className="space-y-2">
+								<Label>Description</Label>
+								<RichEditor
+									content={form.description}
+									onChange={(html) => setForm((f) => ({ ...f, description: html }))}
+									placeholder="Décrivez votre atelier..."
+								/>
+							</div>
+
+							{/* Date & Time */}
+							<div className="grid gap-4 sm:grid-cols-2">
+								<div className="space-y-2">
+									<Label>Date *</Label>
+									<Input
+										type="date"
+										value={form.date}
+										onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
 									/>
 								</div>
-
-								{/* Description */}
-								<div>
-									<label className="mb-1 block text-sm font-medium">Description</label>
-									<RichEditor
-										content={form.description}
-										onChange={(html) => setForm((f) => ({ ...f, description: html }))}
-										placeholder="Décrivez votre atelier..."
-									/>
-								</div>
-
-								{/* Date & Time */}
-								<div className="grid gap-4 sm:grid-cols-2">
-									<div>
-										<label className="mb-1 block text-sm font-medium">Date *</label>
-										<input
-											type="date"
-											value={form.date}
-											onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
-											className="w-full rounded border px-3 py-2 text-sm"
-										/>
-									</div>
-									<div>
-										<label className="mb-1 block text-sm font-medium">Heure de début *</label>
-										<div className="flex items-center gap-1">
-											<select
-												value={form.startHour}
-												onChange={(e) => setForm((f) => ({ ...f, startHour: e.target.value }))}
-												className="w-full rounded border px-3 py-2 text-sm"
-											>
+								<div className="space-y-2">
+									<Label>Heure de début *</Label>
+									<div className="flex items-center gap-1">
+										<Select
+											value={form.startHour}
+											onValueChange={(v) => setForm((f) => ({ ...f, startHour: v }))}
+										>
+											<SelectTrigger className="w-full">
+												<SelectValue />
+											</SelectTrigger>
+											<SelectContent>
 												{HOURS.map((h) => (
-													<option key={h} value={h}>
+													<SelectItem key={h} value={h}>
 														{h}h
-													</option>
+													</SelectItem>
 												))}
-											</select>
-											<span className="text-muted-foreground">:</span>
-											<select
-												value={form.startMinute}
-												onChange={(e) => setForm((f) => ({ ...f, startMinute: e.target.value }))}
-												className="w-full rounded border px-3 py-2 text-sm"
-											>
+											</SelectContent>
+										</Select>
+										<span className="text-muted-foreground">:</span>
+										<Select
+											value={form.startMinute}
+											onValueChange={(v) => setForm((f) => ({ ...f, startMinute: v }))}
+										>
+											<SelectTrigger className="w-full">
+												<SelectValue />
+											</SelectTrigger>
+											<SelectContent>
 												{MINUTES.map((m) => (
-													<option key={m} value={m}>
+													<SelectItem key={m} value={m}>
 														{m}
-													</option>
+													</SelectItem>
 												))}
-											</select>
-										</div>
-										{(Number(form.durationHours) > 0 || Number(form.durationMinutes) > 0) && (
-											<p className="mt-1 text-xs text-muted-foreground">
-												Fin estimée :{' '}
-												{computeEndTime(
-													form.startHour,
-													form.startMinute,
-													Number(form.durationHours) * 60 + Number(form.durationMinutes)
-												)}
-											</p>
-										)}
+											</SelectContent>
+										</Select>
 									</div>
-								</div>
-
-								{/* Price */}
-								<div>
-									<label className="mb-1 block text-sm font-medium">Prix par personne (€) *</label>
-									<input
-										type="number"
-										min="0"
-										step="0.01"
-										value={form.price}
-										onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
-										className="w-full rounded border px-3 py-2 text-sm"
-										placeholder="45"
-									/>
-								</div>
-
-								{/* Payment mode */}
-								<div>
-									<label className="mb-2 block text-sm font-medium">
-										Mode de paiement à la réservation
-									</label>
-									<div className="flex gap-2">
-										<button
-											type="button"
-											onClick={() => setForm((f) => ({ ...f, paymentMode: 'full' }))}
-											className={`flex-1 rounded-lg border-2 px-4 py-3 text-sm font-medium transition-colors ${
-												form.paymentMode === 'full'
-													? 'border-primary bg-primary/5 text-primary'
-													: 'border-gray-200 text-gray-600 hover:border-gray-300'
-											}`}
-										>
-											Paiement intégral
-										</button>
-										<button
-											type="button"
-											onClick={() => setForm((f) => ({ ...f, paymentMode: 'deposit' }))}
-											className={`flex-1 rounded-lg border-2 px-4 py-3 text-sm font-medium transition-colors ${
-												form.paymentMode === 'deposit'
-													? 'border-primary bg-primary/5 text-primary'
-													: 'border-gray-200 text-gray-600 hover:border-gray-300'
-											}`}
-										>
-											Acompte
-										</button>
-									</div>
-
-									{form.paymentMode === 'deposit' && (
-										<div className="mt-3">
-											<label className="mb-1 block text-sm font-medium">
-												Pourcentage d'acompte (%)
-											</label>
-											<input
-												type="number"
-												min="1"
-												max="99"
-												value={form.depositPercent}
-												onChange={(e) => setForm((f) => ({ ...f, depositPercent: e.target.value }))}
-												className="w-full rounded border px-3 py-2 text-sm"
-												placeholder="30"
-											/>
-										</div>
-									)}
-
-									{form.price && (
-										<p className="mt-2 text-sm text-muted-foreground">
-											{form.paymentMode === 'full'
-												? `Le client paiera ${Number(form.price).toFixed(2)} € à la réservation`
-												: `Le client paiera ${((Number(form.price) * Number(form.depositPercent || 0)) / 100).toFixed(2)} € d'acompte à la réservation`}
+									{(Number(form.durationHours) > 0 || Number(form.durationMinutes) > 0) && (
+										<p className="text-xs text-muted-foreground">
+											Fin estimée :{' '}
+											{computeEndTime(
+												form.startHour,
+												form.startMinute,
+												Number(form.durationHours) * 60 + Number(form.durationMinutes)
+											)}
 										</p>
 									)}
 								</div>
-
-								{/* Capacity & Duration */}
-								<div className="grid gap-4 sm:grid-cols-2">
-									<div>
-										<label className="mb-1 block text-sm font-medium">Capacité</label>
-										<input
-											type="number"
-											min="1"
-											value={form.capacity}
-											onChange={(e) => setForm((f) => ({ ...f, capacity: e.target.value }))}
-											className="w-full rounded border px-3 py-2 text-sm"
-										/>
-									</div>
-									<div>
-										<label className="mb-1 block text-sm font-medium">Durée</label>
-										<div className="flex items-center gap-2">
-											<select
-												value={form.durationHours}
-												onChange={(e) => setForm((f) => ({ ...f, durationHours: e.target.value }))}
-												className="w-full rounded border px-3 py-2 text-sm"
-											>
-												{DURATION_HOURS.map((h) => (
-													<option key={h} value={h}>
-														{h}h
-													</option>
-												))}
-											</select>
-											<select
-												value={form.durationMinutes}
-												onChange={(e) =>
-													setForm((f) => ({ ...f, durationMinutes: e.target.value }))
-												}
-												className="w-full rounded border px-3 py-2 text-sm"
-											>
-												{DURATION_MINUTES.map((m) => (
-													<option key={m} value={m}>
-														{m}min
-													</option>
-												))}
-											</select>
-										</div>
-									</div>
-								</div>
-
-								{/* Level & Location */}
-								<div className="grid gap-4 sm:grid-cols-2">
-									<div>
-										<label className="mb-1 block text-sm font-medium">Niveau</label>
-										<select
-											value={form.level}
-											onChange={(e) => setForm((f) => ({ ...f, level: e.target.value }))}
-											className="w-full rounded border px-3 py-2 text-sm"
-										>
-											{LEVELS.map((l) => (
-												<option key={l.value} value={l.value}>
-													{l.label}
-												</option>
-											))}
-										</select>
-									</div>
-									<div>
-										<label className="mb-1 block text-sm font-medium">Lieu</label>
-										<input
-											type="text"
-											value={form.location}
-											onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))}
-											className="w-full rounded border px-3 py-2 text-sm"
-											placeholder="Adresse ou lieu"
-										/>
-									</div>
-								</div>
-
-								{/* What's included */}
-								<div>
-									<label className="mb-1 block text-sm font-medium">Ce qui est inclus</label>
-									<RichEditor
-										content={form.whatIncluded}
-										onChange={(html) => setForm((f) => ({ ...f, whatIncluded: html }))}
-										placeholder="Ingrédients, matériel, tablier..."
-									/>
-								</div>
-
-								{/* Category */}
-								<div>
-									<label className="mb-1 block text-sm font-medium">Catégorie</label>
-									<CategoryCombobox
-										categories={categories}
-										value={form.categoryId}
-										onChange={(v) => setForm((f) => ({ ...f, categoryId: v }))}
-										onCreateCategory={handleCreateCategory}
-									/>
-								</div>
-
-								{/* Visible toggle */}
-								<label className="flex items-center gap-2 text-sm">
-									<input
-										type="checkbox"
-										checked={form.isVisible}
-										onChange={(e) => setForm((f) => ({ ...f, isVisible: e.target.checked }))}
-										className="h-4 w-4 rounded border"
-									/>
-									Visible sur le site
-								</label>
 							</div>
 
-							{/* Actions */}
-							<div className="mt-6 flex justify-end gap-3">
-								<button
-									type="button"
-									onClick={() => setShowModal(false)}
-									className="rounded border px-4 py-2 text-sm hover:bg-muted"
-								>
-									Annuler
-								</button>
-								{!editingId && (
+							{/* Price */}
+							<div className="space-y-2">
+								<Label>Prix par personne (&euro;) *</Label>
+								<Input
+									type="number"
+									min="0"
+									step="0.01"
+									value={form.price}
+									onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
+									placeholder="45"
+								/>
+							</div>
+
+							{/* Payment mode */}
+							<div className="space-y-2">
+								<Label>Mode de paiement à la réservation</Label>
+								<div className="flex gap-2">
 									<button
 										type="button"
-										onClick={() => handleSave('draft')}
-										disabled={saving || !form.title.trim() || !form.price || !form.date}
-										className="rounded border px-4 py-2 text-sm font-medium hover:bg-muted disabled:opacity-50"
+										onClick={() => setForm((f) => ({ ...f, paymentMode: 'full' }))}
+										className={`flex-1 rounded-lg border-2 px-4 py-3 text-sm font-medium transition-colors ${
+											form.paymentMode === 'full'
+												? 'border-primary bg-primary/5 text-primary'
+												: 'border-gray-200 text-gray-600 hover:border-gray-300'
+										}`}
 									>
-										{saving ? 'Enregistrement...' : 'Sauvegarder le brouillon'}
+										Paiement intégral
 									</button>
+									<button
+										type="button"
+										onClick={() => setForm((f) => ({ ...f, paymentMode: 'deposit' }))}
+										className={`flex-1 rounded-lg border-2 px-4 py-3 text-sm font-medium transition-colors ${
+											form.paymentMode === 'deposit'
+												? 'border-primary bg-primary/5 text-primary'
+												: 'border-gray-200 text-gray-600 hover:border-gray-300'
+										}`}
+									>
+										Acompte
+									</button>
+								</div>
+
+								{form.paymentMode === 'deposit' && (
+									<div className="space-y-2">
+										<Label>Pourcentage d&apos;acompte (%)</Label>
+										<Input
+											type="number"
+											min="1"
+											max="99"
+											value={form.depositPercent}
+											onChange={(e) => setForm((f) => ({ ...f, depositPercent: e.target.value }))}
+											placeholder="30"
+										/>
+									</div>
 								)}
-								<button
-									type="button"
-									onClick={() => handleSave(editingId ? undefined : 'published')}
-									disabled={saving || !form.title.trim() || !form.price || !form.date}
-									className="rounded bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-								>
-									{saving ? 'Enregistrement...' : editingId ? 'Enregistrer' : 'Publier'}
-								</button>
+
+								{form.price && (
+									<p className="text-sm text-muted-foreground">
+										{form.paymentMode === 'full'
+											? `Le client paiera ${Number(form.price).toFixed(2)} \u20AC à la réservation`
+											: `Le client paiera ${((Number(form.price) * Number(form.depositPercent || 0)) / 100).toFixed(2)} \u20AC d'acompte à la réservation`}
+									</p>
+								)}
+							</div>
+
+							{/* Capacity & Duration */}
+							<div className="grid gap-4 sm:grid-cols-2">
+								<div className="space-y-2">
+									<Label>Capacité</Label>
+									<Input
+										type="number"
+										min="1"
+										value={form.capacity}
+										onChange={(e) => setForm((f) => ({ ...f, capacity: e.target.value }))}
+									/>
+								</div>
+								<div className="space-y-2">
+									<Label>Durée</Label>
+									<div className="flex items-center gap-2">
+										<Select
+											value={form.durationHours}
+											onValueChange={(v) => setForm((f) => ({ ...f, durationHours: v }))}
+										>
+											<SelectTrigger className="w-full">
+												<SelectValue />
+											</SelectTrigger>
+											<SelectContent>
+												{DURATION_HOURS.map((h) => (
+													<SelectItem key={h} value={h}>
+														{h}h
+													</SelectItem>
+												))}
+											</SelectContent>
+										</Select>
+										<Select
+											value={form.durationMinutes}
+											onValueChange={(v) => setForm((f) => ({ ...f, durationMinutes: v }))}
+										>
+											<SelectTrigger className="w-full">
+												<SelectValue />
+											</SelectTrigger>
+											<SelectContent>
+												{DURATION_MINUTES.map((m) => (
+													<SelectItem key={m} value={m}>
+														{m}min
+													</SelectItem>
+												))}
+											</SelectContent>
+										</Select>
+									</div>
+								</div>
+							</div>
+
+							{/* Level & Location */}
+							<div className="grid gap-4 sm:grid-cols-2">
+								<div className="space-y-2">
+									<Label>Niveau</Label>
+									<Select
+										value={form.level}
+										onValueChange={(v) => setForm((f) => ({ ...f, level: v }))}
+									>
+										<SelectTrigger className="w-full">
+											<SelectValue />
+										</SelectTrigger>
+										<SelectContent>
+											{LEVELS.map((l) => (
+												<SelectItem key={l.value} value={l.value}>
+													{l.label}
+												</SelectItem>
+											))}
+										</SelectContent>
+									</Select>
+								</div>
+								<div className="space-y-2">
+									<Label>Lieu</Label>
+									<Input
+										type="text"
+										value={form.location}
+										onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))}
+										placeholder="Adresse ou lieu"
+									/>
+								</div>
+							</div>
+
+							{/* What's included */}
+							<div className="space-y-2">
+								<Label>Ce qui est inclus</Label>
+								<RichEditor
+									content={form.whatIncluded}
+									onChange={(html) => setForm((f) => ({ ...f, whatIncluded: html }))}
+									placeholder="Ingrédients, matériel, tablier..."
+								/>
+							</div>
+
+							{/* Category */}
+							<div className="space-y-2">
+								<Label>Catégorie</Label>
+								<CategoryCombobox
+									categories={categories}
+									value={form.categoryId}
+									onChange={(v) => setForm((f) => ({ ...f, categoryId: v }))}
+									onCreateCategory={handleCreateCategory}
+								/>
+							</div>
+
+							{/* Visible toggle */}
+							<div className="flex items-center gap-3">
+								<Switch
+									id="workshop-visible"
+									checked={form.isVisible}
+									onCheckedChange={(checked) => setForm((f) => ({ ...f, isVisible: checked }))}
+								/>
+								<Label htmlFor="workshop-visible">Visible sur le site</Label>
 							</div>
 						</div>
-					</div>
-				)}
+
+						{/* Actions */}
+						<DialogFooter>
+							<Button variant="outline" onClick={() => setShowModal(false)}>
+								Annuler
+							</Button>
+							{!editingId && (
+								<Button
+									variant="outline"
+									onClick={() => handleSave('draft')}
+									disabled={saving || !form.title.trim() || !form.price || !form.date}
+								>
+									{saving ? 'Enregistrement...' : 'Sauvegarder le brouillon'}
+								</Button>
+							)}
+							<Button
+								onClick={() => handleSave(editingId ? undefined : 'published')}
+								disabled={saving || !form.title.trim() || !form.price || !form.date}
+							>
+								{saving ? 'Enregistrement...' : editingId ? 'Enregistrer' : 'Publier'}
+							</Button>
+						</DialogFooter>
+					</DialogContent>
+				</Dialog>
 
 				{/* ── Image Cropper ── */}
 				{cropState && (

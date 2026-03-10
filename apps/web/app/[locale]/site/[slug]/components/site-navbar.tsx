@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
-import { useSiteProfile, useSiteBasePath, useSiteConfig } from '../site-provider'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useAuth } from '@/lib/providers/auth-provider'
 import { getImageUrl } from '@/lib/utils/image-url'
+import { useSiteBasePath, useSiteConfig, useSiteProfile } from '../site-provider'
 import { useInlineEdit } from './inline-edit-provider'
 
 export function SiteNavbar() {
@@ -44,10 +44,7 @@ export function SiteNavbar() {
 		})
 		observer.observe(nav)
 		// Set initial value
-		document.documentElement.style.setProperty(
-			'--navbar-height',
-			`${nav.offsetHeight}px`
-		)
+		document.documentElement.style.setProperty('--navbar-height', `${nav.offsetHeight}px`)
 		return () => observer.disconnect()
 	}, [])
 
@@ -66,9 +63,7 @@ export function SiteNavbar() {
 		{ href: basePath || '/', label: 'Accueil' },
 		{ href: `${basePath}/creations`, label: 'Nos créations' },
 		{ href: `${basePath}/workshops`, label: 'Les ateliers' },
-		...(profile.ordersEnabled
-			? [{ href: `${basePath}/commandes`, label: 'Commander' }]
-			: []),
+		...(profile.ordersEnabled ? [{ href: `${basePath}/commandes`, label: 'Commander' }] : []),
 		{ href: `${basePath}/#story`, label: 'Notre histoire' },
 	]
 
@@ -108,7 +103,9 @@ export function SiteNavbar() {
 							className="absolute top-full left-0 mt-2 flex items-center gap-2 rounded-lg border border-white/20 bg-[#1A1A1A]/95 px-3 py-2 shadow-xl backdrop-blur-xl"
 							onClick={(e) => e.stopPropagation()}
 						>
-							<span className="text-[10px] font-medium tracking-wide text-white/50 uppercase whitespace-nowrap">Taille</span>
+							<span className="text-[10px] font-medium tracking-wide text-white/50 uppercase whitespace-nowrap">
+								Taille
+							</span>
 							<input
 								type="range"
 								min="24"
@@ -121,7 +118,9 @@ export function SiteNavbar() {
 								onMouseDown={(e) => e.stopPropagation()}
 								className="h-1 w-24 cursor-pointer accent-[var(--gold)]"
 							/>
-							<span className="min-w-[28px] text-center text-[11px] tabular-nums text-white/70">{logoSize}px</span>
+							<span className="min-w-[28px] text-center text-[11px] tabular-nums text-white/70">
+								{logoSize}px
+							</span>
 						</div>
 					)}
 				</div>
@@ -141,14 +140,22 @@ export function SiteNavbar() {
 						))}
 					</div>
 
-
 					{/* Backoffice link for owner */}
 					{isOwner && (
 						<a
 							href="/dashboard"
 							className="hidden items-center gap-1.5 rounded-full border border-[var(--gold)]/40 px-3 py-1.5 font-[family-name:'Josefin_Sans'] text-[12px] tracking-[1px] text-[var(--gold)] transition-all duration-300 hover:border-[var(--gold)] hover:bg-[var(--gold)]/10 md:flex"
 						>
-							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+							<svg
+								width="14"
+								height="14"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								strokeWidth="2"
+								strokeLinecap="round"
+								strokeLinejoin="round"
+							>
 								<rect x="3" y="3" width="7" height="7" />
 								<rect x="14" y="3" width="7" height="7" />
 								<rect x="3" y="14" width="7" height="7" />
@@ -165,23 +172,11 @@ export function SiteNavbar() {
 						aria-label={mobileOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
 					>
 						{mobileOpen ? (
-							<svg
-								width="24"
-								height="24"
-								fill="none"
-								stroke="currentColor"
-								strokeWidth="2"
-							>
+							<svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2">
 								<path d="M18 6L6 18M6 6l12 12" />
 							</svg>
 						) : (
-							<svg
-								width="24"
-								height="24"
-								fill="none"
-								stroke="currentColor"
-								strokeWidth="2"
-							>
+							<svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2">
 								<path d="M3 12h18M3 6h18M3 18h18" />
 							</svg>
 						)}
@@ -202,12 +197,21 @@ export function SiteNavbar() {
 							{link.label}
 						</a>
 					))}
-						{isOwner && (
+					{isOwner && (
 						<a
 							href="/dashboard"
 							className="mt-4 flex items-center gap-2 rounded-full border border-[var(--gold)]/40 px-4 py-2 font-[family-name:'Josefin_Sans'] text-[13px] tracking-[1px] text-[var(--gold)] transition-all duration-300 hover:bg-[var(--gold)]/10"
 						>
-							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+							<svg
+								width="16"
+								height="16"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								strokeWidth="2"
+								strokeLinecap="round"
+								strokeLinejoin="round"
+							>
 								<rect x="3" y="3" width="7" height="7" />
 								<rect x="14" y="3" width="7" height="7" />
 								<rect x="3" y="14" width="7" height="7" />

@@ -1,8 +1,8 @@
 import type { HttpContext } from '@adonisjs/core/http'
+import db from '@adonisjs/lucid/services/db'
 import PatissierProfile from '#models/patissier_profile'
 import Workshop from '#models/workshop'
 import PlausibleService from '#services/plausible_service'
-import db from '@adonisjs/lucid/services/db'
 
 export default class StatsController {
 	private plausible = new PlausibleService()
@@ -42,9 +42,7 @@ export default class StatsController {
 			.first()
 
 		// Bookings
-		const workshopIds = await Workshop.query()
-			.where('patissierId', profile.id)
-			.select('id')
+		const workshopIds = await Workshop.query().where('patissierId', profile.id).select('id')
 
 		let totalBookings = 0
 		let confirmedBookings = 0

@@ -1,8 +1,8 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { useSiteBasePath } from '../site-provider'
 import { getImageUrl } from '@/lib/utils/image-url'
+import { useSiteBasePath } from '../site-provider'
 
 interface CreationImage {
 	url: string
@@ -95,9 +95,7 @@ export function CreationsGrid({ creations }: CreationsGridProps) {
 							className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full"
 							style={{ backgroundColor: 'var(--gold)', opacity: 0.1 }}
 						/>
-						<h3
-							className="font-[family-name:'Cormorant_Garamond'] text-2xl text-[var(--dark)]"
-						>
+						<h3 className="font-[family-name:'Cormorant_Garamond'] text-2xl text-[var(--dark)]">
 							Aucune création pour le moment
 						</h3>
 						<p
@@ -121,10 +119,7 @@ export function CreationsGrid({ creations }: CreationsGridProps) {
 									}}
 								>
 									{/* Image */}
-									<div
-										className="relative overflow-hidden"
-										style={{ aspectRatio: '4/3' }}
-									>
+									<div className="relative overflow-hidden" style={{ aspectRatio: '4/3' }}>
 										{imageUrl ? (
 											<img
 												src={imageUrl}
@@ -159,24 +154,26 @@ export function CreationsGrid({ creations }: CreationsGridProps) {
 
 									{/* Content */}
 									{(creation.title || creation.description || creation.price != null) && (
-									<div className="p-6">
-										{creation.title && (
-											<h3 className="font-[family-name:'Cormorant_Garamond'] text-[24px] font-medium text-[var(--dark)]">
-												{creation.title}
-											</h3>
-										)}
-										{creation.description && (
-											<div
-												className={`line-clamp-2 text-sm leading-relaxed text-[var(--dark-soft)]/70${creation.title ? ' mt-2' : ''}`}
-												dangerouslySetInnerHTML={{ __html: creation.description }}
-											/>
-										)}
-										{creation.price != null && (
-											<p className={`font-[family-name:'Josefin_Sans'] text-sm font-semibold text-[var(--gold)]${creation.title || creation.description ? ' mt-3' : ''}`}>
-												{creation.price}&nbsp;&euro;
-											</p>
-										)}
-									</div>
+										<div className="p-6">
+											{creation.title && (
+												<h3 className="font-[family-name:'Cormorant_Garamond'] text-[24px] font-medium text-[var(--dark)]">
+													{creation.title}
+												</h3>
+											)}
+											{creation.description && (
+												<div
+													className={`line-clamp-2 text-sm leading-relaxed text-[var(--dark-soft)]/70${creation.title ? ' mt-2' : ''}`}
+													dangerouslySetInnerHTML={{ __html: creation.description }}
+												/>
+											)}
+											{creation.price != null && (
+												<p
+													className={`font-[family-name:'Josefin_Sans'] text-sm font-semibold text-[var(--gold)]${creation.title || creation.description ? ' mt-3' : ''}`}
+												>
+													{creation.price}&nbsp;&euro;
+												</p>
+											)}
+										</div>
 									)}
 								</a>
 							)

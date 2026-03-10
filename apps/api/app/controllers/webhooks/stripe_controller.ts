@@ -1,11 +1,11 @@
 import type { HttpContext } from '@adonisjs/core/http'
-import { DateTime } from 'luxon'
 import logger from '@adonisjs/core/services/logger'
+import { DateTime } from 'luxon'
+import Order from '#models/order'
 import PatissierProfile from '#models/patissier_profile'
 import Subscription from '#models/subscription'
-import WorkshopBooking from '#models/workshop_booking'
 import Workshop from '#models/workshop'
-import Order from '#models/order'
+import WorkshopBooking from '#models/workshop_booking'
 import EmailService from '#services/email_service'
 import StripeService from '#services/stripe_service'
 import TurnstileService from '#services/turnstile_service'
@@ -428,10 +428,7 @@ export default class StripeController {
 				await this.turnstile.removeHostname(domain)
 				profile.customDomain = null
 				profile.customDomainVerified = false
-				logger.info(
-					{ domain, profileId: profile.id },
-					'Custom domain removed on downgrade'
-				)
+				logger.info({ domain, profileId: profile.id }, 'Custom domain removed on downgrade')
 			}
 
 			await profile.save()

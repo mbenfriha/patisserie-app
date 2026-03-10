@@ -1,12 +1,12 @@
 'use client'
 
-import { useCallback, useState } from 'react'
-import { useEditor, EditorContent } from '@tiptap/react'
-import StarterKit from '@tiptap/starter-kit'
-import Underline from '@tiptap/extension-underline'
-import TextAlign from '@tiptap/extension-text-align'
-import Placeholder from '@tiptap/extension-placeholder'
 import Link from '@tiptap/extension-link'
+import Placeholder from '@tiptap/extension-placeholder'
+import TextAlign from '@tiptap/extension-text-align'
+import Underline from '@tiptap/extension-underline'
+import { EditorContent, useEditor } from '@tiptap/react'
+import StarterKit from '@tiptap/starter-kit'
+import { useCallback, useState } from 'react'
 
 interface RichEditorProps {
 	content: string
@@ -150,8 +150,18 @@ export function RichEditor({ content, onChange, placeholder }: RichEditorProps) 
 					onClick={() => editor.chain().focus().toggleBulletList().run()}
 					title="Liste a puces"
 				>
-					<svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-						<path strokeLinecap="round" strokeLinejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm0 5.25h.007v.008H3.75V12zm0 5.25h.007v.008H3.75v-.008z" />
+					<svg
+						className="h-3.5 w-3.5"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+						strokeWidth={2}
+					>
+						<path
+							strokeLinecap="round"
+							strokeLinejoin="round"
+							d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm0 5.25h.007v.008H3.75V12zm0 5.25h.007v.008H3.75v-.008z"
+						/>
 					</svg>
 				</ToolbarButton>
 				<ToolbarButton
@@ -159,8 +169,18 @@ export function RichEditor({ content, onChange, placeholder }: RichEditorProps) 
 					onClick={() => editor.chain().focus().toggleOrderedList().run()}
 					title="Liste numerotee"
 				>
-					<svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-						<path strokeLinecap="round" strokeLinejoin="round" d="M8.242 5.992h12m-12 6.003h12m-12 5.999h12M4.117 7.495v-3.75H2.99m1.125 3.75H2.99m1.125 0H5.24m-1.92 2.577a1.125 1.125 0 11.54 1.874l-1.35 1.553h2.1" />
+					<svg
+						className="h-3.5 w-3.5"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+						strokeWidth={2}
+					>
+						<path
+							strokeLinecap="round"
+							strokeLinejoin="round"
+							d="M8.242 5.992h12m-12 6.003h12m-12 5.999h12M4.117 7.495v-3.75H2.99m1.125 3.75H2.99m1.125 0H5.24m-1.92 2.577a1.125 1.125 0 11.54 1.874l-1.35 1.553h2.1"
+						/>
 					</svg>
 				</ToolbarButton>
 
@@ -171,8 +191,18 @@ export function RichEditor({ content, onChange, placeholder }: RichEditorProps) 
 					onClick={() => editor.chain().focus().setTextAlign('left').run()}
 					title="Aligner a gauche"
 				>
-					<svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-						<path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h10.5m-10.5 5.25h16.5" />
+					<svg
+						className="h-3.5 w-3.5"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+						strokeWidth={2}
+					>
+						<path
+							strokeLinecap="round"
+							strokeLinejoin="round"
+							d="M3.75 6.75h16.5M3.75 12h10.5m-10.5 5.25h16.5"
+						/>
 					</svg>
 				</ToolbarButton>
 				<ToolbarButton
@@ -180,8 +210,18 @@ export function RichEditor({ content, onChange, placeholder }: RichEditorProps) 
 					onClick={() => editor.chain().focus().setTextAlign('center').run()}
 					title="Centrer"
 				>
-					<svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-						<path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M6.75 12h10.5M3.75 17.25h16.5" />
+					<svg
+						className="h-3.5 w-3.5"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+						strokeWidth={2}
+					>
+						<path
+							strokeLinecap="round"
+							strokeLinejoin="round"
+							d="M3.75 6.75h16.5M6.75 12h10.5M3.75 17.25h16.5"
+						/>
 					</svg>
 				</ToolbarButton>
 
@@ -200,12 +240,16 @@ export function RichEditor({ content, onChange, placeholder }: RichEditorProps) 
 				<div className="mx-1 h-4 w-px bg-border" />
 
 				<div className="relative">
-					<ToolbarButton
-						active={editor.isActive('link')}
-						onClick={openLinkInput}
-						title="Lien"
-					>
-						<svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+					<ToolbarButton active={editor.isActive('link')} onClick={openLinkInput} title="Lien">
+						<svg
+							className="h-3.5 w-3.5"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							strokeWidth={2}
+							strokeLinecap="round"
+							strokeLinejoin="round"
+						>
 							<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
 							<path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
 						</svg>
@@ -230,7 +274,13 @@ export function RichEditor({ content, onChange, placeholder }: RichEditorProps) 
 								className="rounded px-1.5 py-1 text-xs text-primary hover:bg-muted"
 								title="Appliquer"
 							>
-								<svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+								<svg
+									className="h-3.5 w-3.5"
+									fill="none"
+									viewBox="0 0 24 24"
+									stroke="currentColor"
+									strokeWidth={2.5}
+								>
 									<path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
 								</svg>
 							</button>
@@ -241,7 +291,13 @@ export function RichEditor({ content, onChange, placeholder }: RichEditorProps) 
 									className="rounded px-1.5 py-1 text-xs text-destructive hover:bg-muted"
 									title="Supprimer le lien"
 								>
-									<svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+									<svg
+										className="h-3.5 w-3.5"
+										fill="none"
+										viewBox="0 0 24 24"
+										stroke="currentColor"
+										strokeWidth={2.5}
+									>
 										<path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
 									</svg>
 								</button>

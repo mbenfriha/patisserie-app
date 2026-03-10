@@ -9,6 +9,13 @@ import EmailService from '#services/email_service'
 import StorageService from '#services/storage_service'
 import StripeService from '#services/stripe_service'
 import env from '#start/env'
+import {
+	quoteOrderValidator,
+	sendMessageValidator,
+	storePatissierOrderValidator,
+	updateOrderStatusValidator,
+	updateOrderValidator,
+} from '#validators/order_validator'
 
 export default class OrdersController {
 	async index({ auth, request, response }: HttpContext) {
@@ -45,41 +52,28 @@ export default class OrdersController {
 		const user = auth.user!
 		const profile = await PatissierProfile.findByOrFail('userId', user.id)
 
-		const type = request.input('type')
-		const clientName = request.input('clientName')
-		const clientEmail = request.input('clientEmail')
-
-		if (!clientName || !clientEmail) {
-			return response.badRequest({
-				success: false,
-				message: "Le nom et l'email du client sont requis.",
-			})
-		}
-
-		if (!type || !['catalogue', 'custom'].includes(type)) {
-			return response.badRequest({
-				success: false,
-				message: 'Le type de commande est requis (catalogue ou custom).',
-			})
-		}
-
-		const clientPhone = request.input('clientPhone')
-		const deliveryMethod = request.input('deliveryMethod')
-		const requestedDate = request.input('requestedDate')
-		const deliveryAddress = request.input('deliveryAddress')
-		const deliveryNotes = request.input('deliveryNotes')
-		const patissierNotes = request.input('patissierNotes')
-		const rawItems = request.input('items')
-		const items = typeof rawItems === 'string' ? JSON.parse(rawItems) : rawItems
-		const customType = request.input('customType')
-		const customNbPersonnes = request.input('customNbPersonnes')
-		const customDateSouhaitee = request.input('customDateSouhaitee')
-		const customTheme = request.input('customTheme')
-		const customAllergies = request.input('customAllergies')
-		const customMessage = request.input('customMessage')
-		const manualTotal = request.input('total')
-		const manualPaymentStatus = request.input('paymentStatus')
-		const depositPercent = request.input('depositPercent')
+		const data = await request.validateUsing(storePatissierOrderValidator)
+		const {
+			type,
+			clientName,
+			clientEmail,
+			clientPhone,
+			deliveryMethod,
+			requestedDate,
+			deliveryAddress,
+			deliveryNotes,
+			patissierNotes,
+			items,
+			customType,
+			customNbPersonnes,
+			customDateSouhaitee,
+			customTheme,
+			customAllergies,
+			customMessage,
+		} = data
+		const manualTotal = data.total
+		const manualPaymentStatus = data.paymentStatus
+		const depositPercent = data.depositPercent
 
 		// Handle photo uploads if present
 		const customPhotoUrls: string[] = []
@@ -216,32 +210,18 @@ export default class OrdersController {
 			.whereNull('deletedAt')
 			.firstOrFail()
 
-		const { status, cancellationReason } = request.only(['status', 'cancellationReason'])
-
-		const validStatuses: Order['status'][] = [
-			'pending',
-			'confirmed',
-			'in_progress',
-			'ready',
-			'delivered',
-			'picked_up',
-			'cancelled',
-		]
-
-		if (!validStatuses.includes(status)) {
-			return response.badRequest({
-				success: false,
-				message: `Invalid status. Must be one of: ${validStatuses.join(', ')}`,
-			})
-		}
+		const {
+			status,
+			cancellationReason,
+			confirmedDate: statusConfirmedDate,
+		} = await request.validateUsing(updateOrderStatusValidator)
 
 		order.status = status
 
 		if (status === 'confirmed') {
 			order.confirmedAt = DateTime.now()
-			const confirmedDate = request.input('confirmedDate')
-			if (confirmedDate) {
-				order.confirmedDate = confirmedDate
+			if (statusConfirmedDate) {
+				order.confirmedDate = statusConfirmedDate
 			}
 		}
 
@@ -301,19 +281,8 @@ export default class OrdersController {
 			})
 		}
 
-		const { quotedPrice, responseMessage, depositPercent, confirmedDate } = request.only([
-			'quotedPrice',
-			'responseMessage',
-			'depositPercent',
-			'confirmedDate',
-		])
-
-		if (quotedPrice === undefined || quotedPrice === null) {
-			return response.badRequest({
-				success: false,
-				message: 'quotedPrice is required',
-			})
-		}
+		const { quotedPrice, responseMessage, depositPercent, confirmedDate } =
+			await request.validateUsing(quoteOrderValidator)
 
 		order.quotedPrice = quotedPrice
 		order.total = quotedPrice
@@ -442,14 +411,7 @@ export default class OrdersController {
 			.whereNull('deletedAt')
 			.firstOrFail()
 
-		const { message, attachments } = request.only(['message', 'attachments'])
-
-		if (!message) {
-			return response.badRequest({
-				success: false,
-				message: 'Message content is required',
-			})
-		}
+		const { message, attachments } = await request.validateUsing(sendMessageValidator)
 
 		const orderMessage = await OrderMessage.create({
 			orderId: params.id,
@@ -489,51 +451,32 @@ export default class OrdersController {
 			.whereNull('deletedAt')
 			.firstOrFail()
 
-		// Client info
-		const clientName = request.input('clientName')
-		const clientEmail = request.input('clientEmail')
-		const clientPhone = request.input('clientPhone')
+		const data = await request.validateUsing(updateOrderValidator)
 
-		if (clientName) order.clientName = clientName
-		if (clientEmail) order.clientEmail = clientEmail
-		if (clientPhone !== undefined) order.clientPhone = clientPhone || null
+		if (data.clientName) order.clientName = data.clientName
+		if (data.clientEmail) order.clientEmail = data.clientEmail
+		if (data.clientPhone !== undefined) order.clientPhone = data.clientPhone || null
 
-		// Delivery info
-		const deliveryMethod = request.input('deliveryMethod')
-		const deliveryAddress = request.input('deliveryAddress')
-		const deliveryNotes = request.input('deliveryNotes')
-		const requestedDate = request.input('requestedDate')
+		if (data.deliveryMethod) order.deliveryMethod = data.deliveryMethod
+		if (data.deliveryAddress !== undefined) order.deliveryAddress = data.deliveryAddress || null
+		if (data.deliveryNotes !== undefined) order.deliveryNotes = data.deliveryNotes || null
+		if (data.requestedDate !== undefined) order.requestedDate = data.requestedDate || null
 
-		if (deliveryMethod) order.deliveryMethod = deliveryMethod
-		if (deliveryAddress !== undefined) order.deliveryAddress = deliveryAddress || null
-		if (deliveryNotes !== undefined) order.deliveryNotes = deliveryNotes || null
-		if (requestedDate !== undefined) order.requestedDate = requestedDate || null
+		if (data.patissierNotes !== undefined) order.patissierNotes = data.patissierNotes || null
 
-		// Notes
-		const patissierNotes = request.input('patissierNotes')
-		if (patissierNotes !== undefined) order.patissierNotes = patissierNotes || null
-
-		// Total override
-		const manualTotal = request.input('total')
-		if (manualTotal !== undefined) {
-			order.total = manualTotal != null && manualTotal !== '' ? Number(manualTotal) : null
+		if (data.total !== undefined) {
+			order.total = data.total
 		}
 
-		// Custom order fields
 		if (order.type === 'custom') {
-			const customType = request.input('customType')
-			const customNbPersonnes = request.input('customNbPersonnes')
-			const customDateSouhaitee = request.input('customDateSouhaitee')
-			const customTheme = request.input('customTheme')
-			const customAllergies = request.input('customAllergies')
-			const customMessage = request.input('customMessage')
-
-			if (customType !== undefined) order.customType = customType || null
-			if (customNbPersonnes !== undefined) order.customNbPersonnes = customNbPersonnes || null
-			if (customDateSouhaitee !== undefined) order.customDateSouhaitee = customDateSouhaitee || null
-			if (customTheme !== undefined) order.customTheme = customTheme || null
-			if (customAllergies !== undefined) order.customAllergies = customAllergies || null
-			if (customMessage !== undefined) order.customMessage = customMessage || null
+			if (data.customType !== undefined) order.customType = data.customType || null
+			if (data.customNbPersonnes !== undefined)
+				order.customNbPersonnes = data.customNbPersonnes || null
+			if (data.customDateSouhaitee !== undefined)
+				order.customDateSouhaitee = data.customDateSouhaitee || null
+			if (data.customTheme !== undefined) order.customTheme = data.customTheme || null
+			if (data.customAllergies !== undefined) order.customAllergies = data.customAllergies || null
+			if (data.customMessage !== undefined) order.customMessage = data.customMessage || null
 
 			// Handle photo uploads (add new photos)
 			const photoFiles = request.files('customPhotos', {
@@ -550,12 +493,9 @@ export default class OrdersController {
 				order.customPhotoUrls = newUrls
 			}
 			// Allow removing specific photos by URL
-			const removePhotos = request.input('removePhotos')
-			if (removePhotos) {
-				const toRemove: string[] =
-					typeof removePhotos === 'string' ? JSON.parse(removePhotos) : removePhotos
+			if (data.removePhotos) {
 				order.customPhotoUrls = (order.customPhotoUrls || []).filter(
-					(url: string) => !toRemove.includes(url)
+					(url: string) => !data.removePhotos!.includes(url)
 				)
 			}
 		}

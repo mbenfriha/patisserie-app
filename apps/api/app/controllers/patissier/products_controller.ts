@@ -2,6 +2,7 @@ import type { HttpContext } from '@adonisjs/core/http'
 import PatissierProfile from '#models/patissier_profile'
 import Product from '#models/product'
 import StorageService from '#services/storage_service'
+import { storeProductValidator, updateProductValidator } from '#validators/product_validator'
 
 export default class ProductsController {
 	async index({ auth, request, response }: HttpContext) {
@@ -12,9 +13,7 @@ export default class ProductsController {
 		const limit = Math.min(Number(request.input('limit', 20)) || 20, 100)
 		const categoryId = request.input('category_id')
 
-		const query = Product.query()
-			.where('patissierId', profile.id)
-			.orderBy('sortOrder', 'asc')
+		const query = Product.query().where('patissierId', profile.id).orderBy('sortOrder', 'asc')
 
 		if (categoryId) {
 			query.where('categoryId', categoryId)
@@ -32,21 +31,7 @@ export default class ProductsController {
 		const user = auth.user!
 		const profile = await PatissierProfile.findByOrFail('userId', user.id)
 
-		const data = request.only([
-			'name',
-			'description',
-			'categoryId',
-			'images',
-			'price',
-			'unit',
-			'minQuantity',
-			'maxQuantity',
-			'preparationDays',
-			'isAvailable',
-			'isVisible',
-			'allergens',
-			'tags',
-		])
+		const data = await request.validateUsing(storeProductValidator)
 
 		const maxSortOrder = await Product.query()
 			.where('patissierId', profile.id)
@@ -101,22 +86,7 @@ export default class ProductsController {
 			.where('patissierId', profile.id)
 			.firstOrFail()
 
-		const data = request.only([
-			'name',
-			'description',
-			'categoryId',
-			'images',
-			'price',
-			'unit',
-			'minQuantity',
-			'maxQuantity',
-			'preparationDays',
-			'isAvailable',
-			'isVisible',
-			'sortOrder',
-			'allergens',
-			'tags',
-		])
+		const data = await request.validateUsing(updateProductValidator)
 
 		product.merge(data)
 		await product.save()

@@ -34,7 +34,8 @@ export function StripeConnectBanner() {
 						Vérifiez votre identité pour commencer à vendre
 					</p>
 					<p className="mt-1 text-sm text-yellow-700">
-						Connectez votre compte Stripe pour recevoir les paiements de vos ateliers et commandes en ligne.
+						Connectez votre compte Stripe pour recevoir les paiements de vos ateliers et commandes
+						en ligne.
 					</p>
 				</div>
 			</div>
@@ -50,7 +51,14 @@ export function StripeConnectBanner() {
 					onClick={() => setDismissed(true)}
 					className="rounded-md p-1.5 text-yellow-600 hover:bg-yellow-100"
 				>
-					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+					<svg
+						width="16"
+						height="16"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						strokeWidth="2"
+					>
 						<line x1="18" y1="6" x2="6" y2="18" />
 						<line x1="6" y1="6" x2="18" y2="18" />
 					</svg>
