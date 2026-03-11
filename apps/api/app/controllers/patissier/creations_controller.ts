@@ -63,7 +63,7 @@ export default class CreationsController {
 				.where('patissierId', profile.id)
 				.count('* as total')
 				.first()
-			const total = Number((count as any)?.$extras?.total ?? 0)
+			const total = Number(count?.$extras?.total ?? 0)
 			if (total >= 50) {
 				return response.forbidden({
 					success: false,

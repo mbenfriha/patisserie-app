@@ -94,11 +94,11 @@ test.group('Patissier - Profile', (group) => {
 		response.assertStatus(422)
 	})
 
-	test('rejects businessName too long', async ({ client }) => {
+	test('rejects businessName too long (more than 200 chars)', async ({ client }) => {
 		const response = await client
 			.patch('/patissier/profile')
 			.loginAs(patissier)
-			.json({ businessName: 'A'.repeat(101) })
+			.json({ businessName: 'A'.repeat(201) })
 
 		response.assertStatus(422)
 	})

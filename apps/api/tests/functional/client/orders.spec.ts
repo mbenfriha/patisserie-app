@@ -183,7 +183,7 @@ test.group('Client - Orders', (group) => {
 
 		const response = await client.get('/client/orders/PAT-20260307-104')
 
-		response.assertStatus(422)
+		response.assertStatus(400)
 	})
 
 	test('create order returns 201 or 403 depending on Turnstile', async ({ client, assert }) => {

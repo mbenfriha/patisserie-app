@@ -28,7 +28,7 @@ export default class OrdersController {
 				headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 				body: new URLSearchParams({ secret, response: token }),
 			})
-			const data: any = await res.json()
+			const data = (await res.json()) as { success?: boolean }
 			return data.success === true
 		} catch (err) {
 			logger.error({ err }, 'Turnstile verification failed')

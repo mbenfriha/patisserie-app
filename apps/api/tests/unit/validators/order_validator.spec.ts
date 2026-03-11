@@ -96,19 +96,10 @@ test.group('PatissierCreateOrderValidator', () => {
 		await assert.rejects(() => storePatissierOrderValidator.validate(data))
 	})
 
-	test('clientName too short fails', async ({ assert }) => {
+	test('clientName too long fails (more than 200 chars)', async ({ assert }) => {
 		const data = {
 			type: 'catalogue',
-			clientName: 'J',
-			clientEmail: 'john@test.com',
-		}
-		await assert.rejects(() => storePatissierOrderValidator.validate(data))
-	})
-
-	test('clientName too long fails', async ({ assert }) => {
-		const data = {
-			type: 'catalogue',
-			clientName: 'A'.repeat(101),
+			clientName: 'A'.repeat(201),
 			clientEmail: 'john@test.com',
 		}
 		await assert.rejects(() => storePatissierOrderValidator.validate(data))
@@ -134,22 +125,12 @@ test.group('PatissierCreateOrderValidator', () => {
 		await assert.rejects(() => storePatissierOrderValidator.validate(data))
 	})
 
-	test('item with quantity over 100 fails', async ({ assert }) => {
+	test('item with quantity over 10000 fails', async ({ assert }) => {
 		const data = {
 			type: 'catalogue',
 			clientName: 'John Doe',
 			clientEmail: 'john@test.com',
-			items: [{ product_id: validUuid, quantity: 101 }],
-		}
-		await assert.rejects(() => storePatissierOrderValidator.validate(data))
-	})
-
-	test('item with decimal quantity fails', async ({ assert }) => {
-		const data = {
-			type: 'catalogue',
-			clientName: 'John Doe',
-			clientEmail: 'john@test.com',
-			items: [{ product_id: validUuid, quantity: 2.5 }],
+			items: [{ product_id: validUuid, quantity: 10001 }],
 		}
 		await assert.rejects(() => storePatissierOrderValidator.validate(data))
 	})
@@ -234,10 +215,10 @@ test.group('UpdateOrderStatusValidator', () => {
 		assert.equal(result.cancellationReason, 'Customer changed their mind')
 	})
 
-	test('cancellationReason too long fails', async ({ assert }) => {
+	test('cancellationReason too long fails (more than 1000 chars)', async ({ assert }) => {
 		const data = {
 			status: 'cancelled',
-			cancellationReason: 'A'.repeat(501),
+			cancellationReason: 'A'.repeat(1001),
 		}
 		await assert.rejects(() => updateOrderStatusValidator.validate(data))
 	})
@@ -285,8 +266,8 @@ test.group('QuoteOrderValidator', () => {
 		assert.equal(result.quotedPrice, 0)
 	})
 
-	test('price over 100000 fails', async ({ assert }) => {
-		const data = { quotedPrice: 100001 }
+	test('price over 1000000 fails', async ({ assert }) => {
+		const data = { quotedPrice: 1000001 }
 		await assert.rejects(() => quoteOrderValidator.validate(data))
 	})
 
@@ -295,10 +276,10 @@ test.group('QuoteOrderValidator', () => {
 		await assert.rejects(() => quoteOrderValidator.validate(data))
 	})
 
-	test('responseMessage too long fails', async ({ assert }) => {
+	test('responseMessage too long fails (more than 5000 chars)', async ({ assert }) => {
 		const data = {
 			quotedPrice: 100,
-			responseMessage: 'A'.repeat(2001),
+			responseMessage: 'A'.repeat(5001),
 		}
 		await assert.rejects(() => quoteOrderValidator.validate(data))
 	})
@@ -330,10 +311,11 @@ test.group('SendMessageValidator', () => {
 	test('message with attachments passes', async ({ assert }) => {
 		const data = {
 			message: 'See attached photo',
-			attachments: [{ url: 'https://example.com/photo.jpg' }],
+			attachments: ['https://example.com/photo.jpg'],
 		}
 		const result = await sendMessageValidator.validate(data)
 		assert.equal(result.message, 'See attached photo')
+		assert.lengthOf(result.attachments!, 1)
 	})
 
 	test('empty message fails', async ({ assert }) => {

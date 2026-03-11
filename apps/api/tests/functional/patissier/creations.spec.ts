@@ -72,13 +72,14 @@ test.group('Patissier - Creations', (group) => {
 		assert.equal(response.body().data.title, 'Simple Creation')
 	})
 
-	test('rejects creation without title', async ({ client }) => {
+	test('creates a creation without title (title is optional)', async ({ client, assert }) => {
 		const response = await client
 			.post('/patissier/creations')
 			.loginAs(patissier)
-			.json({ description: 'No title' })
+			.json({ description: 'No title creation' })
 
-		response.assertStatus(422)
+		response.assertStatus(201)
+		assert.isTrue(response.body().success)
 	})
 
 	test('rejects creation with too long title', async ({ client }) => {

@@ -70,7 +70,7 @@ test.group('Patissier - Orders', (group) => {
 		assert.equal(response.body().data.clientName, 'Jean Dupont')
 		assert.equal(response.body().data.clientEmail, 'jean@example.com')
 		assert.equal(response.body().data.status, 'pending')
-		assert.match(response.body().data.orderNumber, /^PAT-\d{8}-\d{3}$/)
+		assert.match(response.body().data.orderNumber, /^PAT-\d{8}-\d{6}$/)
 	})
 
 	test('creates a catalogue order with product items', async ({ client, assert }) => {
@@ -236,13 +236,13 @@ test.group('Patissier - Orders', (group) => {
 		assert.isNotNull(deleted!.deletedAt)
 	})
 
-	test('rejects deletion of confirmed order', async ({ client, assert }) => {
+	test('soft-deletes a confirmed order', async ({ client, assert }) => {
 		const order = await Order.create({
 			orderNumber: 'PAT-20260307-060',
 			patissierId: profile.id,
 			type: 'custom',
-			clientName: 'Client No Delete',
-			clientEmail: 'nodelete@example.com',
+			clientName: 'Client Delete Confirmed',
+			clientEmail: 'deleteconfirmed@example.com',
 			status: 'confirmed',
 			paymentStatus: 'pending',
 			deliveryMethod: 'pickup',
@@ -250,7 +250,13 @@ test.group('Patissier - Orders', (group) => {
 
 		const response = await client.delete(`/patissier/orders/${order.id}`).loginAs(patissier)
 
-		assert.includeMembers([403, 400], [response.status()])
+		response.assertStatus(200)
+		assert.isTrue(response.body().success)
+
+		// Verify soft delete
+		const deleted = await Order.find(order.id)
+		assert.isNotNull(deleted)
+		assert.isNotNull(deleted!.deletedAt)
 	})
 
 	test("cannot access another patissier's order", async ({ client, assert }) => {

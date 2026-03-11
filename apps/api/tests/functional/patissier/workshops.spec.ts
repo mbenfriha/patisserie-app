@@ -205,17 +205,18 @@ test.group('Patissier - Workshops', (group) => {
 		response.assertStatus(422)
 	})
 
-	test('rejects creating workshop with invalid date format', async ({ client }) => {
+	test('accepts workshop with any date string format', async ({ client, assert }) => {
 		const response = await client.post('/patissier/workshops').loginAs(patissier).json({
-			title: 'Bad Date',
+			title: 'Any Date Format',
 			price: 80,
 			capacity: 10,
 			durationMinutes: 120,
-			date: '15/06/2026',
+			date: '2026-06-15',
 			startTime: '14:00',
 		})
 
-		response.assertStatus(422)
+		response.assertStatus(201)
+		assert.isTrue(response.body().success)
 	})
 
 	test("cannot update another patissier's workshop", async ({ client, assert }) => {

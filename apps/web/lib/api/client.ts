@@ -72,17 +72,18 @@ class ApiClient {
 			},
 		})
 
-		const data = await this.parseJson(response)
+		const data = (await this.parseJson(response)) as Record<string, unknown>
 
 		if (!response.ok) {
-			let errorMessage = data.message || 'An error occurred'
-			if (data.errors && Array.isArray(data.errors) && data.errors.length > 0) {
-				errorMessage = data.errors[0].message || errorMessage
+			let errorMessage = (data.message as string) || 'An error occurred'
+			if (Array.isArray(data.errors) && data.errors.length > 0) {
+				const firstError = data.errors[0] as Record<string, unknown>
+				errorMessage = (firstError.message as string) || errorMessage
 			}
 			throw new ApiError(errorMessage, response.status, data)
 		}
 
-		return { data, status: response.status }
+		return { data: data as T, status: response.status }
 	}
 
 	// biome-ignore lint/suspicious/noExplicitAny: generic default
@@ -137,17 +138,18 @@ class ApiClient {
 			body: formData,
 		})
 
-		const data = await this.parseJson(response)
+		const data = (await this.parseJson(response)) as Record<string, unknown>
 
 		if (!response.ok) {
-			let errorMessage = data.message || 'An error occurred'
-			if (data.errors && Array.isArray(data.errors) && data.errors.length > 0) {
-				errorMessage = data.errors[0].message || errorMessage
+			let errorMessage = (data.message as string) || 'An error occurred'
+			if (Array.isArray(data.errors) && data.errors.length > 0) {
+				const firstError = data.errors[0] as Record<string, unknown>
+				errorMessage = (firstError.message as string) || errorMessage
 			}
 			throw new ApiError(errorMessage, response.status, data)
 		}
 
-		return { data, status: response.status }
+		return { data: data as T, status: response.status }
 	}
 
 	getBaseUrl() {

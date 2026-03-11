@@ -103,63 +103,67 @@ export default class BookingsController {
 
 		const emailService = new EmailService()
 
-		if (canAcceptOnlinePayment && checkoutUrl) {
-			// Payment required: send pending payment email with checkout link
-			const dateFormatted = new Date(workshop.date).toLocaleDateString('fr-FR', {
-				weekday: 'long',
-				day: 'numeric',
-				month: 'long',
-				year: 'numeric',
-			})
+		try {
+			if (canAcceptOnlinePayment && checkoutUrl) {
+				// Payment required: send pending payment email with checkout link
+				const dateFormatted = new Date(workshop.date).toLocaleDateString('fr-FR', {
+					weekday: 'long',
+					day: 'numeric',
+					month: 'long',
+					year: 'numeric',
+				})
 
-			await emailService.sendStatusUpdate({
-				email: booking.clientEmail,
-				recipientName: booking.clientName,
-				subject: `Réservation en attente de paiement — ${workshop.title}`,
-				title: 'Finalisez votre réservation',
-				body: `Votre réservation pour <strong>${workshop.title}</strong> le ${dateFormatted} (${booking.nbParticipants} place${booking.nbParticipants > 1 ? 's' : ''}) est en attente de paiement.<br><br>Montant de l'acompte : <strong>${depositAmount / 100 > 0 ? depositAmount : depositAmount} €</strong><br><br>Veuillez procéder au paiement dans les 30 minutes pour confirmer votre place. Passé ce délai, votre réservation sera automatiquement annulée.`,
-				actionUrl: checkoutUrl,
-				actionLabel: 'Régler maintenant',
-			})
-		} else if (!canAcceptOnlinePayment) {
-			// No payment required: send confirmation emails immediately
-			const patissierUser = await User.findOrFail(profile.userId)
+				await emailService.sendStatusUpdate({
+					email: booking.clientEmail,
+					recipientName: booking.clientName,
+					subject: `Réservation en attente de paiement — ${workshop.title}`,
+					title: 'Finalisez votre réservation',
+					body: `Votre réservation pour <strong>${workshop.title}</strong> le ${dateFormatted} (${booking.nbParticipants} place${booking.nbParticipants > 1 ? 's' : ''}) est en attente de paiement.<br><br>Montant de l'acompte : <strong>${depositAmount / 100 > 0 ? depositAmount : depositAmount} €</strong><br><br>Veuillez procéder au paiement dans les 30 minutes pour confirmer votre place. Passé ce délai, votre réservation sera automatiquement annulée.`,
+					actionUrl: checkoutUrl,
+					actionLabel: 'Régler maintenant',
+				})
+			} else if (!canAcceptOnlinePayment) {
+				// No payment required: send confirmation emails immediately
+				const patissierUser = await User.findOrFail(profile.userId)
 
-			// 1. Email client: booking confirmation
-			await emailService.sendBookingConfirmation({
-				clientEmail: booking.clientEmail,
-				clientName: booking.clientName,
-				workshopTitle: workshop.title,
-				patissierName: profile.businessName,
-				date: workshop.date,
-				startTime: workshop.startTime,
-				nbParticipants: booking.nbParticipants,
-				totalPrice: booking.totalPrice,
-				depositAmount: booking.depositAmount,
-			})
+				// 1. Email client: booking confirmation
+				await emailService.sendBookingConfirmation({
+					clientEmail: booking.clientEmail,
+					clientName: booking.clientName,
+					workshopTitle: workshop.title,
+					patissierName: profile.businessName,
+					date: workshop.date,
+					startTime: workshop.startTime,
+					nbParticipants: booking.nbParticipants,
+					totalPrice: booking.totalPrice,
+					depositAmount: booking.depositAmount,
+				})
 
-			// 2. Email patissier: new booking notification
-			await emailService.sendNewBookingNotification({
-				patissierEmail: patissierUser.email,
-				patissierName: profile.businessName,
-				clientName: booking.clientName,
-				clientEmail: booking.clientEmail,
-				workshopTitle: workshop.title,
-				date: workshop.date,
-				startTime: workshop.startTime,
-				nbParticipants: booking.nbParticipants,
-				depositAmount: booking.depositAmount,
-			})
+				// 2. Email patissier: new booking notification
+				await emailService.sendNewBookingNotification({
+					patissierEmail: patissierUser.email,
+					patissierName: profile.businessName,
+					clientName: booking.clientName,
+					clientEmail: booking.clientEmail,
+					workshopTitle: workshop.title,
+					date: workshop.date,
+					startTime: workshop.startTime,
+					nbParticipants: booking.nbParticipants,
+					depositAmount: booking.depositAmount,
+				})
 
-			// 3. In-app notification to patissier
-			const notificationService = new NotificationService()
-			await notificationService.create(
-				patissierUser.id,
-				'new_booking',
-				`Nouvelle réservation : ${workshop.title}`,
-				`${booking.clientName} a réservé ${booking.nbParticipants} place(s)`,
-				{ bookingId: booking.id, workshopId: workshop.id }
-			)
+				// 3. In-app notification to patissier
+				const notificationService = new NotificationService()
+				await notificationService.create(
+					patissierUser.id,
+					'new_booking',
+					`Nouvelle réservation : ${workshop.title}`,
+					`${booking.clientName} a réservé ${booking.nbParticipants} place(s)`,
+					{ bookingId: booking.id, workshopId: workshop.id }
+				)
+			}
+		} catch (error) {
+			console.error('Failed to send booking notification emails:', error)
 		}
 
 		return response.created({
@@ -218,20 +222,24 @@ export default class BookingsController {
 		await booking.save()
 
 		// Notify patissier by email
-		const workshop = booking.workshop
-		const profile = await PatissierProfile.findOrFail(workshop.patissierId)
-		const patissierUser = await User.findOrFail(profile.userId)
-		const emailService = new EmailService()
+		try {
+			const workshop = booking.workshop
+			const profile = await PatissierProfile.findOrFail(workshop.patissierId)
+			const patissierUser = await User.findOrFail(profile.userId)
+			const emailService = new EmailService()
 
-		await emailService.sendBookingCancellationNotification({
-			patissierEmail: patissierUser.email,
-			patissierName: profile.businessName,
-			clientName: booking.clientName,
-			workshopTitle: workshop.title,
-			date: workshop.date,
-			nbParticipants: booking.nbParticipants,
-			reason: booking.cancellationReason,
-		})
+			await emailService.sendBookingCancellationNotification({
+				patissierEmail: patissierUser.email,
+				patissierName: profile.businessName,
+				clientName: booking.clientName,
+				workshopTitle: workshop.title,
+				date: workshop.date,
+				nbParticipants: booking.nbParticipants,
+				reason: booking.cancellationReason,
+			})
+		} catch (error) {
+			console.error('Failed to send booking cancellation notification email:', error)
+		}
 
 		return response.ok({
 			success: true,

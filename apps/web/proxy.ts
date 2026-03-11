@@ -1,5 +1,5 @@
-import createMiddleware from 'next-intl/middleware'
 import { type NextRequest, NextResponse } from 'next/server'
+import createMiddleware from 'next-intl/middleware'
 import { routing } from './i18n/routing'
 
 const intlMiddleware = createMiddleware(routing)
@@ -79,7 +79,7 @@ function detectLocale(pathname: string): string {
 function stripLocale(pathname: string): string {
 	const first = pathname.split('/')[1]
 	if (LOCALES.includes(first)) {
-		return '/' + pathname.split('/').slice(2).join('/') || '/'
+		return `/${pathname.split('/').slice(2).join('/')}` || '/'
 	}
 	return pathname
 }
@@ -183,7 +183,12 @@ function handleProxy(request: NextRequest): NextResponse {
 	//    e.g., latelier-de-zina.patissio.com
 	// ──────────────────────────────────────────────────
 	const hostParts = hostWithoutPort.split('.')
-	if (!isLocalhost && hostParts.length > 2 && hostParts[0] !== 'www' && hostWithoutPort !== MAIN_DOMAIN) {
+	if (
+		!isLocalhost &&
+		hostParts.length > 2 &&
+		hostParts[0] !== 'www' &&
+		hostWithoutPort !== MAIN_DOMAIN
+	) {
 		const slug = hostParts[0]
 		const locale = detectLocale(pathname)
 		const cleanPath = stripLocale(pathname)
@@ -224,7 +229,7 @@ function handleProxy(request: NextRequest): NextResponse {
 	) {
 		const locale = detectLocale(pathname)
 		const restSegments = LOCALES.includes(segments[0]) ? segments.slice(2) : segments.slice(1)
-		const restPath = restSegments.length > 0 ? '/' + restSegments.join('/') : ''
+		const restPath = restSegments.length > 0 ? `/${restSegments.join('/')}` : ''
 		const url = request.nextUrl.clone()
 		url.pathname = `/${locale}/site/${firstSegment}${restPath}`
 		return NextResponse.rewrite(url)

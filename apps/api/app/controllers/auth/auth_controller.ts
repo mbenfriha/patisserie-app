@@ -140,7 +140,7 @@ export default class AuthController {
 	async resetPassword({ request, response }: HttpContext) {
 		const { token, password } = await request.validateUsing(resetPasswordValidator)
 
-		let accessToken
+		let accessToken: Awaited<ReturnType<typeof User.accessTokens.verify>> | undefined
 		try {
 			accessToken = await User.accessTokens.verify(new Secret(token))
 		} catch {

@@ -138,7 +138,7 @@ test.group('Patissier - Calendar', (group) => {
 			type: 'custom',
 			clientName: 'Client Devis',
 			clientEmail: 'devis@example.com',
-			status: 'pending',
+			status: 'confirmed',
 			paymentStatus: 'pending',
 			deliveryMethod: 'pickup',
 			requestedDate: '2026-01-25',

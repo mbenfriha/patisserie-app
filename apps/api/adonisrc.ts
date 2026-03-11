@@ -24,10 +24,7 @@ export default defineConfig({
 		() => import('@adonisjs/i18n/i18n_provider'),
 		() => import('@adonisjs/transmit/transmit_provider'),
 	],
-	preloads: [
-		() => import('#start/routes'),
-		() => import('#start/kernel'),
-	],
+	preloads: [() => import('#start/routes'), () => import('#start/kernel')],
 	metaFiles: [
 		{
 			pattern: 'resources/templates/**/*.{ts,tsx,js}',

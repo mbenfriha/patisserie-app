@@ -57,7 +57,7 @@ test.group('Client - Bookings', (group) => {
 		await User.query().delete()
 	})
 
-	test('shows a booking by id', async ({ client, assert }) => {
+	test('shows a booking by id with email', async ({ client, assert }) => {
 		const booking = await WorkshopBooking.create({
 			workshopId: workshop.id,
 			clientName: 'Alice Dupont',
@@ -71,7 +71,7 @@ test.group('Client - Bookings', (group) => {
 			remainingPaymentStatus: 'pending',
 		})
 
-		const response = await client.get(`/client/bookings/${booking.id}`)
+		const response = await client.get(`/client/bookings/${booking.id}?email=test@test.com`)
 
 		response.assertStatus(200)
 		assert.isTrue(response.body().success)
@@ -85,9 +85,17 @@ test.group('Client - Bookings', (group) => {
 		assert.exists(response.body().data.workshop)
 	})
 
-	test('returns 404 for non-existent booking', async ({ client, assert }) => {
+	test('returns 400 for booking without email param', async ({ client, assert }) => {
 		const fakeId = '00000000-0000-0000-0000-000000000000'
 		const response = await client.get(`/client/bookings/${fakeId}`)
+
+		response.assertStatus(400)
+		assert.isFalse(response.body().success)
+	})
+
+	test('returns 404 for non-existent booking', async ({ client, assert }) => {
+		const fakeId = '00000000-0000-0000-0000-000000000000'
+		const response = await client.get(`/client/bookings/${fakeId}?email=test@test.com`)
 
 		response.assertStatus(404)
 		assert.isFalse(response.body().success)
@@ -174,15 +182,14 @@ test.group('Client - Bookings', (group) => {
 		assert.equal(response.body().message, 'Booking is already cancelled')
 	})
 
-	test('store (book) returns 201 or 403 (Turnstile)', async ({ client, assert }) => {
+	test('store (book) returns 201', async ({ client, assert }) => {
 		const response = await client.post(`/client/workshops/${workshop.id}/book`).json({
 			client_name: 'Eve Bernard',
 			client_email: 'eve@test.com',
 			nb_participants: 1,
 		})
 
-		// In test environment, Turnstile verification will likely fail with 403.
-		// If it passes, we expect 201.
-		assert.includeMembers([201, 403], [response.status()])
+		response.assertStatus(201)
+		assert.isTrue(response.body().success)
 	})
 })
