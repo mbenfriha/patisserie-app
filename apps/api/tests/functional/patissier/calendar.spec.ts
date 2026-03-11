@@ -180,7 +180,7 @@ test.group('Patissier - Calendar', (group) => {
 		assert.equal(orderEvent.meta.orderNumber, 'PAT-20260110-001')
 
 		const devisEvent = events.find((e: { kind: string }) => e.kind === 'devis')
-		assert.equal(devisEvent.title, 'Devis #PAT-20260125-001')
+		assert.equal(devisEvent.title, 'Commande sur devis #PAT-20260125-001')
 	})
 
 	test('excludes cancelled orders and workshops', async ({ client, assert }) => {

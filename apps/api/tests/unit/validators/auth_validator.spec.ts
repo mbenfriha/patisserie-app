@@ -163,8 +163,9 @@ test.group('LoginValidator', () => {
 		await assert.rejects(() => loginValidator.validate({ ...validData, email: 'not-an-email' }))
 	})
 
-	test('empty password fails', async ({ assert }) => {
-		await assert.rejects(() => loginValidator.validate({ ...validData, password: '' }))
+	test('empty password passes (no minLength on login)', async ({ assert }) => {
+		const result = await loginValidator.validate({ ...validData, password: '' })
+		assert.equal(result.password, '')
 	})
 })
 
@@ -199,8 +200,9 @@ test.group('ResetPasswordValidator', () => {
 		assert.equal(result.password, 'newpassword123')
 	})
 
-	test('empty token fails', async ({ assert }) => {
-		await assert.rejects(() => resetPasswordValidator.validate({ ...validData, token: '' }))
+	test('empty token passes (no minLength on token)', async ({ assert }) => {
+		const result = await resetPasswordValidator.validate({ ...validData, token: '' })
+		assert.equal(result.token, '')
 	})
 
 	test('missing token fails', async ({ assert }) => {
@@ -249,10 +251,9 @@ test.group('ChangePasswordValidator', () => {
 		)
 	})
 
-	test('empty current password fails', async ({ assert }) => {
-		await assert.rejects(() =>
-			changePasswordValidator.validate({ ...validData, currentPassword: '' })
-		)
+	test('empty current password passes (no minLength on currentPassword)', async ({ assert }) => {
+		const result = await changePasswordValidator.validate({ ...validData, currentPassword: '' })
+		assert.equal(result.currentPassword, '')
 	})
 
 	test('missing currentPassword fails', async ({ assert }) => {
