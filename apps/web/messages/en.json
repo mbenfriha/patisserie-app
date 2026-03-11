@@ -394,6 +394,54 @@
     "error": "An error occurred",
     "deposit100": "100% (full payment)"
   },
+  "quote": {
+    "title": "Quote",
+    "statusDraft": "Draft",
+    "statusSent": "Sent",
+    "statusAccepted": "Accepted",
+    "statusRejected": "Rejected",
+    "statusRevised": "Revised",
+    "sentOn": "Sent on {date}",
+    "proposedPrice": "Proposed price",
+    "depositPercent": "Deposit percentage",
+    "depositAmount": "Deposit: {amount}",
+    "confirmedDate": "Confirmed date",
+    "responseMessage": "Response message",
+    "responsePlaceholder": "Write a message to accompany your quote...",
+    "saveDraft": "Save draft",
+    "sendQuote": "Send quote to client",
+    "modifyQuote": "Modify quote",
+    "markAccepted": "Mark as accepted",
+    "markRejected": "Mark as rejected",
+    "reviseQuote": "Revise quote",
+    "createNewQuote": "Create new quote",
+    "modifyDialog": {
+      "title": "Modify quote?",
+      "description": "This will create a new version of the quote. The old version will be archived in the history.",
+      "confirm": "Create new version",
+      "cancel": "Cancel"
+    },
+    "reviseDialog": {
+      "title": "Revise accepted quote?",
+      "description": "This will create a new version that must be sent and accepted again by the client.",
+      "confirm": "Create new version",
+      "cancel": "Cancel"
+    },
+    "history": "Quote history ({count})",
+    "version": "Version #{version}",
+    "deposit": "{percent}% deposit",
+    "messageSent": "Message sent",
+    "draftSaved": "Draft saved",
+    "quoteSent": "Quote sent successfully!",
+    "accepted": "Quote marked as accepted",
+    "rejected": "Quote marked as rejected",
+    "revised": "New version created",
+    "error": "An error occurred",
+    "deposit30": "30%",
+    "deposit50": "50%",
+    "deposit70": "70%",
+    "deposit100": "100% (full payment)"
+  },
   "orderDetail": {
     "createdOn": "Created on {date}",
     "saveChanges": "Save",
@@ -474,7 +522,9 @@
     "deposit70": "70%",
     "deposit100": "100% (full payment)",
     "cancellationReason": "Cancellation Reason",
-    "totalLabel": "Total"
+    "totalLabel": "Total",
+    "quotePriceSaved": "Price applied to quote draft",
+    "quotePriceSaveError": "Error saving price"
   },
   "billing": {
     "title": "Subscription",

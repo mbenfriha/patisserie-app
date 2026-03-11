@@ -394,6 +394,54 @@
     "error": "Une erreur est survenue",
     "deposit100": "100% (paiement intégral)"
   },
+  "quote": {
+    "title": "Devis",
+    "statusDraft": "Brouillon",
+    "statusSent": "Envoyé",
+    "statusAccepted": "Accepté",
+    "statusRejected": "Refusé",
+    "statusRevised": "Révisé",
+    "sentOn": "Envoyé le {date}",
+    "proposedPrice": "Prix proposé",
+    "depositPercent": "Pourcentage d'acompte",
+    "depositAmount": "Acompte : {amount}",
+    "confirmedDate": "Date confirmée",
+    "responseMessage": "Message de réponse",
+    "responsePlaceholder": "Écrivez un message pour accompagner votre devis...",
+    "saveDraft": "Enregistrer le brouillon",
+    "sendQuote": "Envoyer le devis au client",
+    "modifyQuote": "Modifier le devis",
+    "markAccepted": "Marquer comme accepté",
+    "markRejected": "Marquer comme refusé",
+    "reviseQuote": "Réviser le devis",
+    "createNewQuote": "Créer un nouveau devis",
+    "modifyDialog": {
+      "title": "Modifier le devis ?",
+      "description": "Cela créera une nouvelle version du devis. L'ancienne version sera archivée dans l'historique.",
+      "confirm": "Créer une nouvelle version",
+      "cancel": "Annuler"
+    },
+    "reviseDialog": {
+      "title": "Réviser le devis accepté ?",
+      "description": "Cela créera une nouvelle version du devis qui devra être envoyée et acceptée à nouveau par le client.",
+      "confirm": "Créer une nouvelle version",
+      "cancel": "Annuler"
+    },
+    "history": "Historique des devis ({count})",
+    "version": "Version #{version}",
+    "deposit": "{percent}% acompte",
+    "messageSent": "Message envoyé",
+    "draftSaved": "Brouillon enregistré",
+    "quoteSent": "Devis envoyé avec succès !",
+    "accepted": "Devis marqué comme accepté",
+    "rejected": "Devis marqué comme refusé",
+    "revised": "Nouvelle version créée",
+    "error": "Une erreur est survenue",
+    "deposit30": "30%",
+    "deposit50": "50%",
+    "deposit70": "70%",
+    "deposit100": "100% (paiement intégral)"
+  },
   "orderDetail": {
     "createdOn": "Créée le {date}",
     "saveChanges": "Enregistrer",
@@ -474,7 +522,9 @@
     "deposit70": "70%",
     "deposit100": "100% (paiement intégral)",
     "cancellationReason": "Raison de l'annulation",
-    "totalLabel": "Total"
+    "totalLabel": "Total",
+    "quotePriceSaved": "Prix appliqué au brouillon du devis",
+    "quotePriceSaveError": "Erreur lors de l'enregistrement du prix"
   },
   "billing": {
     "title": "Abonnement",

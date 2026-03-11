@@ -1,14 +1,14 @@
 'use client'
 
 import {
-	ArrowLeft,
 	AlertCircle,
+	ArrowLeft,
+	Calculator,
 	Calendar,
 	CheckCircle,
 	Clock,
 	CreditCard,
 	FileText,
-	Calculator,
 	Mail,
 	MapPin,
 	MessageSquare,
@@ -20,12 +20,13 @@ import {
 	User,
 	XCircle,
 } from 'lucide-react'
-import { useTranslations } from 'next-intl'
 import { useParams, useSearchParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { PlanGate } from '@/components/auth/plan-gate'
 import { OrderCosting } from '@/components/dashboard/order-costing'
+import { QuoteSection } from '@/components/dashboard/quote-section'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -202,13 +203,6 @@ export default function PatissierOrderDetailPage() {
 	const [confirmedDate, setConfirmedDate] = useState('')
 	const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
 
-	// Quote form (custom orders)
-	const [quotedPrice, setQuotedPrice] = useState('')
-	const [depositPercent, setDepositPercent] = useState('100')
-	const [quoteResponseMessage, setQuoteResponseMessage] = useState('')
-	const [quoteConfirmedDate, setQuoteConfirmedDate] = useState('')
-	const [isSubmittingQuote, setIsSubmittingQuote] = useState(false)
-
 	// Mark as paid
 	const [isMarkingPaid, setIsMarkingPaid] = useState(false)
 
@@ -278,11 +272,8 @@ export default function PatissierOrderDetailPage() {
 			patissierNotes: order.patissierNotes || '',
 			total: order.total != null ? String(order.total) : '',
 			customType: order.customType || '',
-			customNbPersonnes:
-				order.customNbPersonnes != null ? String(order.customNbPersonnes) : '',
-			customDateSouhaitee: order.customDateSouhaitee
-				? order.customDateSouhaitee.split('T')[0]
-				: '',
+			customNbPersonnes: order.customNbPersonnes != null ? String(order.customNbPersonnes) : '',
+			customDateSouhaitee: order.customDateSouhaitee ? order.customDateSouhaitee.split('T')[0] : '',
 			customTheme: order.customTheme || '',
 			customAllergies: order.customAllergies || '',
 			customMessage: order.customMessage || '',
@@ -363,18 +354,6 @@ export default function PatissierOrderDetailPage() {
 				if (data.confirmedDate) {
 					setConfirmedDate(data.confirmedDate)
 				}
-				if (data.quotedPrice != null) {
-					setQuotedPrice(String(data.quotedPrice))
-				}
-				if (data.depositPercent != null) {
-					setDepositPercent(String(data.depositPercent))
-				}
-				if (data.responseMessage) {
-					setQuoteResponseMessage(data.responseMessage)
-				}
-				if (data.customDateSouhaitee) {
-					setQuoteConfirmedDate(data.confirmedDate || data.customDateSouhaitee)
-				}
 			})
 			.catch((err: unknown) => {
 				const message = err instanceof Error ? err.message : t('notFound')
@@ -410,32 +389,6 @@ export default function PatissierOrderDetailPage() {
 			toast.error(message)
 		} finally {
 			setIsUpdatingStatus(false)
-		}
-	}
-
-	const handleSubmitQuote = async (e: React.FormEvent) => {
-		e.preventDefault()
-		if (!order) return
-		setIsSubmittingQuote(true)
-		try {
-			const res = await api.put(`/patissier/orders/${orderId}/quote`, {
-				quotedPrice: Number(quotedPrice),
-				depositPercent: Number(depositPercent),
-				responseMessage: quoteResponseMessage || undefined,
-				confirmedDate: quoteConfirmedDate || undefined,
-			})
-			setOrder({ ...order, ...res.data.data })
-			const warnings = res.data.warnings as string[] | undefined
-			if (warnings && warnings.length > 0) {
-				toast.warning(warnings[0])
-			} else {
-				toast.success(t('quoteSuccess'))
-			}
-		} catch (err: unknown) {
-			const message = err instanceof Error ? err.message : 'Error'
-			toast.error(message)
-		} finally {
-			setIsSubmittingQuote(false)
 		}
 	}
 
@@ -648,10 +601,7 @@ export default function PatissierOrderDetailPage() {
 										<div className="grid gap-4 md:grid-cols-2">
 											<div className="space-y-2">
 												<Label>{t('newStatus')}</Label>
-												<Select
-													value={newStatus}
-													onValueChange={(value) => setNewStatus(value)}
-												>
+												<Select value={newStatus} onValueChange={(value) => setNewStatus(value)}>
 													<SelectTrigger className="w-full">
 														<SelectValue />
 													</SelectTrigger>
@@ -700,9 +650,7 @@ export default function PatissierOrderDetailPage() {
 										{newStatus === 'cancelled' && order.cancellationReason && (
 											<div className="space-y-2">
 												<Label>{t('cancellationReason')}</Label>
-												<p className="text-sm text-muted-foreground">
-													{order.cancellationReason}
-												</p>
+												<p className="text-sm text-muted-foreground">{order.cancellationReason}</p>
 											</div>
 										)}
 										<Button
@@ -726,12 +674,8 @@ export default function PatissierOrderDetailPage() {
 													<TableRow>
 														<TableHead>{t('product')}</TableHead>
 														<TableHead className="text-right">{t('qty')}</TableHead>
-														<TableHead className="text-right">
-															{t('unitPrice')}
-														</TableHead>
-														<TableHead className="text-right">
-															{t('itemTotal')}
-														</TableHead>
+														<TableHead className="text-right">{t('unitPrice')}</TableHead>
+														<TableHead className="text-right">{t('itemTotal')}</TableHead>
 													</TableRow>
 												</TableHeader>
 												<TableBody>
@@ -745,9 +689,7 @@ export default function PatissierOrderDetailPage() {
 																	</p>
 																)}
 															</TableCell>
-															<TableCell className="text-right">
-																{item.quantity}
-															</TableCell>
+															<TableCell className="text-right">{item.quantity}</TableCell>
 															<TableCell className="text-right">
 																{formatCurrency(item.unitPrice)}
 															</TableCell>
@@ -762,18 +704,12 @@ export default function PatissierOrderDetailPage() {
 												<div className="mt-4 flex justify-end border-t pt-4">
 													<div className="space-y-1 text-right">
 														<div className="flex justify-between gap-8">
-															<span className="text-sm text-muted-foreground">
-																{t('subtotal')}
-															</span>
-															<span className="text-sm">
-																{formatCurrency(order.subtotal)}
-															</span>
+															<span className="text-sm text-muted-foreground">{t('subtotal')}</span>
+															<span className="text-sm">{formatCurrency(order.subtotal)}</span>
 														</div>
 														{order.total != null && (
 															<div className="flex justify-between gap-8">
-																<span className="text-sm font-semibold">
-																	{t('totalLabel')}
-																</span>
+																<span className="text-sm font-semibold">{t('totalLabel')}</span>
 																<span className="text-lg font-bold">
 																	{formatCurrency(order.total)}
 																</span>
@@ -860,37 +796,29 @@ export default function PatissierOrderDetailPage() {
 													<div className="space-y-2 md:col-span-2">
 														<Label>{t('inspirationPhotos')}</Label>
 														{/* Existing photos */}
-														{order.customPhotoUrls &&
-															order.customPhotoUrls.length > 0 && (
-																<div className="mt-2 flex flex-wrap gap-3">
-																	{order.customPhotoUrls
-																		.filter(
-																			(url) => !photosToRemove.includes(url)
-																		)
-																		.map((url) => (
-																			<div key={url} className="group relative">
-																				<img
-																					src={url}
-																					alt="Inspiration"
-																					className="h-20 w-20 cursor-pointer rounded-md object-cover ring-1 ring-border"
-																					onClick={() => setLightboxUrl(url)}
-																				/>
-																				<button
-																					type="button"
-																					onClick={() =>
-																						setPhotosToRemove((prev) => [
-																							...prev,
-																							url,
-																						])
-																					}
-																					className="absolute -right-1.5 -top-1.5 rounded-full bg-red-500 p-0.5 text-white opacity-0 transition-opacity group-hover:opacity-100"
-																				>
-																					<XCircle className="size-3" />
-																				</button>
-																			</div>
-																		))}
-																</div>
-															)}
+														{order.customPhotoUrls && order.customPhotoUrls.length > 0 && (
+															<div className="mt-2 flex flex-wrap gap-3">
+																{order.customPhotoUrls
+																	.filter((url) => !photosToRemove.includes(url))
+																	.map((url) => (
+																		<div key={url} className="group relative">
+																			<img
+																				src={url}
+																				alt="Inspiration"
+																				className="h-20 w-20 cursor-pointer rounded-md object-cover ring-1 ring-border"
+																				onClick={() => setLightboxUrl(url)}
+																			/>
+																			<button
+																				type="button"
+																				onClick={() => setPhotosToRemove((prev) => [...prev, url])}
+																				className="absolute -right-1.5 -top-1.5 rounded-full bg-red-500 p-0.5 text-white opacity-0 transition-opacity group-hover:opacity-100"
+																			>
+																				<XCircle className="size-3" />
+																			</button>
+																		</div>
+																	))}
+															</div>
+														)}
 														{photosToRemove.length > 0 && (
 															<button
 																type="button"
@@ -952,76 +880,57 @@ export default function PatissierOrderDetailPage() {
 												<div className="grid gap-4 md:grid-cols-2">
 													{order.customType && (
 														<div>
-															<p className="text-sm text-muted-foreground">
-																{t('pastryType')}
-															</p>
+															<p className="text-sm text-muted-foreground">{t('pastryType')}</p>
 															<p className="font-medium">{order.customType}</p>
 														</div>
 													)}
 													{order.customNbPersonnes && (
 														<div>
-															<p className="text-sm text-muted-foreground">
-																{t('numberOfPeople')}
-															</p>
-															<p className="font-medium">
-																{order.customNbPersonnes}
-															</p>
+															<p className="text-sm text-muted-foreground">{t('numberOfPeople')}</p>
+															<p className="font-medium">{order.customNbPersonnes}</p>
 														</div>
 													)}
 													{order.customDateSouhaitee && (
 														<div>
-															<p className="text-sm text-muted-foreground">
-																{t('requestedDate')}
-															</p>
+															<p className="text-sm text-muted-foreground">{t('requestedDate')}</p>
 															<p className="font-medium">
-																{new Date(
-																	order.customDateSouhaitee
-																).toLocaleDateString('fr-FR')}
+																{new Date(order.customDateSouhaitee).toLocaleDateString('fr-FR')}
 															</p>
 														</div>
 													)}
 													{order.customTheme && (
 														<div>
-															<p className="text-sm text-muted-foreground">
-																{t('theme')}
-															</p>
+															<p className="text-sm text-muted-foreground">{t('theme')}</p>
 															<p className="font-medium">{order.customTheme}</p>
 														</div>
 													)}
 													{order.customAllergies && (
 														<div>
-															<p className="text-sm text-muted-foreground">
-																{t('allergies')}
-															</p>
-															<p className="font-medium">
-																{order.customAllergies}
-															</p>
+															<p className="text-sm text-muted-foreground">{t('allergies')}</p>
+															<p className="font-medium">{order.customAllergies}</p>
 														</div>
 													)}
-													{order.customPhotoUrls &&
-														order.customPhotoUrls.length > 0 && (
-															<div className="md:col-span-2">
-																<p className="text-sm text-muted-foreground">
-																	{t('inspirationPhotos')}
-																</p>
-																<div className="mt-2 flex flex-wrap gap-3">
-																	{order.customPhotoUrls.map((url) => (
-																		<img
-																			key={url}
-																			src={url}
-																			alt="Inspiration"
-																			className="h-24 w-24 cursor-pointer rounded-md object-cover ring-1 ring-border transition-shadow hover:ring-2 hover:ring-primary"
-																			onClick={() => setLightboxUrl(url)}
-																		/>
-																	))}
-																</div>
-															</div>
-														)}
-													{order.customMessage && (
+													{order.customPhotoUrls && order.customPhotoUrls.length > 0 && (
 														<div className="md:col-span-2">
 															<p className="text-sm text-muted-foreground">
-																{t('clientMessage')}
+																{t('inspirationPhotos')}
 															</p>
+															<div className="mt-2 flex flex-wrap gap-3">
+																{order.customPhotoUrls.map((url) => (
+																	<img
+																		key={url}
+																		src={url}
+																		alt="Inspiration"
+																		className="h-24 w-24 cursor-pointer rounded-md object-cover ring-1 ring-border transition-shadow hover:ring-2 hover:ring-primary"
+																		onClick={() => setLightboxUrl(url)}
+																	/>
+																))}
+															</div>
+														</div>
+													)}
+													{order.customMessage && (
+														<div className="md:col-span-2">
+															<p className="text-sm text-muted-foreground">{t('clientMessage')}</p>
 															<p className="font-medium">{order.customMessage}</p>
 														</div>
 													)}
@@ -1031,126 +940,16 @@ export default function PatissierOrderDetailPage() {
 									</Card>
 								)}
 
-								{/* Quote form for custom orders */}
+								{/* Quote section for custom orders */}
 								{order.type === 'custom' && (
-									<Card>
-										<CardHeader>
-											<CardTitle>{t('quote')}</CardTitle>
-										</CardHeader>
-										<CardContent>
-											<form onSubmit={handleSubmitQuote} className="space-y-4">
-												<div className="grid gap-4 md:grid-cols-2">
-													<div className="space-y-2">
-														<Label htmlFor="quotedPrice">
-															{t('proposedPrice')}
-														</Label>
-														<Input
-															id="quotedPrice"
-															type="number"
-															step="0.01"
-															min="0"
-															value={quotedPrice}
-															onChange={(e) => setQuotedPrice(e.target.value)}
-															placeholder="0.00"
-															required
-														/>
-													</div>
-													<div className="space-y-2">
-														<Label htmlFor="depositPercent">
-															{t('depositPercent')}
-														</Label>
-														<Select
-															value={depositPercent}
-															onValueChange={(value) => setDepositPercent(value)}
-														>
-															<SelectTrigger id="depositPercent" className="w-full">
-																<SelectValue />
-															</SelectTrigger>
-															<SelectContent>
-																<SelectItem value="30">
-																	{t('deposit30')}
-																</SelectItem>
-																<SelectItem value="50">
-																	{t('deposit50')}
-																</SelectItem>
-																<SelectItem value="70">
-																	{t('deposit70')}
-																</SelectItem>
-																<SelectItem value="100">
-																	{t('deposit100')}
-																</SelectItem>
-															</SelectContent>
-														</Select>
-														{quotedPrice && (
-															<p className="text-xs text-muted-foreground">
-																{t('depositPaymentLink')}{' '}
-																<strong>
-																	{(
-																		(Number(quotedPrice) *
-																			Number(depositPercent)) /
-																		100
-																	).toFixed(2)}{' '}
-																	&euro;
-																</strong>
-															</p>
-														)}
-													</div>
-												</div>
-												<div className="space-y-2">
-													<Label htmlFor="quoteConfirmedDate">
-														{t('confirmedDate')}
-													</Label>
-													<Input
-														id="quoteConfirmedDate"
-														type="date"
-														value={quoteConfirmedDate}
-														onChange={(e) =>
-															setQuoteConfirmedDate(e.target.value)
-														}
-													/>
-													{order.customDateSouhaitee && !quoteConfirmedDate && (
-														<p className="text-xs text-muted-foreground">
-															{t('clientRequestedDate')}{' '}
-															{new Date(
-																order.customDateSouhaitee
-															).toLocaleDateString('fr-FR')}
-														</p>
-													)}
-												</div>
-												<div className="space-y-2">
-													<Label htmlFor="quoteResponse">
-														{t('responseMessage')}
-													</Label>
-													<Textarea
-														id="quoteResponse"
-														value={quoteResponseMessage}
-														onChange={(e) =>
-															setQuoteResponseMessage(e.target.value)
-														}
-														rows={3}
-														placeholder={t('responsePlaceholder')}
-													/>
-												</div>
-												<Button
-													type="submit"
-													disabled={isSubmittingQuote || !quotedPrice}
-												>
-													{isSubmittingQuote
-														? t('sendingQuote')
-														: t('sendQuote')}
-												</Button>
-											</form>
-										</CardContent>
-									</Card>
+									<QuoteSection orderId={orderId} onQuoteChange={() => fetchOrder()} />
 								)}
 
 								{/* Total display */}
 								{order.total != null && (
 									<div className="flex items-center justify-between rounded-lg border bg-card p-4">
 										<span className="text-sm font-semibold">{t('totalLabel')}</span>
-										<span className="text-lg font-bold">
-											{formatCurrency(order.total)}
-										</span>
+										<span className="text-lg font-bold">{formatCurrency(order.total)}</span>
 									</div>
 								)}
 
@@ -1216,9 +1015,7 @@ export default function PatissierOrderDetailPage() {
 														onValueChange={(value) =>
 															setEditForm({
 																...editForm,
-																deliveryMethod: value as
-																	| 'pickup'
-																	| 'delivery',
+																deliveryMethod: value as 'pickup' | 'delivery',
 															})
 														}
 													>
@@ -1226,12 +1023,8 @@ export default function PatissierOrderDetailPage() {
 															<SelectValue />
 														</SelectTrigger>
 														<SelectContent>
-															<SelectItem value="pickup">
-																{t('pickup')}
-															</SelectItem>
-															<SelectItem value="delivery">
-																{t('deliveryLabel')}
-															</SelectItem>
+															<SelectItem value="pickup">{t('pickup')}</SelectItem>
+															<SelectItem value="delivery">{t('deliveryLabel')}</SelectItem>
 														</SelectContent>
 													</Select>
 												</div>
@@ -1267,13 +1060,9 @@ export default function PatissierOrderDetailPage() {
 											<>
 												{order.requestedDate && (
 													<div>
-														<p className="text-sm text-muted-foreground">
-															{t('requestedDate')}
-														</p>
+														<p className="text-sm text-muted-foreground">{t('requestedDate')}</p>
 														<p className="font-medium">
-															{new Date(
-																order.requestedDate
-															).toLocaleDateString('fr-FR')}
+															{new Date(order.requestedDate).toLocaleDateString('fr-FR')}
 														</p>
 													</div>
 												)}
@@ -1297,25 +1086,17 @@ export default function PatissierOrderDetailPage() {
 												</div>
 												{order.deliveryAddress && (
 													<div>
-														<p className="text-sm text-muted-foreground">
-															{t('deliveryAddress')}
-														</p>
+														<p className="text-sm text-muted-foreground">{t('deliveryAddress')}</p>
 														<div className="mt-1 flex items-start gap-2">
 															<MapPin className="mt-0.5 size-4 text-muted-foreground" />
-															<p className="text-sm">
-																{order.deliveryAddress}
-															</p>
+															<p className="text-sm">{order.deliveryAddress}</p>
 														</div>
 													</div>
 												)}
 												{order.deliveryNotes && (
 													<div>
-														<p className="text-sm text-muted-foreground">
-															{t('deliveryNotes')}
-														</p>
-														<p className="mt-1 text-sm">
-															{order.deliveryNotes}
-														</p>
+														<p className="text-sm text-muted-foreground">{t('deliveryNotes')}</p>
+														<p className="mt-1 text-sm">{order.deliveryNotes}</p>
 													</div>
 												)}
 											</>
@@ -1333,58 +1114,40 @@ export default function PatissierOrderDetailPage() {
 									</CardHeader>
 									<CardContent className="space-y-3">
 										<div>
-											<p className="text-sm text-muted-foreground">
-												{t('createdAt')}
-											</p>
+											<p className="text-sm text-muted-foreground">{t('createdAt')}</p>
 											<p className="text-sm font-medium">
 												{new Date(order.createdAt).toLocaleString('fr-FR')}
 											</p>
 										</div>
 										{order.confirmedDate && (
 											<div>
-												<p className="text-sm text-muted-foreground">
-													{t('confirmedDate')}
-												</p>
+												<p className="text-sm text-muted-foreground">{t('confirmedDate')}</p>
 												<p className="text-sm font-medium">
-													{new Date(
-														order.confirmedDate
-													).toLocaleDateString('fr-FR')}
+													{new Date(order.confirmedDate).toLocaleDateString('fr-FR')}
 												</p>
 											</div>
 										)}
 										{order.confirmedAt && (
 											<div>
-												<p className="text-sm text-muted-foreground">
-													{t('confirmedAt')}
-												</p>
+												<p className="text-sm text-muted-foreground">{t('confirmedAt')}</p>
 												<p className="text-sm font-medium">
-													{new Date(order.confirmedAt).toLocaleString(
-														'fr-FR'
-													)}
+													{new Date(order.confirmedAt).toLocaleString('fr-FR')}
 												</p>
 											</div>
 										)}
 										{order.completedAt && (
 											<div>
-												<p className="text-sm text-muted-foreground">
-													{t('completedAt')}
-												</p>
+												<p className="text-sm text-muted-foreground">{t('completedAt')}</p>
 												<p className="text-sm font-medium">
-													{new Date(order.completedAt).toLocaleString(
-														'fr-FR'
-													)}
+													{new Date(order.completedAt).toLocaleString('fr-FR')}
 												</p>
 											</div>
 										)}
 										{order.cancelledAt && (
 											<div>
-												<p className="text-sm text-muted-foreground">
-													{t('cancelledAt')}
-												</p>
+												<p className="text-sm text-muted-foreground">{t('cancelledAt')}</p>
 												<p className="text-sm font-medium">
-													{new Date(order.cancelledAt).toLocaleString(
-														'fr-FR'
-													)}
+													{new Date(order.cancelledAt).toLocaleString('fr-FR')}
 												</p>
 											</div>
 										)}
@@ -1401,7 +1164,18 @@ export default function PatissierOrderDetailPage() {
 								<OrderCosting
 									orderId={orderId}
 									currentTotal={order.total ?? 0}
-									onApplyPrice={(price) => setQuotedPrice(String(price))}
+									onApplyPrice={async (price) => {
+										try {
+											await api.post(`/patissier/orders/${orderId}/quotes/draft`, {
+												price,
+												depositPercent: 30,
+											})
+											toast.success(t('quotePriceSaved'))
+											fetchOrder()
+										} catch {
+											toast.error(t('quotePriceSaveError'))
+										}
+									}}
 								/>
 							</div>
 							<div className="space-y-6">
@@ -1425,9 +1199,7 @@ export default function PatissierOrderDetailPage() {
 											</Avatar>
 											<div>
 												<p className="font-medium">{order.clientName}</p>
-												<p className="text-sm text-muted-foreground">
-													{order.clientEmail}
-												</p>
+												<p className="text-sm text-muted-foreground">{order.clientEmail}</p>
 											</div>
 										</div>
 									</CardContent>
@@ -1443,24 +1215,11 @@ export default function PatissierOrderDetailPage() {
 									</CardHeader>
 									<CardContent className="space-y-3">
 										<div className="flex justify-between">
-											<span className="text-muted-foreground">
-												{t('currentPrice')}
-											</span>
+											<span className="text-muted-foreground">{t('currentPrice')}</span>
 											<span className="text-2xl font-bold">
-												{formatCurrency(
-													quotedPrice
-														? Number(quotedPrice)
-														: (order.total ?? 0)
-												)}
+												{formatCurrency(order.quotedPrice ?? order.total ?? 0)}
 											</span>
 										</div>
-										{quotedPrice &&
-											Number(quotedPrice) !== (order.total ?? 0) && (
-												<p className="text-xs text-muted-foreground">
-													{t('originalPrice')}:{' '}
-													{formatCurrency(order.total ?? 0)}
-												</p>
-											)}
 									</CardContent>
 								</Card>
 							</div>
@@ -1518,9 +1277,7 @@ export default function PatissierOrderDetailPage() {
 																<p className="text-sm">{msg.message}</p>
 															</div>
 															<p className="mt-1 text-xs text-muted-foreground">
-																{new Date(msg.createdAt).toLocaleString(
-																	'fr-FR'
-																)}
+																{new Date(msg.createdAt).toLocaleString('fr-FR')}
 															</p>
 														</div>
 													</div>
@@ -1529,18 +1286,13 @@ export default function PatissierOrderDetailPage() {
 										) : (
 											<div className="py-12 text-center">
 												<MessageSquare className="mx-auto size-12 text-muted-foreground" />
-												<p className="mt-4 text-muted-foreground">
-													{t('noMessages')}
-												</p>
+												<p className="mt-4 text-muted-foreground">{t('noMessages')}</p>
 											</div>
 										)}
 
 										<Separator />
 
-										<form
-											onSubmit={handleSendMessage}
-											className="flex gap-2"
-										>
+										<form onSubmit={handleSendMessage} className="flex gap-2">
 											<Input
 												value={newMessage}
 												onChange={(e) => setNewMessage(e.target.value)}
