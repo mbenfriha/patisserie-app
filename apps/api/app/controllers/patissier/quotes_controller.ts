@@ -3,7 +3,7 @@ import { DateTime } from 'luxon'
 import Order from '#models/order'
 import OrderQuote from '#models/order_quote'
 import PatissierProfile from '#models/patissier_profile'
-import EmailService from '#services/email_service'
+import EmailService, { escapeHtml } from '#services/email_service'
 import StripeService from '#services/stripe_service'
 import env from '#start/env'
 import {
@@ -192,8 +192,8 @@ export default class QuotesController {
 			const formattedDeposit = depositAmount.toFixed(2)
 
 			let body = quote.message
-				? `${profile.businessName} vous a envoyé un devis pour votre commande sur-mesure #${order.orderNumber}.<br><br><strong>Message du pâtissier :</strong><br>${quote.message}<br><br>`
-				: `${profile.businessName} vous a envoyé un devis de <strong>${formattedPrice} €</strong> pour votre commande sur-mesure #${order.orderNumber}.<br><br>`
+				? `${escapeHtml(profile.businessName)} vous a envoyé un devis pour votre commande sur-mesure #${escapeHtml(order.orderNumber)}.<br><br><strong>Message du pâtissier :</strong><br>${escapeHtml(quote.message)}<br><br>`
+				: `${escapeHtml(profile.businessName)} vous a envoyé un devis de <strong>${formattedPrice} €</strong> pour votre commande sur-mesure #${escapeHtml(order.orderNumber)}.<br><br>`
 
 			if (effectiveDepositPercent < 100) {
 				body += `<strong>Acompte demandé :</strong> ${formattedDeposit} € (${effectiveDepositPercent}% du total de ${formattedPrice} €)`

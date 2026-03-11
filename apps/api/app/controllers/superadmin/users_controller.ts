@@ -58,6 +58,10 @@ export default class UsersController {
 			return response.notFound({ success: false, message: 'User not found' })
 		}
 
+		if (user.role === 'superadmin') {
+			return response.forbidden({ success: false, message: 'Cannot suspend a superadmin' })
+		}
+
 		if (user.suspendedAt) {
 			return response.badRequest({ success: false, message: 'User is already suspended' })
 		}

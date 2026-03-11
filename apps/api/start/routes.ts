@@ -252,16 +252,21 @@ router
 // Client routes
 router
 	.group(() => {
-		router.post('/orders', '#controllers/client/orders_controller.store')
+		router
+			.post('/orders', '#controllers/client/orders_controller.store')
+			.use(throttle('publicSubmit'))
 		router.get('/orders/:orderNumber', '#controllers/client/orders_controller.show')
 		router.get('/orders/:orderNumber/messages', '#controllers/client/orders_controller.messages')
-		router.post(
-			'/orders/:orderNumber/messages',
-			'#controllers/client/orders_controller.sendMessage'
-		)
-		router.post('/workshops/:id/book', '#controllers/client/bookings_controller.store')
+		router
+			.post('/orders/:orderNumber/messages', '#controllers/client/orders_controller.sendMessage')
+			.use(throttle('publicSubmit'))
+		router
+			.post('/workshops/:id/book', '#controllers/client/bookings_controller.store')
+			.use(throttle('publicSubmit'))
 		router.get('/bookings/:id', '#controllers/client/bookings_controller.show')
-		router.put('/bookings/:id/cancel', '#controllers/client/bookings_controller.cancel')
+		router
+			.put('/bookings/:id/cancel', '#controllers/client/bookings_controller.cancel')
+			.use(throttle('publicSubmit'))
 	})
 	.prefix('/client')
 	.use([throttle('api')])

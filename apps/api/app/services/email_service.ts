@@ -9,6 +9,15 @@ import PaymentConfirmation from '#mails/payment_confirmation'
 import VerifyEmail from '#mails/verify_email'
 import env from '#start/env'
 
+export function escapeHtml(str: string): string {
+	return str
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+		.replace(/"/g, '&quot;')
+		.replace(/'/g, '&#39;')
+}
+
 interface VerificationEmailData {
 	email: string
 	fullName: string | null
@@ -194,11 +203,16 @@ export default class EmailService {
 	 * Send a generic status update email (kept as inline HTML for flexibility).
 	 */
 	async sendStatusUpdate(data: StatusUpdateData): Promise<void> {
+		const safeRecipientName = escapeHtml(data.recipientName)
+		const safeTitle = escapeHtml(data.title)
+		// body may contain pre-built HTML (strong, br) — caller must escape user data
+		const safeBody = data.body
+
 		const actionButton =
 			data.actionUrl && data.actionLabel
 				? `<p style="text-align: center; margin: 30px 0;">
-					<a href="${data.actionUrl}" style="background-color: #c2956b; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
-						${data.actionLabel}
+					<a href="${encodeURI(data.actionUrl)}" style="background-color: #c2956b; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+						${escapeHtml(data.actionLabel)}
 					</a>
 				</p>`
 				: ''
@@ -217,9 +231,9 @@ export default class EmailService {
 								<span style="color: #c2956b; font-size: 24px; font-weight: bold; font-family: Georgia, serif;">Patissio</span>
 							</div>
 							<div style="background-color: #ffffff; padding: 30px;">
-								<h1 style="color: #1f2937; font-size: 24px;">Bonjour ${data.recipientName},</h1>
-								<h2 style="color: #1f2937;">${data.title}</h2>
-								<p style="color: #4b5563; font-size: 16px; line-height: 1.6;">${data.body}</p>
+								<h1 style="color: #1f2937; font-size: 24px;">Bonjour ${safeRecipientName},</h1>
+								<h2 style="color: #1f2937;">${safeTitle}</h2>
+								<p style="color: #4b5563; font-size: 16px; line-height: 1.6;">${safeBody}</p>
 								${actionButton}
 							</div>
 							<div style="background-color: #faf8f5; padding: 20px; text-align: center; border-radius: 0 0 8px 8px;">

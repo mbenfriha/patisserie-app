@@ -109,6 +109,9 @@ export default class OrdersController {
 			size: '5mb',
 			extnames: ['jpg', 'jpeg', 'png', 'webp', 'avif'],
 		})
+		if (photoFiles.length > 10) {
+			return response.badRequest({ success: false, message: 'Maximum 10 photos allowed' })
+		}
 		if (photoFiles.length > 0) {
 			const storageService = new StorageService()
 			for (const photoFile of photoFiles) {

@@ -15,17 +15,21 @@ const corsConfig = defineConfig({
 		if (allowed.includes(origin)) return true
 		// Allow *.patissio.com subdomains (patissier sites)
 		if (origin.endsWith('.patissio.com')) return true
+		// Staging domain
+		const appDomain = env.get('APP_DOMAIN' as 'FRONTEND_URL', '')
+		if (appDomain && origin.endsWith(appDomain)) return true
 		// Allow localhost in dev
 		if (origin.startsWith('http://localhost:')) return true
-		// Allow custom domains (premium patissiers) — safe because auth uses
-		// Bearer tokens in Authorization header, not cookies, so CSRF is not a risk
+		// Allow custom domains (premium patissiers) only if HTTPS
+		// Verified at runtime by checking DB — but for CORS preflight we accept
+		// any HTTPS origin since auth uses Bearer tokens (not cookies), preventing CSRF
 		if (origin.startsWith('https://')) return true
 		return false
 	},
 	methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE'],
 	headers: true,
 	exposeHeaders: [],
-	credentials: true,
+	credentials: false,
 	maxAge: 90,
 })
 

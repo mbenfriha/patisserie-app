@@ -5,7 +5,7 @@ import OrderItem from '#models/order_item'
 import OrderMessage from '#models/order_message'
 import PatissierProfile from '#models/patissier_profile'
 import Product from '#models/product'
-import EmailService from '#services/email_service'
+import EmailService, { escapeHtml } from '#services/email_service'
 import StorageService from '#services/storage_service'
 import StripeService from '#services/stripe_service'
 import env from '#start/env'
@@ -81,6 +81,9 @@ export default class OrdersController {
 			size: '5mb',
 			extnames: ['jpg', 'jpeg', 'png', 'webp', 'avif'],
 		})
+		if (photoFiles.length > 10) {
+			return response.badRequest({ success: false, message: 'Maximum 10 photos allowed' })
+		}
 		if (photoFiles.length > 0) {
 			const storageService = new StorageService()
 			for (const photoFile of photoFiles) {
@@ -92,7 +95,7 @@ export default class OrdersController {
 		// Generate order number
 		const now = DateTime.now()
 		const datePart = now.toFormat('yyyyMMdd')
-		const randomPart = String(Math.floor(Math.random() * 1000)).padStart(3, '0')
+		const randomPart = String(Math.floor(Math.random() * 1000000)).padStart(6, '0')
 		const orderNumber = `PAT-${datePart}-${randomPart}`
 
 		let subtotal = 0
@@ -318,8 +321,8 @@ export default class OrdersController {
 					`${frontendUrl}/${profile.slug}/commandes?payment=success&order=${order.orderNumber}`,
 					`${frontendUrl}/${profile.slug}/commandes?payment=cancelled&order=${order.orderNumber}`
 				)
-			} catch (err: any) {
-				stripeError = err?.message || String(err)
+			} catch (err: unknown) {
+				stripeError = err instanceof Error ? err.message : String(err)
 				console.error('Failed to create Stripe checkout for order quote:', err)
 			}
 		}
@@ -331,8 +334,8 @@ export default class OrdersController {
 			const formattedDeposit = depositAmount.toFixed(2)
 
 			let body = responseMessage
-				? `${profile.businessName} vous a envoyé un devis pour votre commande sur-mesure #${order.orderNumber}.<br><br><strong>Message du pâtissier :</strong><br>${responseMessage}<br><br>`
-				: `${profile.businessName} vous a envoyé un devis de <strong>${formattedPrice} €</strong> pour votre commande sur-mesure #${order.orderNumber}.<br><br>`
+				? `${escapeHtml(profile.businessName)} vous a envoyé un devis pour votre commande sur-mesure #${escapeHtml(order.orderNumber)}.<br><br><strong>Message du pâtissier :</strong><br>${escapeHtml(responseMessage)}<br><br>`
+				: `${escapeHtml(profile.businessName)} vous a envoyé un devis de <strong>${formattedPrice} €</strong> pour votre commande sur-mesure #${escapeHtml(order.orderNumber)}.<br><br>`
 
 			if (effectiveDepositPercent < 100) {
 				body += `<strong>Acompte demandé :</strong> ${formattedDeposit} € (${effectiveDepositPercent}% du total de ${formattedPrice} €)`

@@ -171,8 +171,17 @@ export default class BookingsController {
 		})
 	}
 
-	async show({ params, response }: HttpContext) {
-		const booking = await WorkshopBooking.query().where('id', params.id).preload('workshop').first()
+	async show({ params, request, response }: HttpContext) {
+		const email = request.input('email')
+		if (!email) {
+			return response.badRequest({ success: false, message: 'Email is required' })
+		}
+
+		const booking = await WorkshopBooking.query()
+			.where('id', params.id)
+			.where('clientEmail', email)
+			.preload('workshop')
+			.first()
 
 		if (!booking) {
 			return response.notFound({ success: false, message: 'Booking not found' })

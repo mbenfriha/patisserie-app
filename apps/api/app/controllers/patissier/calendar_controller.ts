@@ -15,6 +15,12 @@ export default class CalendarController {
 			return response.badRequest({ message: 'start and end are required' })
 		}
 
+		// Validate date format (YYYY-MM-DD)
+		const dateRegex = /^\d{4}-\d{2}-\d{2}$/
+		if (!dateRegex.test(start) || !dateRegex.test(end)) {
+			return response.badRequest({ message: 'start and end must be YYYY-MM-DD format' })
+		}
+
 		// Orders (non-cancelled, exclude pending custom/devis)
 		const orders = await Order.query()
 			.where('patissierId', profile.id)

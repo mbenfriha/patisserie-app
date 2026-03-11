@@ -209,9 +209,15 @@ export default class AuthController {
 		user.password = newPassword
 		await user.save()
 
+		// Revoke all existing tokens and issue a new one
+		const allTokens = await User.accessTokens.all(user)
+		await Promise.all(allTokens.map((t) => User.accessTokens.delete(user, t.identifier)))
+		const newToken = await User.accessTokens.create(user)
+
 		return response.ok({
 			success: true,
 			message: 'Mot de passe modifié avec succès',
+			token: newToken.value!.release(),
 		})
 	}
 }
