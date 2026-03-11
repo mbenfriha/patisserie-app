@@ -21,8 +21,7 @@ function withSecurityHeaders(response: NextResponse): NextResponse {
 }
 
 // Main domains that should NOT be treated as subdomains
-// APP_DOMAIN allows overriding for staging/preview deployments (e.g. koyeb.app)
-const MAIN_DOMAIN = process.env.APP_DOMAIN || 'patissio.com'
+const MAIN_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN || 'patissio.com'
 
 const LOCALES = ['fr', 'en']
 const DEFAULT_LOCALE = 'fr'

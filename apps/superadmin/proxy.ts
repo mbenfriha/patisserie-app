@@ -18,7 +18,7 @@ function applySecurityHeaders(response: NextResponse) {
 	return response
 }
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
 	const { pathname } = request.nextUrl
 	const token = request.cookies.get('superadmin_token')?.value
 
