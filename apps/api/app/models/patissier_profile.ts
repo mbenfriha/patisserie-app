@@ -9,7 +9,17 @@ import User from '#models/user'
 import Workshop from '#models/workshop'
 
 export type SocialLinks = Partial<
-	Record<'instagram' | 'facebook' | 'tiktok' | 'snapchat' | 'linkedin' | 'youtube' | 'customUrl' | 'customLabel', string>
+	Record<
+		| 'instagram'
+		| 'facebook'
+		| 'tiktok'
+		| 'snapchat'
+		| 'linkedin'
+		| 'youtube'
+		| 'customUrl'
+		| 'customLabel',
+		string
+	>
 >
 
 export type OperatingHours = Partial<

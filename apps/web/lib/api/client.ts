@@ -16,10 +16,10 @@ class ApiClient {
 		this.supportSlug = slug
 	}
 
-	private async parseJson(response: Response): Promise<any> {
+	private async parseJson(response: Response): Promise<unknown> {
 		const text = await response.text()
 		if (!text) return {}
-		return JSON.parse(text)
+		return JSON.parse(text) as unknown
 	}
 
 	private getHeaders(): HeadersInit {
@@ -56,6 +56,7 @@ class ApiClient {
 		return url.toString()
 	}
 
+	// biome-ignore lint/suspicious/noExplicitAny: generic default for backwards-compatible callers
 	async request<T = any>(
 		path: string,
 		options: RequestOptions = {}
@@ -84,26 +85,32 @@ class ApiClient {
 		return { data, status: response.status }
 	}
 
+	// biome-ignore lint/suspicious/noExplicitAny: generic default
 	async get<T = any>(path: string, params?: Record<string, string>) {
 		return this.request<T>(path, { method: 'GET', params })
 	}
 
-	async post<T = any>(path: string, body?: any) {
+	// biome-ignore lint/suspicious/noExplicitAny: generic default
+	async post<T = any>(path: string, body?: unknown) {
 		return this.request<T>(path, { method: 'POST', body: JSON.stringify(body) })
 	}
 
-	async put<T = any>(path: string, body?: any) {
+	// biome-ignore lint/suspicious/noExplicitAny: generic default
+	async put<T = any>(path: string, body?: unknown) {
 		return this.request<T>(path, { method: 'PUT', body: JSON.stringify(body) })
 	}
 
-	async patch<T = any>(path: string, body?: any) {
+	// biome-ignore lint/suspicious/noExplicitAny: generic default
+	async patch<T = any>(path: string, body?: unknown) {
 		return this.request<T>(path, { method: 'PATCH', body: JSON.stringify(body) })
 	}
 
+	// biome-ignore lint/suspicious/noExplicitAny: generic default
 	async delete<T = any>(path: string) {
 		return this.request<T>(path, { method: 'DELETE' })
 	}
 
+	// biome-ignore lint/suspicious/noExplicitAny: generic default
 	async upload<T = any>(path: string, formData: FormData, method: 'POST' | 'PUT' = 'POST') {
 		const url = this.buildUrl(path)
 		const headers: HeadersInit = {}
@@ -150,9 +157,9 @@ class ApiClient {
 
 export class ApiError extends Error {
 	status: number
-	data: any
+	data: unknown
 
-	constructor(message: string, status: number, data: any) {
+	constructor(message: string, status: number, data: unknown) {
 		super(message)
 		this.name = 'ApiError'
 		this.status = status

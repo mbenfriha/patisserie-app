@@ -35,9 +35,7 @@ export default class PatissierMiddleware {
 				// Allow all GET requests (read-only dashboard access)
 				const isAllowed =
 					method === 'GET' ||
-					SUPPORT_ALLOWED_ROUTES.some(
-						(route) => route.method === method && route.pattern.test(url)
-					)
+					SUPPORT_ALLOWED_ROUTES.some((route) => route.method === method && route.pattern.test(url))
 
 				if (!isAllowed) {
 					return ctx.response.forbidden({

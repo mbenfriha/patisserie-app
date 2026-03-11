@@ -288,5 +288,4 @@ export default class StripeService {
 		}
 		return mapping[priceId] || null
 	}
-
 }

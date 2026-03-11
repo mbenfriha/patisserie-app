@@ -1,0 +1,135 @@
+name: CI
+
+on:
+  push:
+    branches: [main, staging]
+  pull_request:
+    branches: [main, staging]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint & Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.14.4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check
+
+  check-types:
+    name: Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.14.4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check-types
+
+  test:
+    name: API Tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: patisserie_test
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=3s
+          --health-timeout=3s
+          --health-retries=10
+          --tmpfs=/var/lib/postgresql/data
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6380:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=3s
+          --health-timeout=3s
+          --health-retries=10
+          --tmpfs=/data
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.14.4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Run API tests
+        working-directory: apps/api
+        env:
+          TZ: UTC
+          PORT: 3334
+          HOST: 0.0.0.0
+          LOG_LEVEL: error
+          APP_KEY: ci-test-app-key-min-16-chars-long
+          APP_NAME: patissio-test
+          NODE_ENV: test
+          API_PUBLIC_URL: http://localhost:3334
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5433/patisserie_test
+          REDIS_HOST: 127.0.0.1
+          REDIS_PORT: 6380
+          REDIS_PASSWORD: ""
+          SESSION_DRIVER: cookie
+          MAIL_FROM: test@patissio.test
+          DRIVE_DISK: r2
+          R2_KEY: test
+          R2_SECRET: test
+          R2_REGION: auto
+          R2_BUCKET: test
+          R2_ENDPOINT: http://localhost:9002
+          FRONTEND_URL: http://localhost:3000
+        run: node ace test --force-exit
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: [lint, check-types]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.14.4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build API
+        run: pnpm -F api build
+      - name: Build Web
+        env:
+          NEXT_PUBLIC_API_URL: https://placeholder.test
+          NEXT_PUBLIC_APP_URL: https://placeholder.test
+          NEXT_PUBLIC_STORAGE_URL: https://placeholder.test
+        run: pnpm -F web build
+      - name: Build Superadmin
+        env:
+          NEXT_PUBLIC_API_URL: https://placeholder.test
+          NEXT_PUBLIC_APP_URL: https://placeholder.test
+          NEXT_PUBLIC_FRONTEND_URL: https://placeholder.test
+        run: pnpm -F @patissio/superadmin build

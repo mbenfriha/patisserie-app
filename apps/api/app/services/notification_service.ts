@@ -1,5 +1,5 @@
-import Notification from '#models/notification'
 import transmit from '@adonisjs/transmit/services/main'
+import Notification from '#models/notification'
 
 export default class NotificationService {
 	/**
@@ -50,10 +50,7 @@ export default class NotificationService {
 	 * @param userId - The owner user ID (for authorization)
 	 */
 	async markAsRead(id: string, userId: string): Promise<Notification | null> {
-		const notification = await Notification.query()
-			.where('id', id)
-			.where('userId', userId)
-			.first()
+		const notification = await Notification.query().where('id', id).where('userId', userId).first()
 
 		if (!notification) {
 			return null

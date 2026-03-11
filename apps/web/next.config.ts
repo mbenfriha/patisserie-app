@@ -1,10 +1,11 @@
 import type { NextConfig } from 'next'
+import { withSentryConfig } from '@sentry/nextjs'
 import createNextIntlPlugin from 'next-intl/plugin'
 
 const withNextIntl = createNextIntlPlugin('./i18n/request.ts')
 
 const nextConfig: NextConfig = {
-	output: 'standalone',
+	output: process.env.VERCEL ? undefined : 'standalone',
 	reactStrictMode: true,
 	images: {
 		dangerouslyAllowSVG: true,
@@ -35,4 +36,13 @@ const nextConfig: NextConfig = {
 	},
 }
 
-export default withNextIntl(nextConfig)
+const config = withNextIntl(nextConfig)
+
+export default process.env.NEXT_PUBLIC_SENTRY_DSN
+	? withSentryConfig(config, {
+			silent: true,
+			sourcemaps: {
+				deleteSourcemapsAfterUpload: true,
+			},
+		})
+	: config

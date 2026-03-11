@@ -55,7 +55,10 @@ export default class VercelService {
 			if (!res.ok) {
 				const data: any = await res.json()
 				// Domain already exists on this project — not an error
-				if (data?.error?.code === 'domain_already_in_use' || data?.error?.code === 'domain_already_exists') {
+				if (
+					data?.error?.code === 'domain_already_in_use' ||
+					data?.error?.code === 'domain_already_exists'
+				) {
 					logger.info({ domain }, 'Domain already exists on Vercel project')
 					return { success: true }
 				}

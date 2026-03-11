@@ -1,6 +1,6 @@
-import drive from '@adonisjs/drive/services/main'
+import type { MultipartFile } from '@adonisjs/core/bodyparser'
 import { cuid } from '@adonisjs/core/helpers'
-import { MultipartFile } from '@adonisjs/core/bodyparser'
+import drive from '@adonisjs/drive/services/main'
 import env from '#start/env'
 
 export default class StorageService {

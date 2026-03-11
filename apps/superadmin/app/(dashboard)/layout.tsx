@@ -4,6 +4,7 @@ import {
 	BarChart3,
 	CalendarDays,
 	CreditCard,
+	FileText,
 	Home,
 	Loader2,
 	LogOut,
@@ -24,6 +25,7 @@ const navItems = [
 	{ href: '/workshops', label: 'Ateliers', icon: CalendarDays },
 	{ href: '/subscriptions', label: 'Abonnements', icon: CreditCard },
 	{ href: '/stats', label: 'Statistiques', icon: BarChart3 },
+	{ href: '/audit-logs', label: 'Audit Logs', icon: FileText },
 ]
 
 interface User {

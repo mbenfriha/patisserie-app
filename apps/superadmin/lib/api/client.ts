@@ -31,17 +31,18 @@ class ApiClient {
 		return url.toString()
 	}
 
-	private async parseJson(response: Response): Promise<any> {
+	private async parseJson(response: Response): Promise<unknown> {
 		const text = await response.text()
 		if (!text) return {}
-		return JSON.parse(text)
+		return JSON.parse(text) as unknown
 	}
 
+	// biome-ignore lint/suspicious/noExplicitAny: generic default for backwards-compatible callers
 	async request<T = any>(
 		path: string,
 		options: RequestInit & { params?: Record<string, string> } = {}
 	): Promise<T> {
-		const { params, ...fetchOptions } = options as any
+		const { params, ...fetchOptions } = options as RequestInit & { params?: Record<string, string> }
 		const url = this.buildUrl(path, params)
 
 		const response = await fetch(url, {
@@ -65,44 +66,52 @@ class ApiClient {
 						...fetchOptions.headers,
 					},
 				})
-				const retryData = await this.parseJson(retryResponse)
+				const retryData = (await this.parseJson(retryResponse)) as Record<string, unknown>
 				if (!retryResponse.ok) {
-					let errorMessage = retryData.message || 'An error occurred'
-					if (retryData.errors && Array.isArray(retryData.errors) && retryData.errors.length > 0) {
-						errorMessage = retryData.errors[0].message || errorMessage
+					let errorMessage = (retryData.message as string) || 'An error occurred'
+					if (Array.isArray(retryData.errors) && retryData.errors.length > 0) {
+						const firstError = retryData.errors[0] as Record<string, unknown>
+						errorMessage = (firstError.message as string) || errorMessage
 					}
 					throw new ApiError(errorMessage, retryResponse.status, retryData)
 				}
-				return retryData
+				return retryData as T
 			}
 			throw new ApiError('Redirect sans URL de destination', response.status, null)
 		}
 
-		const data = await this.parseJson(response)
+		const data = (await this.parseJson(response)) as Record<string, unknown>
 
 		if (!response.ok) {
-			let errorMessage = data.message || 'An error occurred'
-			if (data.errors && Array.isArray(data.errors) && data.errors.length > 0) {
-				errorMessage = data.errors[0].message || errorMessage
+			let errorMessage = (data.message as string) || 'An error occurred'
+			if (Array.isArray(data.errors) && data.errors.length > 0) {
+				const firstError = data.errors[0] as Record<string, unknown>
+				errorMessage = (firstError.message as string) || errorMessage
 			}
 			throw new ApiError(errorMessage, response.status, data)
 		}
 
-		return data
+		return data as T
 	}
 
+	// biome-ignore lint/suspicious/noExplicitAny: generic default
 	async get<T = any>(path: string, params?: Record<string, string>) {
-		return this.request<T>(path, { method: 'GET', params } as any)
+		return this.request<T>(path, { method: 'GET', params } as RequestInit & {
+			params?: Record<string, string>
+		})
 	}
 
-	async post<T = any>(path: string, body?: any) {
+	// biome-ignore lint/suspicious/noExplicitAny: generic default
+	async post<T = any>(path: string, body?: unknown) {
 		return this.request<T>(path, { method: 'POST', body: JSON.stringify(body) })
 	}
 
-	async put<T = any>(path: string, body?: any) {
+	// biome-ignore lint/suspicious/noExplicitAny: generic default
+	async put<T = any>(path: string, body?: unknown) {
 		return this.request<T>(path, { method: 'PUT', body: JSON.stringify(body) })
 	}
 
+	// biome-ignore lint/suspicious/noExplicitAny: generic default
 	async delete<T = any>(path: string) {
 		return this.request<T>(path, { method: 'DELETE' })
 	}
@@ -110,9 +119,9 @@ class ApiClient {
 
 export class ApiError extends Error {
 	status: number
-	data: any
+	data: unknown
 
-	constructor(message: string, status: number, data: any) {
+	constructor(message: string, status: number, data: unknown) {
 		super(message)
 		this.name = 'ApiError'
 		this.status = status

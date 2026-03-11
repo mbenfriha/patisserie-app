@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Cormorant_Garamond, Josefin_Sans } from 'next/font/google'
 import type React from 'react'
+import { PostHogProvider } from './posthog-provider'
 import './globals.css'
 
 const josefin = Josefin_Sans({
@@ -75,10 +76,8 @@ export default function RootLayout({
 }>) {
 	return (
 		<html lang="fr" suppressHydrationWarning>
-			<body
-				className={`${josefin.variable} ${cormorant.variable} font-sans antialiased bg-background text-foreground`}
-			>
-				{children}
+			<body className={`${josefin.variable} ${cormorant.variable} font-sans antialiased bg-background text-foreground`}>
+				<PostHogProvider>{children}</PostHogProvider>
 			</body>
 		</html>
 	)

@@ -1,11 +1,28 @@
-import { type NextRequest, NextResponse } from 'next/server'
 import createMiddleware from 'next-intl/middleware'
+import { type NextRequest, NextResponse } from 'next/server'
 import { routing } from './i18n/routing'
 
 const intlMiddleware = createMiddleware(routing)
 
+const securityHeaders: Record<string, string> = {
+	'X-Frame-Options': 'DENY',
+	'X-Content-Type-Options': 'nosniff',
+	'Referrer-Policy': 'strict-origin-when-cross-origin',
+	'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+	'X-XSS-Protection': '1; mode=block',
+	'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+}
+
+function withSecurityHeaders(response: NextResponse): NextResponse {
+	for (const [key, value] of Object.entries(securityHeaders)) {
+		response.headers.set(key, value)
+	}
+	return response
+}
+
 // Main domains that should NOT be treated as subdomains
-const MAIN_DOMAIN = 'patissio.com'
+// APP_DOMAIN allows overriding for staging/preview deployments (e.g. koyeb.app)
+const MAIN_DOMAIN = process.env.APP_DOMAIN || 'patissio.com'
 
 const LOCALES = ['fr', 'en']
 const DEFAULT_LOCALE = 'fr'
@@ -68,6 +85,11 @@ function stripLocale(pathname: string): string {
 }
 
 export function proxy(request: NextRequest) {
+	const response = handleProxy(request)
+	return withSecurityHeaders(response)
+}
+
+function handleProxy(request: NextRequest): NextResponse {
 	const hostname = request.headers.get('host') || ''
 	const hostWithoutPort = hostname.split(':')[0]
 	const isLocalhost =
@@ -161,7 +183,7 @@ export function proxy(request: NextRequest) {
 	//    e.g., latelier-de-zina.patissio.com
 	// ──────────────────────────────────────────────────
 	const hostParts = hostWithoutPort.split('.')
-	if (!isLocalhost && hostParts.length > 2 && hostParts[0] !== 'www') {
+	if (!isLocalhost && hostParts.length > 2 && hostParts[0] !== 'www' && hostWithoutPort !== MAIN_DOMAIN) {
 		const slug = hostParts[0]
 		const locale = detectLocale(pathname)
 		const cleanPath = stripLocale(pathname)

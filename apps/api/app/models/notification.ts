@@ -20,8 +20,7 @@ export default class Notification extends BaseModel {
 	declare message: string | null
 
 	@column({
-		prepare: (value: Record<string, unknown> | null) =>
-			value ? JSON.stringify(value) : null,
+		prepare: (value: Record<string, unknown> | null) => (value ? JSON.stringify(value) : null),
 		consume: (value: string | Record<string, unknown> | null) => {
 			if (!value) return null
 			if (typeof value === 'object') return value

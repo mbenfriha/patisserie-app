@@ -12,9 +12,6 @@ node_modules
 .DS_Store
 **/.DS_Store
 
-# Only the API is dockerized, ignore other apps' source
-apps/web
-apps/superadmin
 apps/stripe-webhooks
 
 # Dev tools

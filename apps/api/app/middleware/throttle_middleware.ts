@@ -18,8 +18,7 @@ function getClientKey(ctx: HttpContext): string {
 	const forwardedFor = ctx.request.header('x-forwarded-for')
 	const realIp = ctx.request.header('x-real-ip')
 	const cfConnectingIp = ctx.request.header('cf-connecting-ip')
-	const ip =
-		cfConnectingIp || realIp || forwardedFor?.split(',')[0]?.trim() || ctx.request.ip()
+	const ip = cfConnectingIp || realIp || forwardedFor?.split(',')[0]?.trim() || ctx.request.ip()
 	return ip || 'unknown'
 }
 
@@ -27,6 +26,8 @@ export function throttle(type: LimitType = 'global') {
 	const config = LIMITS[type]
 
 	return async (ctx: HttpContext, next: NextFn) => {
+		if (process.env.NODE_ENV === 'test') return next()
+
 		const key = `${type}:${getClientKey(ctx)}`
 
 		const rateLimiter = limiter.use({

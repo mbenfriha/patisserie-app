@@ -1,5 +1,16 @@
 import vine from '@vinejs/vine'
 
+export const paginationValidator = vine.compile(
+	vine.object({
+		page: vine.number().min(1).optional(),
+		limit: vine.number().min(1).max(100).optional(),
+		status: vine
+			.enum(['pending', 'confirmed', 'in_progress', 'ready', 'delivered', 'picked_up', 'cancelled'])
+			.optional(),
+		type: vine.enum(['catalogue', 'custom']).optional(),
+	})
+)
+
 const orderItemSchema = vine.object({
 	product_id: vine.string().uuid(),
 	quantity: vine.number().min(1).max(10000),

@@ -2,6 +2,7 @@
 
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react'
 import { useRouter } from '@/i18n/navigation'
+import { identifyUser, trackEvent } from '@/lib/analytics'
 import { ApiError, api } from '@/lib/api/client'
 
 interface PatissierProfile {
@@ -111,6 +112,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		const response = await api.post('/auth/login', data)
 		localStorage.setItem('token', response.data.token)
 		setUser(response.data.user)
+		identifyUser(response.data.user.id, {
+			email: response.data.user.email,
+			role: response.data.user.role,
+		})
+		trackEvent('user_logged_in')
 
 		if (response.data.user.role === 'patissier') {
 			router.push('/dashboard')

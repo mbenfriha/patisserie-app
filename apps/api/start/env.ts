@@ -47,6 +47,7 @@ export default await Env.create(new URL('../', import.meta.url), {
 	STRIPE_PRICE_PRO_YEARLY: Env.schema.string.optional(),
 	STRIPE_PRICE_PREMIUM_MONTHLY: Env.schema.string.optional(),
 	STRIPE_PRICE_PREMIUM_YEARLY: Env.schema.string.optional(),
+
 	// Instagram OAuth
 	INSTAGRAM_APP_ID: Env.schema.string.optional(),
 	INSTAGRAM_APP_SECRET: Env.schema.string.optional(),
@@ -65,6 +66,9 @@ export default await Env.create(new URL('../', import.meta.url), {
 	TURNSTILE_SITE_KEY: Env.schema.string.optional(),
 	CLOUDFLARE_ACCOUNT_ID: Env.schema.string.optional(),
 	CLOUDFLARE_API_TOKEN: Env.schema.string.optional(),
+
+	// Sentry
+	SENTRY_DSN: Env.schema.string.optional(),
 
 	// Frontend URLs
 	FRONTEND_URL: Env.schema.string(),

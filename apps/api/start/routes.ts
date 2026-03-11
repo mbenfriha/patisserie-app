@@ -7,7 +7,29 @@ router.get('/', async ({ response }) => {
 	return response.ok({ status: 'ok', name: 'Patissio API' })
 })
 router.get('/health', async ({ response }) => {
-	return response.ok({ status: 'ok', timestamp: new Date().toISOString() })
+	let database = 'disconnected'
+	let redis = 'disconnected'
+
+	try {
+		const db = (await import('@adonisjs/lucid/services/db')).default
+		await db.rawQuery('SELECT 1')
+		database = 'connected'
+	} catch {}
+
+	try {
+		const redisService = (await import('@adonisjs/redis/services/main')).default
+		await redisService.ping()
+		redis = 'connected'
+	} catch {}
+
+	const healthy = database === 'connected'
+	return response.status(healthy ? 200 : 503).send({
+		status: healthy ? 'ok' : 'degraded',
+		database,
+		redis,
+		uptime: process.uptime(),
+		timestamp: new Date().toISOString(),
+	})
 })
 
 // Auth routes
@@ -279,6 +301,7 @@ router
 			'/patissiers/:profileId/sync-turnstile',
 			'#controllers/superadmin/users_controller.syncTurnstile'
 		)
+		router.get('/audit-logs', '#controllers/superadmin/audit_logs_controller.index')
 	})
 	.prefix('/superadmin')
 	.use([throttle('api'), middleware.auth(), middleware.superadmin()])

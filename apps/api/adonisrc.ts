@@ -21,6 +21,7 @@ export default defineConfig({
 		() => import('@adonisjs/drive/drive_provider'),
 		() => import('@adonisjs/limiter/limiter_provider'),
 		() => import('@adonisjs/bouncer/bouncer_provider'),
+		() => import('@adonisjs/i18n/i18n_provider'),
 		() => import('@adonisjs/transmit/transmit_provider'),
 	],
 	preloads: [
@@ -30,6 +31,10 @@ export default defineConfig({
 	metaFiles: [
 		{
 			pattern: 'resources/templates/**/*.{ts,tsx,js}',
+			reloadServer: false,
+		},
+		{
+			pattern: 'resources/lang/**/*.json',
 			reloadServer: false,
 		},
 	],
