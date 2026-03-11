@@ -82,6 +82,7 @@ export function OrderCosting({ orderId, currentTotal, onApplyPrice }: OrderCosti
 	>([])
 	const [costingLabor, setCostingLabor] = useState<{ employeeId: string; hours: number }[]>([])
 	const [marginCoefficient, setMarginCoefficient] = useState(2.5)
+	const [customPrice, setCustomPrice] = useState<string>('')
 	const [ingredientPopoverOpen, setIngredientPopoverOpen] = useState(false)
 	const [employeePopoverOpen, setEmployeePopoverOpen] = useState(false)
 	const [isLoading, setIsLoading] = useState(true)
@@ -148,8 +149,9 @@ export function OrderCosting({ orderId, currentTotal, onApplyPrice }: OrderCosti
 
 	const totalCost = ingredientsCost + laborCost
 	const suggestedPrice = totalCost * marginCoefficient
-	const profit = suggestedPrice - totalCost
-	const marginPercent = suggestedPrice > 0 ? (profit / suggestedPrice) * 100 : 0
+	const finalPrice = customPrice ? Number(customPrice) : suggestedPrice
+	const profit = finalPrice - totalCost
+	const marginPercent = finalPrice > 0 ? (profit / finalPrice) * 100 : 0
 
 	const getMarginIndicator = () => {
 		if (marginPercent >= 50)
@@ -523,10 +525,40 @@ export function OrderCosting({ orderId, currentTotal, onApplyPrice }: OrderCosti
 							<p className="text-2xl font-bold text-primary">{formatCurrency(suggestedPrice)}</p>
 						</div>
 
+						<div className="space-y-2">
+							<Label htmlFor="customPrice">{t('finalPrice')}</Label>
+							<div className="flex items-center gap-2">
+								<Input
+									id="customPrice"
+									type="number"
+									min="0"
+									step="0.01"
+									value={customPrice}
+									onChange={(e) => setCustomPrice(e.target.value)}
+									placeholder={suggestedPrice.toFixed(2)}
+									className="w-40"
+								/>
+								<span className="text-sm text-muted-foreground">EUR</span>
+								{customPrice && (
+									<Button
+										variant="ghost"
+										size="sm"
+										onClick={() => setCustomPrice('')}
+										className="text-xs text-muted-foreground"
+									>
+										{t('resetToSuggested')}
+									</Button>
+								)}
+							</div>
+							<p className="text-xs text-muted-foreground">
+								{t('finalPriceDescription')}
+							</p>
+						</div>
+
 						<div className="flex items-center justify-between">
 							<span className="text-muted-foreground">{t('profit')}</span>
-							<span className="font-mono font-medium text-green-600">
-								+{formatCurrency(profit)}
+							<span className={`font-mono font-medium ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+								{profit >= 0 ? '+' : ''}{formatCurrency(profit)}
 							</span>
 						</div>
 
@@ -538,7 +570,7 @@ export function OrderCosting({ orderId, currentTotal, onApplyPrice }: OrderCosti
 									{marginPercent.toFixed(1)}%
 								</Badge>
 							</div>
-							<Progress value={Math.min(marginPercent, 100)} className="h-2" />
+							<Progress value={Math.min(Math.max(marginPercent, 0), 100)} className="h-2" />
 							<p className="text-xs text-muted-foreground">{marginIndicator.label}</p>
 						</div>
 					</div>
@@ -560,8 +592,8 @@ export function OrderCosting({ orderId, currentTotal, onApplyPrice }: OrderCosti
 								{t('save')}
 							</Button>
 							<Button
-								onClick={() => onApplyPrice?.(suggestedPrice)}
-								disabled={suggestedPrice === 0}
+								onClick={() => onApplyPrice?.(finalPrice)}
+								disabled={finalPrice === 0}
 							>
 								<TrendingUp className="mr-2 size-4" />
 								{t('applyPrice')}

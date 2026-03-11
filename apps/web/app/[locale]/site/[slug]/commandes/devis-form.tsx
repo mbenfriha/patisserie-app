@@ -11,7 +11,9 @@ const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
 
 function isTurnstileDomain() {
 	if (typeof window === 'undefined') return false
-	return true // Turnstile enabled on all domains (including custom domains)
+	const hostname = window.location.hostname
+	if (hostname === 'localhost' || hostname === '127.0.0.1') return false
+	return true
 }
 
 interface DevisFormProps {
