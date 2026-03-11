@@ -15,7 +15,7 @@ import {
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { api, ApiError } from '@/lib/api/client'
+import { ApiError, api } from '@/lib/api/client'
 
 const navItems = [
 	{ href: '/', label: 'Dashboard', icon: Home },
@@ -77,14 +77,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 			<aside className="w-64 border-r border-border bg-card min-h-screen flex flex-col">
 				<div className="p-6 border-b border-border">
 					<h1 className="text-lg font-bold text-foreground">Patisserie Admin</h1>
-					{user && (
-						<p className="text-sm text-muted-foreground mt-1 truncate">{user.email}</p>
-					)}
+					{user && <p className="text-sm text-muted-foreground mt-1 truncate">{user.email}</p>}
 				</div>
 
 				<nav className="flex-1 p-4 space-y-1">
 					{navItems.map((item) => {
-						const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))
+						const isActive =
+							pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))
 						const Icon = item.icon
 						return (
 							<Link
@@ -115,9 +114,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 			</aside>
 
 			{/* Content */}
-			<div className="flex-1 p-8 overflow-auto">
-				{children}
-			</div>
+			<div className="flex-1 p-8 overflow-auto">{children}</div>
 		</main>
 	)
 }

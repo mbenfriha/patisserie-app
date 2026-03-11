@@ -45,7 +45,7 @@ export default class PatissierMiddleware {
 				}
 
 				const profile = await PatissierProfile.findBy('slug', supportSlug)
-				if (profile && profile.allowSupportAccess) {
+				if (profile?.allowSupportAccess) {
 					;(ctx as any).supportProfile = profile
 					return next()
 				}

@@ -551,15 +551,16 @@ export function OrderCosting({ orderId, currentTotal, onApplyPrice }: OrderCosti
 									</Button>
 								)}
 							</div>
-							<p className="text-xs text-muted-foreground">
-								{t('finalPriceDescription')}
-							</p>
+							<p className="text-xs text-muted-foreground">{t('finalPriceDescription')}</p>
 						</div>
 
 						<div className="flex items-center justify-between">
 							<span className="text-muted-foreground">{t('profit')}</span>
-							<span className={`font-mono font-medium ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-								{profit >= 0 ? '+' : ''}{formatCurrency(profit)}
+							<span
+								className={`font-mono font-medium ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`}
+							>
+								{profit >= 0 ? '+' : ''}
+								{formatCurrency(profit)}
 							</span>
 						</div>
 

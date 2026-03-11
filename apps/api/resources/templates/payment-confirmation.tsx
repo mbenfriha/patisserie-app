@@ -57,8 +57,8 @@ export default function PaymentConfirmationTemplate({
 			<Text style={{ ...emailStyles.heading, textAlign: 'center' }}>{t.heading}</Text>
 
 			<Text style={{ ...emailStyles.paragraph, textAlign: 'center' }}>
-				{common.greeting} {clientName}, votre paiement de <strong>{amountPaid}</strong> a bien
-				été reçu.
+				{common.greeting} {clientName}, votre paiement de <strong>{amountPaid}</strong> a bien été
+				reçu.
 			</Text>
 
 			{/* Recap heading */}
@@ -76,7 +76,11 @@ export default function PaymentConfirmationTemplate({
 
 			{/* Info table */}
 			<Section>
-				<table style={{ width: '100%', borderCollapse: 'collapse' }} cellPadding="0" cellSpacing="0">
+				<table
+					style={{ width: '100%', borderCollapse: 'collapse' }}
+					cellPadding="0"
+					cellSpacing="0"
+				>
 					<tr style={{ backgroundColor: '#faf8f5' }}>
 						<td style={emailStyles.infoRow}>{t.workshopLabel}</td>
 						<td style={emailStyles.infoValue}>{workshopTitle}</td>
@@ -114,7 +118,11 @@ export default function PaymentConfirmationTemplate({
 
 			{/* Payment summary */}
 			<Section style={emailStyles.successBox}>
-				<table style={{ width: '100%', borderCollapse: 'collapse' }} cellPadding="0" cellSpacing="0">
+				<table
+					style={{ width: '100%', borderCollapse: 'collapse' }}
+					cellPadding="0"
+					cellSpacing="0"
+				>
 					<tr>
 						<td style={{ padding: '6px 0', color: '#6b7280', fontSize: '14px' }}>
 							{t.amountPaidLabel}

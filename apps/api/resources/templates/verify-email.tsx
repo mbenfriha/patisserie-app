@@ -7,10 +7,7 @@ interface VerifyEmailProps {
 	verificationUrl: string
 }
 
-export default function VerifyEmailTemplate({
-	fullName,
-	verificationUrl,
-}: VerifyEmailProps) {
+export default function VerifyEmailTemplate({ fullName, verificationUrl }: VerifyEmailProps) {
 	const t = emailTranslations.verifyEmail
 	const common = emailTranslations.common
 	const greeting = fullName ? `${common.greeting} ${fullName}` : common.greeting

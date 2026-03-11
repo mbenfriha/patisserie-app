@@ -259,6 +259,7 @@ export function InlineEditProvider({
 		profile,
 		onProfileUpdate,
 		resetEditState,
+		showToast,
 	])
 
 	return (

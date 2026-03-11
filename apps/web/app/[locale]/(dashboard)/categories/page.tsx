@@ -107,8 +107,7 @@ export default function CategoriesPage() {
 		const query = searchQuery.toLowerCase()
 		return categories.filter(
 			(cat) =>
-				cat.name.toLowerCase().includes(query) ||
-				(cat.description && cat.description.toLowerCase().includes(query))
+				cat.name.toLowerCase().includes(query) || cat.description?.toLowerCase().includes(query)
 		)
 	}, [categories, searchQuery])
 
@@ -201,9 +200,7 @@ export default function CategoriesPage() {
 			<div className="flex flex-wrap items-center justify-between gap-4">
 				<div>
 					<h1 className="text-2xl font-bold tracking-tight">Catégories</h1>
-					<p className="text-muted-foreground">
-						Organisez vos créations, produits et ateliers
-					</p>
+					<p className="text-muted-foreground">Organisez vos créations, produits et ateliers</p>
 				</div>
 				<Button onClick={openCreateDialog}>
 					<Plus className="mr-2 size-4" />
@@ -296,16 +293,11 @@ export default function CategoriesPage() {
 													<span className="font-medium">{cat.name}</span>
 												</div>
 												{cat.description && (
-													<p className="mt-1 text-sm text-muted-foreground">
-														{cat.description}
-													</p>
+													<p className="mt-1 text-sm text-muted-foreground">{cat.description}</p>
 												)}
 											</div>
 										</div>
-										<Badge
-											variant={cat.isVisible ? 'default' : 'secondary'}
-											className="shrink-0"
-										>
+										<Badge variant={cat.isVisible ? 'default' : 'secondary'} className="shrink-0">
 											{cat.isVisible ? 'Visible' : 'Masqué'}
 										</Badge>
 									</div>
@@ -378,9 +370,7 @@ export default function CategoriesPage() {
 												<div>
 													<p className="font-medium">{cat.name}</p>
 													{cat.description && (
-														<p className="text-sm text-muted-foreground">
-															{cat.description}
-														</p>
+														<p className="text-sm text-muted-foreground">{cat.description}</p>
 													)}
 												</div>
 											</div>
@@ -478,9 +468,7 @@ export default function CategoriesPage() {
 							<Switch
 								id="category-visible"
 								checked={form.isVisible}
-								onCheckedChange={(checked) =>
-									setForm((f) => ({ ...f, isVisible: checked }))
-								}
+								onCheckedChange={(checked) => setForm((f) => ({ ...f, isVisible: checked }))}
 							/>
 						</div>
 					</div>
@@ -507,17 +495,13 @@ export default function CategoriesPage() {
 					<DialogHeader>
 						<DialogTitle>Supprimer la catégorie</DialogTitle>
 						<DialogDescription>
-							Vous êtes sur le point de supprimer la catégorie{' '}
-							<strong>{deleteTarget?.name}</strong>. Les créations, produits et ateliers
-							associés ne seront plus classés. Cette action est irréversible.
+							Vous êtes sur le point de supprimer la catégorie <strong>{deleteTarget?.name}</strong>
+							. Les créations, produits et ateliers associés ne seront plus classés. Cette action
+							est irréversible.
 						</DialogDescription>
 					</DialogHeader>
 					<DialogFooter>
-						<Button
-							variant="outline"
-							onClick={() => setDeleteTarget(null)}
-							disabled={deleting}
-						>
+						<Button variant="outline" onClick={() => setDeleteTarget(null)} disabled={deleting}>
 							Annuler
 						</Button>
 						<Button variant="destructive" onClick={handleDelete} disabled={deleting}>

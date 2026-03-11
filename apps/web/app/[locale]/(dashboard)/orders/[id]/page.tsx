@@ -192,7 +192,7 @@ export default function PatissierOrderDetailPage() {
 	const dashboardPrefix = useDashboardPrefix()
 	const t = useTranslations('orderDetail')
 	const to = useTranslations('orders')
-	const tc = useTranslations('common')
+	const _tc = useTranslations('common')
 
 	const [order, setOrder] = useState<Order | null>(null)
 	const [isLoading, setIsLoading] = useState(true)
@@ -364,14 +364,14 @@ export default function PatissierOrderDetailPage() {
 
 	useEffect(() => {
 		fetchOrder()
-	}, [orderId])
+	}, [fetchOrder])
 
 	// Auto-open edit mode when ?edit=1
 	useEffect(() => {
 		if (order && searchParams.get('edit') === '1' && !isEditing) {
 			startEditing()
 		}
-	}, [order])
+	}, [order, isEditing, searchParams, startEditing])
 
 	const handleUpdateStatus = async () => {
 		if (!newStatus || !order) return
@@ -1330,7 +1330,7 @@ export default function PatissierOrderDetailPage() {
 					</button>
 					<img
 						src={lightboxUrl}
-						alt="Photo"
+						alt="Commande"
 						className="max-h-[90vh] max-w-[90vw] rounded-lg object-contain"
 						onClick={(e) => e.stopPropagation()}
 					/>

@@ -11,7 +11,7 @@ import {
 	Users,
 } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
-import { api, ApiError } from '@/lib/api/client'
+import { ApiError, api } from '@/lib/api/client'
 
 interface DashboardStats {
 	totalUsers: number

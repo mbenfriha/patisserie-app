@@ -300,7 +300,6 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
 									if (e.key === 'Escape') setLinkInput({ show: false, url: '' })
 								}}
 								placeholder="https://..."
-								autoFocus
 								className="h-7 w-48 rounded border bg-background px-2 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
 							/>
 							<button

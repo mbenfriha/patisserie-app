@@ -95,9 +95,7 @@ export default function EmployeesPage() {
 		if (!searchQuery) return employees
 		const query = searchQuery.toLowerCase()
 		return employees.filter(
-			(emp) =>
-				emp.name.toLowerCase().includes(query) ||
-				(emp.role && emp.role.toLowerCase().includes(query))
+			(emp) => emp.name.toLowerCase().includes(query) || emp.role?.toLowerCase().includes(query)
 		)
 	}, [employees, searchQuery])
 

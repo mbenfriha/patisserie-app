@@ -36,7 +36,11 @@ export default function BookingCancellationTemplate({
 			</Text>
 
 			<Section>
-				<table style={{ width: '100%', borderCollapse: 'collapse', margin: '20px 0' }} cellPadding="0" cellSpacing="0">
+				<table
+					style={{ width: '100%', borderCollapse: 'collapse', margin: '20px 0' }}
+					cellPadding="0"
+					cellSpacing="0"
+				>
 					<tr style={{ borderBottom: '1px solid #eee' }}>
 						<td style={emailStyles.infoRow}>{t.dateLabel}</td>
 						<td style={emailStyles.infoValue}>{date}</td>

@@ -21,7 +21,8 @@ export const emailTranslations = {
 		orderLabel: 'Numéro',
 		typeLabel: 'Type',
 		totalLabel: 'Total',
-		footer: 'Vous recevrez une notification dès que le pâtissier aura mis à jour le statut de votre commande.',
+		footer:
+			'Vous recevrez une notification dès que le pâtissier aura mis à jour le statut de votre commande.',
 	},
 
 	bookingConfirmation: {
@@ -52,7 +53,8 @@ export const emailTranslations = {
 		amountPaidLabel: 'Montant payé',
 		remainingLabel: 'Reste à régler sur place',
 		totalLabel: 'Prix total',
-		fullPaymentFooter: "Votre paiement est complet. Il ne vous reste plus qu'à vous présenter le jour J !",
+		fullPaymentFooter:
+			"Votre paiement est complet. Il ne vous reste plus qu'à vous présenter le jour J !",
 		depositFooter: (amount: string) =>
 			`Le solde restant de ${amount} sera à régler le jour de l'atelier.`,
 	},

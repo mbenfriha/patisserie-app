@@ -1,22 +1,22 @@
 {
-	"$schema": "https://raw.githubusercontent.com/stryker-mutator/stryker/master/packages/core/schema/stryker-schema.json",
-	"mutate": [
-		"app/validators/**/*.ts",
-		"app/services/**/*.ts",
-		"app/helpers/**/*.ts",
-		"!app/**/*.spec.ts"
-	],
-	"testRunner": "command",
-	"commandRunner": {
-		"command": "node ace test --suite=unit --force-exit"
-	},
-	"reporters": ["html", "clear-text", "progress"],
-	"coverageAnalysis": "perTest",
-	"thresholds": {
-		"high": 80,
-		"low": 60,
-		"break": 50
-	},
-	"timeoutMS": 30000,
-	"concurrency": 2
+  "$schema": "https://raw.githubusercontent.com/stryker-mutator/stryker/master/packages/core/schema/stryker-schema.json",
+  "mutate": [
+    "app/validators/**/*.ts",
+    "app/services/**/*.ts",
+    "app/helpers/**/*.ts",
+    "!app/**/*.spec.ts"
+  ],
+  "testRunner": "command",
+  "commandRunner": {
+    "command": "node ace test --suite=unit --force-exit"
+  },
+  "reporters": ["html", "clear-text", "progress"],
+  "coverageAnalysis": "perTest",
+  "thresholds": {
+    "high": 80,
+    "low": 60,
+    "break": 50
+  },
+  "timeoutMS": 30000,
+  "concurrency": 2
 }

@@ -2,7 +2,7 @@
 
 import { Loader2, RefreshCw, ShoppingBag } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
-import { api, ApiError } from '@/lib/api/client'
+import { ApiError, api } from '@/lib/api/client'
 
 interface OrderData {
 	id: string
@@ -28,9 +28,10 @@ export default function OrdersPage() {
 		setIsLoading(true)
 		setError('')
 		try {
-			const res = await api.get<{ success: boolean; data: { data: OrderData[]; meta: { lastPage: number } } }>(
-				`/superadmin/orders?page=${page}`
-			)
+			const res = await api.get<{
+				success: boolean
+				data: { data: OrderData[]; meta: { lastPage: number } }
+			}>(`/superadmin/orders?page=${page}`)
 			setOrders(res.data?.data || [])
 			setTotalPages(res.data?.meta?.lastPage || 1)
 		} catch (err) {
@@ -100,13 +101,27 @@ export default function OrdersPage() {
 						<table className="w-full">
 							<thead>
 								<tr className="border-b border-border bg-secondary/50">
-									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">N. commande</th>
-									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">Patissier</th>
-									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">Client</th>
-									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">Type</th>
-									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">Statut</th>
-									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">Total</th>
-									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">Date</th>
+									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">
+										N. commande
+									</th>
+									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">
+										Patissier
+									</th>
+									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">
+										Client
+									</th>
+									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">
+										Type
+									</th>
+									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">
+										Statut
+									</th>
+									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">
+										Total
+									</th>
+									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">
+										Date
+									</th>
 								</tr>
 							</thead>
 							<tbody>
@@ -118,16 +133,16 @@ export default function OrdersPage() {
 										<td className="px-6 py-4 text-sm text-foreground">
 											{order.patissier?.businessName || '-'}
 										</td>
-										<td className="px-6 py-4 text-sm text-foreground">
-											{order.clientName}
-										</td>
+										<td className="px-6 py-4 text-sm text-foreground">{order.clientName}</td>
 										<td className="px-6 py-4">
 											<span className="px-2 py-1 text-xs font-medium rounded-full bg-primary/10 text-primary">
 												{order.type}
 											</span>
 										</td>
 										<td className="px-6 py-4">
-											<span className={`px-2 py-1 text-xs font-medium rounded-full ${statusColor(order.status)}`}>
+											<span
+												className={`px-2 py-1 text-xs font-medium rounded-full ${statusColor(order.status)}`}
+											>
 												{order.status}
 											</span>
 										</td>

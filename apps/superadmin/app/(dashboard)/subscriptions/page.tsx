@@ -2,7 +2,7 @@
 
 import { CreditCard, Loader2, RefreshCw } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
-import { api, ApiError } from '@/lib/api/client'
+import { ApiError, api } from '@/lib/api/client'
 
 interface SubscriptionData {
 	id: string
@@ -26,9 +26,10 @@ export default function SubscriptionsPage() {
 		setIsLoading(true)
 		setError('')
 		try {
-			const res = await api.get<{ success: boolean; data: { data: SubscriptionData[]; meta: { lastPage: number } } }>(
-				`/superadmin/subscriptions?page=${page}`
-			)
+			const res = await api.get<{
+				success: boolean
+				data: { data: SubscriptionData[]; meta: { lastPage: number } }
+			}>(`/superadmin/subscriptions?page=${page}`)
 			setSubscriptions(res.data?.data || [])
 			setTotalPages(res.data?.meta?.lastPage || 1)
 		} catch (err) {
@@ -99,29 +100,43 @@ export default function SubscriptionsPage() {
 						<table className="w-full">
 							<thead>
 								<tr className="border-b border-border bg-secondary/50">
-									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">Email</th>
-									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">Plan</th>
-									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">Intervalle</th>
-									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">Statut</th>
-									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">Fin de periode</th>
+									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">
+										Email
+									</th>
+									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">
+										Plan
+									</th>
+									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">
+										Intervalle
+									</th>
+									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">
+										Statut
+									</th>
+									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">
+										Fin de periode
+									</th>
 								</tr>
 							</thead>
 							<tbody>
 								{subscriptions.map((sub) => (
 									<tr key={sub.id} className="border-b border-border hover:bg-secondary/30">
-										<td className="px-6 py-4 text-sm text-foreground">
-											{sub.user?.email || '-'}
-										</td>
+										<td className="px-6 py-4 text-sm text-foreground">{sub.user?.email || '-'}</td>
 										<td className="px-6 py-4">
 											<span className="px-2 py-1 text-xs font-medium rounded-full bg-primary/10 text-primary">
 												{sub.plan}
 											</span>
 										</td>
 										<td className="px-6 py-4 text-sm text-foreground">
-											{sub.billingInterval === 'month' ? 'Mensuel' : sub.billingInterval === 'year' ? 'Annuel' : sub.billingInterval}
+											{sub.billingInterval === 'month'
+												? 'Mensuel'
+												: sub.billingInterval === 'year'
+													? 'Annuel'
+													: sub.billingInterval}
 										</td>
 										<td className="px-6 py-4">
-											<span className={`px-2 py-1 text-xs font-medium rounded-full ${statusColor(sub.status)}`}>
+											<span
+												className={`px-2 py-1 text-xs font-medium rounded-full ${statusColor(sub.status)}`}
+											>
 												{sub.status}
 											</span>
 										</td>

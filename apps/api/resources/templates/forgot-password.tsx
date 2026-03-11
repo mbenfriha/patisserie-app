@@ -7,10 +7,7 @@ interface ForgotPasswordProps {
 	resetUrl: string
 }
 
-export default function ForgotPasswordTemplate({
-	fullName,
-	resetUrl,
-}: ForgotPasswordProps) {
+export default function ForgotPasswordTemplate({ fullName, resetUrl }: ForgotPasswordProps) {
 	const t = emailTranslations.forgotPassword
 	const common = emailTranslations.common
 	const greeting = fullName ? `${common.greeting} ${fullName}` : common.greeting

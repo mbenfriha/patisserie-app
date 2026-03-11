@@ -17,7 +17,9 @@ export default class extends BaseSchema {
 		})
 
 		this.schema.raw('CREATE INDEX idx_audit_logs_user ON audit_logs (user_id, created_at DESC)')
-		this.schema.raw('CREATE INDEX idx_audit_logs_resource ON audit_logs (resource_type, resource_id)')
+		this.schema.raw(
+			'CREATE INDEX idx_audit_logs_resource ON audit_logs (resource_type, resource_id)'
+		)
 	}
 
 	async down() {

@@ -126,7 +126,9 @@ export function HomeContent() {
 			},
 			{ threshold: 0.1 }
 		)
-		document.querySelectorAll('.animate-on-scroll').forEach((el) => observer.observe(el))
+		document.querySelectorAll('.animate-on-scroll').forEach((el) => {
+			observer.observe(el)
+		})
 
 		return () => {
 			window.removeEventListener('scroll', handleScroll)
@@ -694,8 +696,6 @@ export function HomeContent() {
 							)
 						})}
 					</div>
-
-
 				</div>
 			</section>
 

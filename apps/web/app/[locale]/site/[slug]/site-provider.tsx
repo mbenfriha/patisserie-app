@@ -1,14 +1,6 @@
 'use client'
 
-import {
-	createContext,
-	type ReactNode,
-	useCallback,
-	useContext,
-	useEffect,
-	useMemo,
-	useState,
-} from 'react'
+import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from 'react'
 import { InlineEditProvider } from './components/inline-edit-provider'
 import { SiteFooter } from './components/site-footer'
 import { SiteNavbar } from './components/site-navbar'
@@ -216,12 +208,12 @@ export function SiteProvider({
 		const hostname = window.location.hostname
 		const isLocalSubdomain = hostname.endsWith('.localhost')
 		const isProdSubdomain =
-			hostname.split('.').length > 2 && hostname !== 'www.' + hostname.split('.').slice(1).join('.')
+			hostname.split('.').length > 2 && hostname !== `www.${hostname.split('.').slice(1).join('.')}`
 		const isCustomDomain = !hostname.includes('localhost') && !hostname.endsWith('patissio.com')
 		if (isLocalSubdomain || isProdSubdomain || isCustomDomain) {
 			setBasePath('')
 		}
-	}, [slug])
+	}, [])
 
 	return (
 		<SiteContext.Provider value={{ profile, basePath }}>

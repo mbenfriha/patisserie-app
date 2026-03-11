@@ -4,9 +4,9 @@ import { loginValidator, registerValidator } from '#validators/auth_validator'
 import { storeCategoryValidator } from '#validators/category_validator'
 import { storeCreationValidator } from '#validators/creation_validator'
 import {
-	storePatissierOrderValidator,
 	quoteOrderValidator,
 	sendMessageValidator,
+	storePatissierOrderValidator,
 	updateOrderStatusValidator,
 } from '#validators/order_validator'
 

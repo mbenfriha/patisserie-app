@@ -1,9 +1,9 @@
 import { test } from '@japa/runner'
 import {
 	paginationValidator,
-	storePatissierOrderValidator,
 	quoteOrderValidator,
 	sendMessageValidator,
+	storePatissierOrderValidator,
 	updateOrderStatusValidator,
 } from '#validators/order_validator'
 

@@ -6,7 +6,14 @@ import { useTranslations } from 'next-intl'
 import { useEffect, useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardFooter,
+	CardHeader,
+	CardTitle,
+} from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
@@ -131,12 +138,8 @@ export default function BillingPage() {
 						</div>
 						<div>
 							<div className="flex items-center gap-2">
-								<span className="text-xl font-bold">
-									{PLANS[activePlan].name}
-								</span>
-								{currentPlan?.status === 'active' && (
-									<Badge variant="outline">{t('active')}</Badge>
-								)}
+								<span className="text-xl font-bold">{PLANS[activePlan].name}</span>
+								{currentPlan?.status === 'active' && <Badge variant="outline">{t('active')}</Badge>}
 								{currentPlan?.status === 'past_due' && (
 									<Badge variant="destructive">{t('pastDue')}</Badge>
 								)}
@@ -212,9 +215,7 @@ export default function BillingPage() {
 						>
 							{key === 'pro' && (
 								<div className="absolute -top-3 left-1/2 -translate-x-1/2">
-									<Badge className="bg-primary text-primary-foreground">
-										{t('popular')}
-									</Badge>
+									<Badge className="bg-primary text-primary-foreground">{t('popular')}</Badge>
 								</div>
 							)}
 							<CardHeader>
@@ -281,11 +282,7 @@ export default function BillingPage() {
 										{t('upgradeTo', { plan: plan.name })}
 									</Button>
 								) : (
-									<Button
-										variant="outline"
-										className="w-full"
-										onClick={() => handleSubscribe(key)}
-									>
+									<Button variant="outline" className="w-full" onClick={() => handleSubscribe(key)}>
 										{t('downgrade')}
 									</Button>
 								)}

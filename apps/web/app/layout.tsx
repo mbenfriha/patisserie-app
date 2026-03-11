@@ -76,7 +76,9 @@ export default function RootLayout({
 }>) {
 	return (
 		<html lang="fr" suppressHydrationWarning>
-			<body className={`${josefin.variable} ${cormorant.variable} font-sans antialiased bg-background text-foreground`}>
+			<body
+				className={`${josefin.variable} ${cormorant.variable} font-sans antialiased bg-background text-foreground`}
+			>
 				<PostHogProvider>{children}</PostHogProvider>
 			</body>
 		</html>

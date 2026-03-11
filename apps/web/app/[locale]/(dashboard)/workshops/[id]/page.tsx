@@ -170,7 +170,7 @@ export default function PatissierWorkshopDetailPage() {
 	useEffect(() => {
 		fetchWorkshop()
 		fetchBookings()
-	}, [workshopId])
+	}, [fetchBookings, fetchWorkshop])
 
 	const handleUpdateWorkshopStatus = async () => {
 		if (!newWorkshopStatus || !workshop) return

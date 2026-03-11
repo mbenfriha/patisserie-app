@@ -176,17 +176,25 @@ export default function PatissiersPage() {
 															Acceder au site
 														</button>
 													) : (
-														<span className="text-xs text-muted-foreground">Acces non autorise</span>
+														<span className="text-xs text-muted-foreground">
+															Acces non autorise
+														</span>
 													)}
 													{profile?.customDomain && profile?.plan === 'premium' && (
 														<button
 															type="button"
 															onClick={async () => {
 																try {
-																	await api.post(`/superadmin/patissiers/${profile.id}/sync-turnstile`)
+																	await api.post(
+																		`/superadmin/patissiers/${profile.id}/sync-turnstile`
+																	)
 																	alert(`Turnstile synchronise pour ${profile.customDomain}`)
 																} catch (err) {
-																	alert(err instanceof ApiError ? err.message : 'Erreur lors de la synchronisation Turnstile')
+																	alert(
+																		err instanceof ApiError
+																			? err.message
+																			: 'Erreur lors de la synchronisation Turnstile'
+																	)
 																}
 															}}
 															className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-green-500/10 text-green-600 hover:bg-green-500/20 transition-colors"

@@ -432,9 +432,7 @@ export default function WorkshopsPage() {
 							<h1 className="text-2xl font-bold tracking-tight">Ateliers</h1>
 							<Badge className="bg-primary/10 text-primary border-transparent">Pro</Badge>
 						</div>
-						<p className="text-muted-foreground">
-							Gérez vos ateliers et réservations
-						</p>
+						<p className="text-muted-foreground">Gérez vos ateliers et réservations</p>
 					</div>
 					<Button onClick={openCreate}>
 						<Plus />
@@ -527,9 +525,10 @@ export default function WorkshopsPage() {
 						{filteredWorkshops.map((workshop) => {
 							const statusInfo = STATUS_BADGES[workshop.status] || STATUS_BADGES.draft
 							const participants = workshop.bookingsCount ?? 0
-							const capacityPercent = workshop.capacity > 0
-								? Math.min(100, Math.round((participants / workshop.capacity) * 100))
-								: 0
+							const capacityPercent =
+								workshop.capacity > 0
+									? Math.min(100, Math.round((participants / workshop.capacity) * 100))
+									: 0
 							return (
 								<Card key={workshop.id} className="group overflow-hidden p-0">
 									{/* Image area */}
@@ -613,9 +612,7 @@ export default function WorkshopsPage() {
 														</label>
 													</DropdownMenuItem>
 													{workshop.images?.[0]?.url && (
-														<DropdownMenuItem
-															onClick={() => handleIllustrationDelete(workshop.id)}
-														>
+														<DropdownMenuItem onClick={() => handleIllustrationDelete(workshop.id)}>
 															<Trash2 className="h-3.5 w-3.5" />
 															Supprimer illustration
 														</DropdownMenuItem>
@@ -714,9 +711,7 @@ export default function WorkshopsPage() {
 				<Dialog open={showModal} onOpenChange={setShowModal}>
 					<DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
 						<DialogHeader>
-							<DialogTitle>
-								{editingId ? "Modifier l'atelier" : 'Nouvel atelier'}
-							</DialogTitle>
+							<DialogTitle>{editingId ? "Modifier l'atelier" : 'Nouvel atelier'}</DialogTitle>
 							<DialogDescription>
 								{editingId
 									? 'Modifiez les informations de votre atelier.'

@@ -2,7 +2,7 @@
 
 import { CalendarDays, Loader2, RefreshCw } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
-import { api, ApiError } from '@/lib/api/client'
+import { ApiError, api } from '@/lib/api/client'
 
 interface WorkshopData {
 	id: string
@@ -27,9 +27,10 @@ export default function WorkshopsPage() {
 		setIsLoading(true)
 		setError('')
 		try {
-			const res = await api.get<{ success: boolean; data: { data: WorkshopData[]; meta: { lastPage: number } } }>(
-				`/superadmin/workshops?page=${page}`
-			)
+			const res = await api.get<{
+				success: boolean
+				data: { data: WorkshopData[]; meta: { lastPage: number } }
+			}>(`/superadmin/workshops?page=${page}`)
 			setWorkshops(res.data?.data || [])
 			setTotalPages(res.data?.meta?.lastPage || 1)
 		} catch (err) {
@@ -99,12 +100,24 @@ export default function WorkshopsPage() {
 						<table className="w-full">
 							<thead>
 								<tr className="border-b border-border bg-secondary/50">
-									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">Titre</th>
-									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">Patissier</th>
-									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">Date</th>
-									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">Capacite</th>
-									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">Reservations</th>
-									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">Statut</th>
+									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">
+										Titre
+									</th>
+									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">
+										Patissier
+									</th>
+									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">
+										Date
+									</th>
+									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">
+										Capacite
+									</th>
+									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">
+										Reservations
+									</th>
+									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">
+										Statut
+									</th>
 								</tr>
 							</thead>
 							<tbody>
@@ -125,21 +138,23 @@ export default function WorkshopsPage() {
 												minute: '2-digit',
 											})}
 										</td>
+										<td className="px-6 py-4 text-sm text-foreground">{workshop.capacity}</td>
 										<td className="px-6 py-4 text-sm text-foreground">
-											{workshop.capacity}
-										</td>
-										<td className="px-6 py-4 text-sm text-foreground">
-											<span className={`font-medium ${
-												(workshop.bookings?.length ?? 0) >= workshop.capacity
-													? 'text-destructive'
-													: 'text-foreground'
-											}`}>
+											<span
+												className={`font-medium ${
+													(workshop.bookings?.length ?? 0) >= workshop.capacity
+														? 'text-destructive'
+														: 'text-foreground'
+												}`}
+											>
 												{workshop.bookings?.length ?? 0}
 											</span>
 											<span className="text-muted-foreground"> / {workshop.capacity}</span>
 										</td>
 										<td className="px-6 py-4">
-											<span className={`px-2 py-1 text-xs font-medium rounded-full ${statusColor(workshop.status)}`}>
+											<span
+												className={`px-2 py-1 text-xs font-medium rounded-full ${statusColor(workshop.status)}`}
+											>
 												{workshop.status}
 											</span>
 										</td>

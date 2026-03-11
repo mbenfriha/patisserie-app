@@ -167,10 +167,8 @@ export default function ProductsPage() {
 			const matchesSearch =
 				!searchQuery ||
 				product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-				(product.description &&
-					product.description.toLowerCase().includes(searchQuery.toLowerCase()))
-			const matchesCategory =
-				categoryFilter === 'all' || product.categoryId === categoryFilter
+				product.description?.toLowerCase().includes(searchQuery.toLowerCase())
+			const matchesCategory = categoryFilter === 'all' || product.categoryId === categoryFilter
 			return matchesSearch && matchesCategory
 		})
 	}, [products, searchQuery, categoryFilter])
@@ -383,9 +381,7 @@ export default function ProductsPage() {
 							<h1 className="text-2xl font-bold tracking-tight">{t('products')}</h1>
 							<Badge className="bg-primary/10 text-primary hover:bg-primary/20">Pro</Badge>
 						</div>
-						<p className="text-muted-foreground">
-							Gérez votre catalogue de produits en vente
-						</p>
+						<p className="text-muted-foreground">Gérez votre catalogue de produits en vente</p>
 					</div>
 					<div className="flex gap-2">
 						<Button variant="outline" onClick={() => setShowCategories(true)}>
@@ -499,9 +495,7 @@ export default function ProductsPage() {
 												{/* Catégorie */}
 												<TableCell>
 													{getCategoryName(product.categoryId) ? (
-														<Badge variant="outline">
-															{getCategoryName(product.categoryId)}
-														</Badge>
+														<Badge variant="outline">{getCategoryName(product.categoryId)}</Badge>
 													) : (
 														<span className="text-muted-foreground">—</span>
 													)}
@@ -509,13 +503,9 @@ export default function ProductsPage() {
 
 												{/* Prix */}
 												<TableCell>
-													<span className="font-medium">
-														{product.price} &euro;
-													</span>
+													<span className="font-medium">{product.price} &euro;</span>
 													{product.unit && (
-														<span className="text-muted-foreground">
-															{' '}/ {product.unit}
-														</span>
+														<span className="text-muted-foreground"> / {product.unit}</span>
 													)}
 												</TableCell>
 
@@ -629,9 +619,7 @@ export default function ProductsPage() {
 				<Dialog open={showModal} onOpenChange={setShowModal}>
 					<DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
 						<DialogHeader>
-							<DialogTitle>
-								{editingId ? 'Modifier le produit' : 'Nouveau produit'}
-							</DialogTitle>
+							<DialogTitle>{editingId ? 'Modifier le produit' : 'Nouveau produit'}</DialogTitle>
 							<DialogDescription>
 								{editingId
 									? 'Modifiez les informations de votre produit.'
@@ -897,9 +885,7 @@ export default function ProductsPage() {
 									<Switch
 										id="product-visible"
 										checked={form.isVisible}
-										onCheckedChange={(checked) =>
-											setForm((f) => ({ ...f, isVisible: checked }))
-										}
+										onCheckedChange={(checked) => setForm((f) => ({ ...f, isVisible: checked }))}
 									/>
 									<Label htmlFor="product-visible">Visible sur le site</Label>
 								</div>
@@ -907,9 +893,7 @@ export default function ProductsPage() {
 									<Switch
 										id="product-available"
 										checked={form.isAvailable}
-										onCheckedChange={(checked) =>
-											setForm((f) => ({ ...f, isAvailable: checked }))
-										}
+										onCheckedChange={(checked) => setForm((f) => ({ ...f, isAvailable: checked }))}
 									/>
 									<Label htmlFor="product-available">Disponible</Label>
 								</div>
@@ -975,7 +959,7 @@ function CategoriesDialog({ onClose }: { onClose: () => void }) {
 
 	useEffect(() => {
 		fetchCategories()
-	}, [])
+	}, [fetchCategories])
 
 	const handleCreate = async (e: React.FormEvent) => {
 		e.preventDefault()

@@ -1,6 +1,6 @@
 import { test } from '@japa/runner'
-import env from '#start/env'
 import { verifyTurnstile } from '#helpers/verify_turnstile'
+import env from '#start/env'
 
 const secretConfigured = !!env.get('TURNSTILE_SECRET_KEY')
 

@@ -123,7 +123,7 @@ function NavGroup({
 					{items.map((item) => {
 						const href =
 							item.href === '/dashboard' ? '/dashboard' : `${dashboardPrefix}${item.href}`
-						const isActive = pathname === href || pathname.startsWith(href + '/')
+						const isActive = pathname === href || pathname.startsWith(`${href}/`)
 						const requiredLevel = item.minPlan ? PLAN_LEVELS[item.minPlan] || 1 : 1
 						const locked = userLevel < requiredLevel
 

@@ -1,8 +1,8 @@
 'use client'
 
-import { BarChart3, Loader2, RefreshCw, TrendingUp, Users } from 'lucide-react'
+import { Loader2, RefreshCw, TrendingUp, Users } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
-import { api, ApiError } from '@/lib/api/client'
+import { ApiError, api } from '@/lib/api/client'
 
 interface RevenueStats {
 	totalRevenue: number

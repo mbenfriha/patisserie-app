@@ -222,12 +222,7 @@ export default class extends BaseSchema {
 				.references('id')
 				.inTable('workshops')
 				.onDelete('CASCADE')
-			table
-				.uuid('client_id')
-				.nullable()
-				.references('id')
-				.inTable('users')
-				.onDelete('SET NULL')
+			table.uuid('client_id').nullable().references('id').inTable('users').onDelete('SET NULL')
 			table.string('client_name', 200).notNullable()
 			table.string('client_email', 254).notNullable()
 			table.string('client_phone', 30).nullable()
@@ -241,9 +236,7 @@ export default class extends BaseSchema {
 				.defaultTo('pending_payment')
 			table.string('stripe_checkout_session_id', 255).nullable()
 			table.string('stripe_payment_intent_id', 255).nullable()
-			table
-				.enum('deposit_payment_status', ['pending', 'paid', 'refunded'])
-				.defaultTo('pending')
+			table.enum('deposit_payment_status', ['pending', 'paid', 'refunded']).defaultTo('pending')
 			table.timestamp('deposit_paid_at').nullable()
 			table
 				.enum('remaining_payment_status', ['pending', 'paid', 'not_required'])
@@ -268,12 +261,7 @@ export default class extends BaseSchema {
 				.references('id')
 				.inTable('patissier_profiles')
 				.onDelete('CASCADE')
-			table
-				.uuid('client_id')
-				.nullable()
-				.references('id')
-				.inTable('users')
-				.onDelete('SET NULL')
+			table.uuid('client_id').nullable().references('id').inTable('users').onDelete('SET NULL')
 			table.string('client_name', 200).notNullable()
 			table.string('client_email', 254).notNullable()
 			table.string('client_phone', 30).nullable()
@@ -330,18 +318,8 @@ export default class extends BaseSchema {
 		// Order items
 		this.schema.createTable('order_items', (table) => {
 			table.uuid('id').primary().defaultTo(this.raw('uuid_generate_v4()'))
-			table
-				.uuid('order_id')
-				.notNullable()
-				.references('id')
-				.inTable('orders')
-				.onDelete('CASCADE')
-			table
-				.uuid('product_id')
-				.nullable()
-				.references('id')
-				.inTable('products')
-				.onDelete('SET NULL')
+			table.uuid('order_id').notNullable().references('id').inTable('orders').onDelete('CASCADE')
+			table.uuid('product_id').nullable().references('id').inTable('products').onDelete('SET NULL')
 			table.string('product_name', 200).notNullable()
 			table.decimal('unit_price', 10, 2).notNullable()
 			table.integer('quantity').notNullable()
@@ -356,12 +334,7 @@ export default class extends BaseSchema {
 		// Order messages
 		this.schema.createTable('order_messages', (table) => {
 			table.uuid('id').primary().defaultTo(this.raw('uuid_generate_v4()'))
-			table
-				.uuid('order_id')
-				.notNullable()
-				.references('id')
-				.inTable('orders')
-				.onDelete('CASCADE')
+			table.uuid('order_id').notNullable().references('id').inTable('orders').onDelete('CASCADE')
 			table.enum('sender_type', ['patissier', 'client', 'system']).notNullable()
 			table.uuid('sender_id').nullable()
 			table.text('message').notNullable()

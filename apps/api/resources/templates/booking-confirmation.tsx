@@ -42,14 +42,20 @@ export default function BookingConfirmationTemplate({
 			</Text>
 
 			<Section>
-				<table style={{ width: '100%', borderCollapse: 'collapse', margin: '20px 0' }} cellPadding="0" cellSpacing="0">
+				<table
+					style={{ width: '100%', borderCollapse: 'collapse', margin: '20px 0' }}
+					cellPadding="0"
+					cellSpacing="0"
+				>
 					<tr style={{ borderBottom: '1px solid #eee' }}>
 						<td style={emailStyles.infoRow}>{t.workshopLabel}</td>
 						<td style={emailStyles.infoValue}>{workshopTitle}</td>
 					</tr>
 					<tr style={{ borderBottom: '1px solid #eee' }}>
 						<td style={emailStyles.infoRow}>{t.dateLabel}</td>
-						<td style={emailStyles.infoValue}>{date} à {startTime}</td>
+						<td style={emailStyles.infoValue}>
+							{date} à {startTime}
+						</td>
 					</tr>
 					<tr style={{ borderBottom: '1px solid #eee' }}>
 						<td style={emailStyles.infoRow}>{t.participantsLabel}</td>

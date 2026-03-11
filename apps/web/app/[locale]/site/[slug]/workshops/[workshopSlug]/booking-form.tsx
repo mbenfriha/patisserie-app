@@ -39,7 +39,7 @@ export function WorkshopBookingForm({
 		const { name, value } = e.target
 		setForm((prev) => ({
 			...prev,
-			[name]: name === 'nb_participants' ? parseInt(value) || 1 : value,
+			[name]: name === 'nb_participants' ? parseInt(value, 10) || 1 : value,
 		}))
 	}
 
@@ -146,8 +146,12 @@ export function WorkshopBookingForm({
 								fontFamily: "'Josefin Sans', sans-serif",
 								border: '2px solid #eee',
 							}}
-							onFocus={(e) => (e.target.style.borderColor = 'var(--gold)')}
-							onBlur={(e) => (e.target.style.borderColor = '#eee')}
+							onFocus={(e) => {
+								e.target.style.borderColor = 'var(--gold)'
+							}}
+							onBlur={(e) => {
+								e.target.style.borderColor = '#eee'
+							}}
 						/>
 					</div>
 
@@ -177,8 +181,12 @@ export function WorkshopBookingForm({
 								fontFamily: "'Josefin Sans', sans-serif",
 								border: '2px solid #eee',
 							}}
-							onFocus={(e) => (e.target.style.borderColor = 'var(--gold)')}
-							onBlur={(e) => (e.target.style.borderColor = '#eee')}
+							onFocus={(e) => {
+								e.target.style.borderColor = 'var(--gold)'
+							}}
+							onBlur={(e) => {
+								e.target.style.borderColor = '#eee'
+							}}
 						/>
 					</div>
 
@@ -207,8 +215,12 @@ export function WorkshopBookingForm({
 								fontFamily: "'Josefin Sans', sans-serif",
 								border: '2px solid #eee',
 							}}
-							onFocus={(e) => (e.target.style.borderColor = 'var(--gold)')}
-							onBlur={(e) => (e.target.style.borderColor = '#eee')}
+							onFocus={(e) => {
+								e.target.style.borderColor = 'var(--gold)'
+							}}
+							onBlur={(e) => {
+								e.target.style.borderColor = '#eee'
+							}}
 						/>
 					</div>
 

@@ -52,10 +52,7 @@ function ColorPicker({
 		<div className="space-y-2">
 			<Label>{label}</Label>
 			<div className="flex items-center gap-2">
-				<div
-					className="h-9 w-9 shrink-0 rounded-md border"
-					style={{ backgroundColor: value }}
-				/>
+				<div className="h-9 w-9 shrink-0 rounded-md border" style={{ backgroundColor: value }} />
 				<Input
 					type="text"
 					value={value}
@@ -101,9 +98,7 @@ function PasswordStrengthIndicator({
 						) : (
 							<X className="h-3.5 w-3.5 text-muted-foreground" />
 						)}
-						<span
-							className={`text-xs ${rule.valid ? 'text-green-600' : 'text-muted-foreground'}`}
-						>
+						<span className={`text-xs ${rule.valid ? 'text-green-600' : 'text-muted-foreground'}`}>
 							{rule.label}
 						</span>
 					</div>
@@ -177,8 +172,7 @@ export default function SettingsPage() {
 		newPasswordConfirmation.length > 0 &&
 		newPassword === newPasswordConfirmation
 
-	const allPasswordRulesValid =
-		passwordStrengthRules.every((rule) => rule.valid) && passwordsMatch
+	const allPasswordRulesValid = passwordStrengthRules.every((rule) => rule.valid) && passwordsMatch
 
 	const handleChangePassword = async (e: React.FormEvent) => {
 		e.preventDefault()
@@ -880,8 +874,8 @@ export default function SettingsPage() {
 							) : (
 								<div className="space-y-3">
 									<p className="text-sm text-muted-foreground">
-										Connectez votre propre nom de domaine pour que vos clients accèdent à votre
-										site via votre URL.
+										Connectez votre propre nom de domaine pour que vos clients accèdent à votre site
+										via votre URL.
 									</p>
 									<div className="flex gap-2">
 										<Input
@@ -902,11 +896,7 @@ export default function SettingsPage() {
 											onClick={handleSetDomain}
 											disabled={domainLoading || !domainInput.trim()}
 										>
-											{domainLoading ? (
-												<Loader2 className="h-4 w-4 animate-spin" />
-											) : (
-												'Vérifier'
-											)}
+											{domainLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Vérifier'}
 										</Button>
 									</div>
 									{domainError && <p className="text-xs text-red-500">{domainError}</p>}
@@ -986,18 +976,12 @@ export default function SettingsPage() {
 										onClick={() => setShowNewPassword(!showNewPassword)}
 										className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
 									>
-										{showNewPassword ? (
-											<EyeOff className="h-4 w-4" />
-										) : (
-											<Eye className="h-4 w-4" />
-										)}
+										{showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
 									</button>
 								</div>
 							</div>
 
-							{newPassword && (
-								<PasswordStrengthIndicator rules={passwordStrengthRules} />
-							)}
+							{newPassword && <PasswordStrengthIndicator rules={passwordStrengthRules} />}
 
 							<div className="space-y-2">
 								<Label htmlFor="newPasswordConfirmation">Confirmer le nouveau mot de passe</Label>
@@ -1094,8 +1078,8 @@ export default function SettingsPage() {
 					</CardHeader>
 					<CardContent>
 						<p className="text-sm text-muted-foreground">
-							Autorisez l'équipe Patissio à accéder à votre site pour vous aider à le
-							configurer. Vous pouvez désactiver cet accès à tout moment.
+							Autorisez l'équipe Patissio à accéder à votre site pour vous aider à le configurer.
+							Vous pouvez désactiver cet accès à tout moment.
 						</p>
 						<div className="mt-4 flex items-center justify-between">
 							<Label htmlFor="supportAccess">Autoriser l'accès au support Patissio</Label>

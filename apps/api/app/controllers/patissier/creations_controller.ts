@@ -326,7 +326,9 @@ export default class CreationsController {
 		// Move selected image to first position
 		const [selected] = images.splice(index, 1)
 		selected.is_cover = true
-		images.forEach((img) => (img.is_cover = false))
+		images.forEach((img) => {
+			img.is_cover = false
+		})
 		images.unshift(selected)
 
 		creation.images = images

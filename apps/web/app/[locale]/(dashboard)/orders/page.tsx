@@ -24,7 +24,7 @@ import { toast } from 'sonner'
 import { PlanGate } from '@/components/auth/plan-gate'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import {
 	Dialog,
 	DialogContent,
@@ -556,9 +556,7 @@ export default function OrdersPage() {
 							<Package className="mx-auto size-12 text-muted-foreground" />
 							<p className="mt-4 text-lg font-semibold">{t('emptyTitle')}</p>
 							<p className="text-sm text-muted-foreground">
-								{searchQuery || statusFilter !== 'all'
-									? t('emptyFiltered')
-									: t('emptyDefault')}
+								{searchQuery || statusFilter !== 'all' ? t('emptyFiltered') : t('emptyDefault')}
 							</p>
 						</CardContent>
 					</Card>
@@ -650,7 +648,9 @@ export default function OrdersPage() {
 										<TableHead className="px-4">{t('type')}</TableHead>
 										<TableHead className="px-4">{t('status')}</TableHead>
 										<TableHead className="px-4">{t('total')}</TableHead>
-										<TableHead className="hidden px-4 md:table-cell">{t('requestedDate')}</TableHead>
+										<TableHead className="hidden px-4 md:table-cell">
+											{t('requestedDate')}
+										</TableHead>
 										<TableHead className="hidden px-4 md:table-cell">{t('payment')}</TableHead>
 										<TableHead className="w-10 px-2" />
 									</TableRow>
@@ -748,11 +748,7 @@ export default function OrdersPage() {
 							</DialogDescription>
 						</DialogHeader>
 						<DialogFooter>
-							<Button
-								variant="outline"
-								onClick={() => setDeleteTarget(null)}
-								disabled={deleting}
-							>
+							<Button variant="outline" onClick={() => setDeleteTarget(null)} disabled={deleting}>
 								{tc('cancel')}
 							</Button>
 							<Button variant="destructive" onClick={handleDelete} disabled={deleting}>
@@ -767,9 +763,7 @@ export default function OrdersPage() {
 					<DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
 						<DialogHeader>
 							<DialogTitle>{t('createTitle')}</DialogTitle>
-							<DialogDescription>
-								{t('createDescription')}
-							</DialogDescription>
+							<DialogDescription>{t('createDescription')}</DialogDescription>
 						</DialogHeader>
 
 						<div className="space-y-4">
@@ -880,9 +874,7 @@ export default function OrdersPage() {
 										<Label className="mb-1">{t('deliveryAddress')}</Label>
 										<Input
 											value={form.deliveryAddress}
-											onChange={(e) =>
-												setForm((f) => ({ ...f, deliveryAddress: e.target.value }))
-											}
+											onChange={(e) => setForm((f) => ({ ...f, deliveryAddress: e.target.value }))}
 											placeholder="123 rue de la Paix, 75001 Paris"
 										/>
 									</div>
@@ -912,9 +904,7 @@ export default function OrdersPage() {
 								<Label>{t('paymentSection')}</Label>
 								<div className="grid gap-4 sm:grid-cols-2">
 									<div>
-										<Label className="mb-1 text-xs text-muted-foreground">
-											{t('totalAmount')}
-										</Label>
+										<Label className="mb-1 text-xs text-muted-foreground">{t('totalAmount')}</Label>
 										<Input
 											type="number"
 											step="0.01"
@@ -968,10 +958,7 @@ export default function OrdersPage() {
 								<div className="space-y-3 rounded-lg border bg-muted/30 p-3">
 									<Label>{t('articles')}</Label>
 									<div className="flex gap-2">
-										<Select
-											value={selectedProductId}
-											onValueChange={setSelectedProductId}
-										>
+										<Select value={selectedProductId} onValueChange={setSelectedProductId}>
 											<SelectTrigger className="flex-1">
 												<SelectValue placeholder={t('selectProduct')} />
 											</SelectTrigger>
@@ -1055,9 +1042,7 @@ export default function OrdersPage() {
 									</div>
 									<div className="grid gap-4 sm:grid-cols-2">
 										<div>
-											<Label className="mb-1 text-xs text-muted-foreground">
-												{t('eventDate')}
-											</Label>
+											<Label className="mb-1 text-xs text-muted-foreground">{t('eventDate')}</Label>
 											<Input
 												type="date"
 												value={form.customDateSouhaitee}
@@ -1079,9 +1064,7 @@ export default function OrdersPage() {
 										<Label className="mb-1 text-xs text-muted-foreground">{t('allergies')}</Label>
 										<Input
 											value={form.customAllergies}
-											onChange={(e) =>
-												setForm((f) => ({ ...f, customAllergies: e.target.value }))
-											}
+											onChange={(e) => setForm((f) => ({ ...f, customAllergies: e.target.value }))}
 											placeholder="Gluten, lactose..."
 										/>
 									</div>

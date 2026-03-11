@@ -468,7 +468,8 @@ export default function PatissierSitePage() {
 							id="instagram"
 							className="relative overflow-hidden px-6 py-24 text-center"
 							style={{
-								background: 'linear-gradient(160deg, var(--cream) 0%, var(--cream-dark) 50%, var(--cream) 100%)',
+								background:
+									'linear-gradient(160deg, var(--cream) 0%, var(--cream-dark) 50%, var(--cream) 100%)',
 								opacity: !showSection && isEditing ? 0.5 : 1,
 							}}
 						>

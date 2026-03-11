@@ -2,7 +2,7 @@
 
 import { Loader2, RefreshCw, Search, Users } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
-import { api, ApiError } from '@/lib/api/client'
+import { ApiError, api } from '@/lib/api/client'
 
 interface UserData {
 	id: string
@@ -30,9 +30,10 @@ export default function UsersPage() {
 			const params = new URLSearchParams({ page: page.toString() })
 			if (search) params.append('search', search)
 
-			const res = await api.get<{ success: boolean; data: { data: UserData[]; meta: { lastPage: number } } }>(
-				`/superadmin/users?${params.toString()}`
-			)
+			const res = await api.get<{
+				success: boolean
+				data: { data: UserData[]; meta: { lastPage: number } }
+			}>(`/superadmin/users?${params.toString()}`)
 			setUsers(res.data?.data || [])
 			setTotalPages(res.data?.meta?.lastPage || 1)
 		} catch (err) {
@@ -121,12 +122,24 @@ export default function UsersPage() {
 						<table className="w-full">
 							<thead>
 								<tr className="border-b border-border bg-secondary/50">
-									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">Email</th>
-									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">Nom</th>
-									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">Role</th>
-									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">Email verifie</th>
-									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">Date</th>
-									<th className="px-6 py-3 text-right text-sm font-medium text-muted-foreground">Actions</th>
+									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">
+										Email
+									</th>
+									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">
+										Nom
+									</th>
+									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">
+										Role
+									</th>
+									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">
+										Email verifie
+									</th>
+									<th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">
+										Date
+									</th>
+									<th className="px-6 py-3 text-right text-sm font-medium text-muted-foreground">
+										Actions
+									</th>
 								</tr>
 							</thead>
 							<tbody>
@@ -146,9 +159,13 @@ export default function UsersPage() {
 											</td>
 											<td className="px-6 py-4">
 												{user.emailVerifiedAt ? (
-													<span className="px-2 py-1 text-xs rounded-full bg-green-500/10 text-green-600">Oui</span>
+													<span className="px-2 py-1 text-xs rounded-full bg-green-500/10 text-green-600">
+														Oui
+													</span>
 												) : (
-													<span className="px-2 py-1 text-xs rounded-full bg-yellow-500/10 text-yellow-600">Non</span>
+													<span className="px-2 py-1 text-xs rounded-full bg-yellow-500/10 text-yellow-600">
+														Non
+													</span>
 												)}
 											</td>
 											<td className="px-6 py-4 text-sm text-muted-foreground">

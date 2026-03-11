@@ -169,7 +169,6 @@ function InlineRichEditor({ value, onChange, className, style }: EditableRichTex
 							if (e.key === 'Escape') setLinkInput({ show: false, url: '' })
 						}}
 						placeholder="https://..."
-						autoFocus
 						className="h-6 w-48 rounded border border-white/20 bg-transparent px-2 text-[11px] text-white placeholder:text-white/40 focus:outline-none focus:border-[var(--gold)]"
 					/>
 					<MiniBtn onClick={applyLink}>
