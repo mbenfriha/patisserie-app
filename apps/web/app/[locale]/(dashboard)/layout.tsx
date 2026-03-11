@@ -99,6 +99,7 @@ function getSiteUrl(profile: { slug: string; plan: string; customDomain?: string
 }
 
 function NavGroup({
+	id,
 	label,
 	items,
 	pathname,
@@ -106,6 +107,7 @@ function NavGroup({
 	dashboardPrefix,
 	t,
 }: {
+	id?: string
 	label: string
 	items: NavItem[]
 	pathname: string
@@ -116,7 +118,7 @@ function NavGroup({
 	const userLevel = PLAN_LEVELS[userPlan] || 1
 
 	return (
-		<SidebarGroup>
+		<SidebarGroup id={id}>
 			<SidebarGroupLabel>{label}</SidebarGroupLabel>
 			<SidebarGroupContent>
 				<SidebarMenu>
@@ -183,7 +185,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 		<RoleGuard allowedRoles={['patissier', 'superadmin']}>
 			<SidebarProvider>
 				<Sidebar collapsible="icon" className="border-r-0">
-					<SidebarHeader className="border-b border-sidebar-border">
+					<SidebarHeader id="tour-sidebar-header" className="border-b border-sidebar-border">
 						<div className="flex items-center gap-2 px-2 py-2">
 							{user?.profile?.logoUrl ? (
 								<img
@@ -214,6 +216,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 					</SidebarHeader>
 					<SidebarContent>
 						<NavGroup
+							id="tour-nav-overview"
 							label="Vue d'ensemble"
 							items={overviewItems}
 							pathname={pathname}
@@ -222,6 +225,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 							t={t}
 						/>
 						<NavGroup
+							id="tour-nav-content"
 							label="Contenu"
 							items={contentItems}
 							pathname={pathname}
@@ -230,6 +234,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 							t={t}
 						/>
 						<NavGroup
+							id="tour-nav-operations"
 							label="Opérations"
 							items={operationsItems}
 							pathname={pathname}
@@ -238,6 +243,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 							t={t}
 						/>
 						<NavGroup
+							id="tour-nav-costing"
 							label="Costing"
 							items={costingItems}
 							pathname={pathname}
@@ -246,6 +252,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 							t={t}
 						/>
 						<NavGroup
+							id="tour-nav-account"
 							label="Compte"
 							items={accountItems}
 							pathname={pathname}

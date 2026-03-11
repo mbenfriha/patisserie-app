@@ -25,6 +25,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Link } from '@/i18n/navigation'
 import { api } from '@/lib/api/client'
 import { useDashboardPrefix } from '@/lib/hooks/use-custom-domain'
+import { useTour } from '@/lib/hooks/use-tour'
 import { useAuth } from '@/lib/providers/auth-provider'
 
 interface Stats {
@@ -334,6 +335,9 @@ export default function DashboardPage() {
 
 	const isPro = user?.profile?.plan === 'pro' || user?.profile?.plan === 'premium'
 
+	// Auto-start dashboard tour for new users
+	useTour('dashboard', true)
+
 	useEffect(() => {
 		api
 			.get('/patissier/stats')
@@ -383,7 +387,7 @@ export default function DashboardPage() {
 			</div>
 
 			{/* Stat cards */}
-			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+			<div id="tour-stats" className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
 				<StatCard
 					title={t('totalOrders')}
 					value={String(stats?.orders?.total ?? 0)}

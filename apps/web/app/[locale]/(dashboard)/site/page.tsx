@@ -22,6 +22,7 @@ import { Button } from '@/components/ui/button'
 import { ImageCropper } from '@/components/ui/image-cropper'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { api } from '@/lib/api/client'
+import { useTour } from '@/lib/hooks/use-tour'
 import { BrandingTab } from './_components/branding-tab'
 import { ContactTab } from './_components/contact-tab'
 import { ContentTab } from './_components/content-tab'
@@ -441,6 +442,9 @@ export default function SiteEditorPage() {
 
 	const refreshPreview = () => setPreviewKey((k) => k + 1)
 
+	// Auto-start site editor tour for new users
+	useTour('site-editor', true)
+
 	if (isLoading) {
 		return <p className="text-muted-foreground">{tc('loading')}</p>
 	}
@@ -470,6 +474,7 @@ export default function SiteEditorPage() {
 							</Button>
 						)}
 						<Button
+							id="tour-site-preview"
 							variant={showPreview ? 'secondary' : 'outline'}
 							size="sm"
 							onClick={() => setShowPreview(!showPreview)}
@@ -477,7 +482,12 @@ export default function SiteEditorPage() {
 							<Eye className="mr-2 size-4" />
 							{t('preview')}
 						</Button>
-						<Button size="sm" disabled={!hasChanges || isSaving} onClick={handleSave}>
+						<Button
+							id="tour-site-save"
+							size="sm"
+							disabled={!hasChanges || isSaving}
+							onClick={handleSave}
+						>
 							{isSaving ? (
 								<RefreshCw className="mr-2 size-4 animate-spin" />
 							) : (
@@ -516,20 +526,20 @@ export default function SiteEditorPage() {
 				<div className={`flex-1 overflow-y-auto ${showPreview ? 'max-w-2xl' : ''}`}>
 					<div className="p-6">
 						<Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-							<TabsList className="grid w-full grid-cols-4">
-								<TabsTrigger value="branding" className="gap-2">
+							<TabsList id="tour-site-tabs" className="grid w-full grid-cols-4">
+								<TabsTrigger id="tour-tab-branding" value="branding" className="gap-2">
 									<Palette className="size-4" />
 									<span className="hidden sm:inline">{t('branding')}</span>
 								</TabsTrigger>
-								<TabsTrigger value="content" className="gap-2">
+								<TabsTrigger id="tour-tab-content" value="content" className="gap-2">
 									<FileText className="size-4" />
 									<span className="hidden sm:inline">{t('content')}</span>
 								</TabsTrigger>
-								<TabsTrigger value="sections" className="gap-2">
+								<TabsTrigger id="tour-tab-sections" value="sections" className="gap-2">
 									<LayoutGrid className="size-4" />
 									<span className="hidden sm:inline">{t('sections')}</span>
 								</TabsTrigger>
-								<TabsTrigger value="contact" className="gap-2">
+								<TabsTrigger id="tour-tab-contact" value="contact" className="gap-2">
 									<Phone className="size-4" />
 									<span className="hidden sm:inline">{t('contact')}</span>
 								</TabsTrigger>
