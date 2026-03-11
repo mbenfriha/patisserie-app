@@ -140,6 +140,18 @@ router
 				// Order costing
 				router.get('/:id/costing', '#controllers/patissier/order_costing_controller.show')
 				router.put('/:id/costing', '#controllers/patissier/order_costing_controller.save')
+				// Order quotes
+				router.get('/:orderId/quotes', '#controllers/patissier/quotes_controller.index')
+				router.post('/:orderId/quotes/draft', '#controllers/patissier/quotes_controller.saveDraft')
+				router.post('/:orderId/quotes/send', '#controllers/patissier/quotes_controller.send')
+				router.put(
+					'/:orderId/quotes/:id/status',
+					'#controllers/patissier/quotes_controller.updateStatus'
+				)
+				router.post(
+					'/:orderId/quotes/:id/revise',
+					'#controllers/patissier/quotes_controller.revise'
+				)
 			})
 			.prefix('/orders')
 			.use(middleware.planGuard({ minPlan: 'pro' }))
