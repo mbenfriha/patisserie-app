@@ -167,6 +167,7 @@
     "finalPrice": "Prix final du devis",
     "finalPriceDescription": "Laissez vide pour utiliser le prix suggéré, ou saisissez un montant libre",
     "resetToSuggested": "Réinitialiser",
+    "enterAmount": "Saisir un montant",
     "profit": "Bénéfice",
     "realMargin": "Marge réelle",
     "marginExcellent": "Excellente marge",

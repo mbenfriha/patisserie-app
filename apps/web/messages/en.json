@@ -167,6 +167,7 @@
     "finalPrice": "Final quote price",
     "finalPriceDescription": "Leave empty to use the suggested price, or enter a custom amount",
     "resetToSuggested": "Reset",
+    "enterAmount": "Enter amount",
     "profit": "Profit",
     "realMargin": "Real margin",
     "marginExcellent": "Excellent margin",

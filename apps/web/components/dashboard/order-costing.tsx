@@ -149,7 +149,8 @@ export function OrderCosting({ orderId, currentTotal, onApplyPrice }: OrderCosti
 
 	const totalCost = ingredientsCost + laborCost
 	const suggestedPrice = totalCost * marginCoefficient
-	const finalPrice = customPrice ? Number(customPrice) : suggestedPrice
+	const hasCustomPrice = customPrice !== '' && !Number.isNaN(Number(customPrice))
+	const finalPrice = hasCustomPrice ? Number(customPrice) : suggestedPrice
 	const profit = finalPrice - totalCost
 	const marginPercent = finalPrice > 0 ? (profit / finalPrice) * 100 : 0
 
@@ -535,7 +536,7 @@ export function OrderCosting({ orderId, currentTotal, onApplyPrice }: OrderCosti
 									step="0.01"
 									value={customPrice}
 									onChange={(e) => setCustomPrice(e.target.value)}
-									placeholder={suggestedPrice.toFixed(2)}
+									placeholder={suggestedPrice > 0 ? suggestedPrice.toFixed(2) : t('enterAmount')}
 									className="w-40"
 								/>
 								<span className="text-sm text-muted-foreground">EUR</span>
@@ -593,7 +594,7 @@ export function OrderCosting({ orderId, currentTotal, onApplyPrice }: OrderCosti
 							</Button>
 							<Button
 								onClick={() => onApplyPrice?.(finalPrice)}
-								disabled={finalPrice === 0}
+								disabled={!hasCustomPrice && finalPrice === 0}
 							>
 								<TrendingUp className="mr-2 size-4" />
 								{t('applyPrice')}
