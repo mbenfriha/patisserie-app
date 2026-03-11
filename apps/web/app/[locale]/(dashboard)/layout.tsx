@@ -2,6 +2,7 @@
 
 import {
 	ChefHat,
+	CirclePlay,
 	ClipboardList,
 	CreditCard,
 	ExternalLink,
@@ -18,7 +19,7 @@ import {
 	Users,
 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import { RoleGuard } from '@/components/auth/role-guard'
 import { StripeConnectBanner } from '@/components/dashboard/stripe-connect-banner'
 import { Separator } from '@/components/ui/separator'
@@ -39,6 +40,7 @@ import {
 } from '@/components/ui/sidebar'
 import { Link, usePathname } from '@/i18n/navigation'
 import { useDashboardPrefix } from '@/lib/hooks/use-custom-domain'
+import { resetTour, type TourId, useTour } from '@/lib/hooks/use-tour'
 import { useAuth } from '@/lib/providers/auth-provider'
 import { getImageUrl } from '@/lib/utils/image-url'
 
@@ -173,6 +175,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 		return getSiteUrl(user.profile)
 	}, [user?.profile])
 
+	const isOnSitePage = pathname.endsWith('/site') || pathname.includes('/site/')
+	const tourId: TourId = isOnSitePage ? 'site-editor' : 'dashboard'
+	const { startTour } = useTour(tourId)
+
+	const handleRestartTour = useCallback(() => {
+		resetTour(tourId)
+		startTour()
+	}, [tourId, startTour])
+
 	const businessName = user?.profile?.businessName || 'Patissio'
 	const planLabel =
 		user?.profile?.plan === 'premium'
@@ -262,6 +273,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 						/>
 					</SidebarContent>
 					<SidebarFooter className="border-t border-sidebar-border">
+						<button
+							type="button"
+							onClick={handleRestartTour}
+							className="flex items-center gap-2 px-2 py-1.5 text-xs text-sidebar-foreground/40 transition-colors hover:text-sidebar-foreground/60 group-data-[collapsible=icon]:hidden"
+						>
+							<CirclePlay className="size-3.5" />
+							Relancer le guide
+						</button>
 						<a
 							href="https://patissio.com"
 							target="_blank"

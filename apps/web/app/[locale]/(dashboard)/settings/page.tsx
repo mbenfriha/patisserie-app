@@ -10,7 +10,6 @@ import {
 	Eye,
 	EyeOff,
 	Globe,
-	GraduationCap,
 	HelpCircle,
 	Loader2,
 	Lock,
@@ -44,7 +43,6 @@ import {
 import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
 import { api } from '@/lib/api/client'
-import { resetAllTours } from '@/lib/hooks/use-tour'
 import { useAuth } from '@/lib/providers/auth-provider'
 
 function ColorPicker({
@@ -1108,33 +1106,6 @@ export default function SettingsPage() {
 								}}
 							/>
 						</div>
-					</CardContent>
-				</Card>
-
-				{/* Guide Card */}
-				<Card>
-					<CardHeader>
-						<CardTitle className="flex items-center gap-2 text-lg">
-							<GraduationCap className="h-5 w-5" />
-							Guide de prise en main
-						</CardTitle>
-					</CardHeader>
-					<CardContent>
-						<p className="text-sm text-muted-foreground">
-							Relancez le guide interactif pour redécouvrir les fonctionnalités de votre espace.
-						</p>
-						<Button
-							type="button"
-							variant="outline"
-							className="mt-4"
-							onClick={() => {
-								resetAllTours()
-								window.location.href = '/dashboard'
-							}}
-						>
-							<GraduationCap className="mr-2 h-4 w-4" />
-							Relancer le guide
-						</Button>
 					</CardContent>
 				</Card>
 			</div>

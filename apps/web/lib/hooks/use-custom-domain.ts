@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from 'react'
 
+const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN || 'patissio.com'
+
 /**
  * Detect if the current page is served from a "site domain"
- * (subdomain or custom domain — NOT the main patissio.com domain).
+ * (subdomain or custom domain — NOT the main domain).
  *
  * On site domains, dashboard routes need a `/dashboard` prefix
  * so they don't conflict with the public site routes.
@@ -16,6 +18,7 @@ import { useEffect, useState } from 'react'
  *
  * Returns false for:
  *  - localhost, patissio.com, www.patissio.com
+ *  - patissio.xyz (staging main domain)
  */
 export function useIsSiteDomain() {
 	const [isSiteDomain, setIsSiteDomain] = useState(false)
@@ -26,15 +29,19 @@ export function useIsSiteDomain() {
 		// Dev subdomain: latelier-de-zina.localhost
 		const isLocalSubdomain = hostname.endsWith('.localhost')
 
-		// Prod subdomain: latelier-de-zina.patissio.com (not www)
+		// Prod/staging subdomain: latelier-de-zina.patissio.com (not www)
 		const isProdSubdomain =
-			hostname.endsWith('patissio.com') &&
-			hostname.split('.').length > 2 &&
+			hostname.endsWith(APP_DOMAIN) &&
+			hostname.split('.').length > APP_DOMAIN.split('.').length &&
 			!hostname.startsWith('www.')
 
-		// Custom domain: anything not localhost-related and not patissio.com
+		// Main domain or localhost
 		const isLocal = hostname === 'localhost' || hostname === '127.0.0.1'
-		const isCustomDomain = !isLocal && !isLocalSubdomain && !hostname.endsWith('patissio.com')
+		const isMainDomain = hostname === APP_DOMAIN || hostname === `www.${APP_DOMAIN}`
+
+		// Custom domain: anything not localhost-related and not the main domain
+		const isCustomDomain =
+			!isLocal && !isLocalSubdomain && !isMainDomain && !hostname.endsWith(`.${APP_DOMAIN}`)
 
 		setIsSiteDomain(isLocalSubdomain || isProdSubdomain || isCustomDomain)
 	}, [])
