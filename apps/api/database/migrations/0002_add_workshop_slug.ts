@@ -50,11 +50,9 @@ export default class extends BaseSchema {
 	}
 
 	async down() {
-		await this.db.rawQuery(
-			'DROP INDEX IF EXISTS workshops_patissier_id_slug_unique'
-		)
-		await this.schema.alterTable('workshops', (table) => {
-			table.dropColumn('slug')
-		})
+		await this.db.rawQuery('DROP INDEX IF EXISTS workshops_patissier_id_slug_unique')
+		await this.db.rawQuery(`
+			ALTER TABLE workshops DROP COLUMN IF EXISTS slug
+		`)
 	}
 }

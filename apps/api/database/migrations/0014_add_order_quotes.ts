@@ -2,6 +2,9 @@ import { BaseSchema } from '@adonisjs/lucid/schema'
 
 export default class extends BaseSchema {
 	async up() {
+		// Drop type if it exists from a previous migration:fresh (which doesn't drop types)
+		this.schema.raw('DROP TYPE IF EXISTS "quote_status"')
+
 		this.schema.createTable('order_quotes', (table) => {
 			table.uuid('id').primary().defaultTo(this.raw('gen_random_uuid()'))
 			table.uuid('order_id').notNullable().references('id').inTable('orders').onDelete('CASCADE')
@@ -30,6 +33,6 @@ export default class extends BaseSchema {
 
 	async down() {
 		this.schema.dropTable('order_quotes')
-		this.raw('DROP TYPE IF EXISTS "quote_status"')
+		this.schema.raw('DROP TYPE IF EXISTS "quote_status"')
 	}
 }
