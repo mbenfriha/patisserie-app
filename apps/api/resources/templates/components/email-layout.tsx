@@ -4,6 +4,7 @@ import {
 	Head,
 	Hr,
 	Html,
+	Img,
 	Link,
 	Preview,
 	Section,
@@ -12,11 +13,15 @@ import {
 import type { ReactNode } from 'react'
 
 const BRAND = {
-	gold: '#c2956b',
-	goldLight: '#d4a97a',
-	dark: '#1f2937',
-	cream: '#faf8f5',
-	creamDark: '#f0ebe4',
+	primary: '#D4816A',
+	primaryLight: '#E29B85',
+	dark: '#1A1A1A',
+	background: '#FFF8F5',
+	accent: '#F5ECE8',
+	border: '#E8DDD5',
+	muted: '#8A8A8A',
+	text: '#4b5563',
+	white: '#FFFFFF',
 }
 
 interface EmailLayoutProps {
@@ -37,7 +42,13 @@ export function EmailLayout({ title, preview, children }: EmailLayoutProps) {
 			<Body style={styles.body}>
 				<Container style={styles.container}>
 					<Section style={styles.header}>
-						<Text style={styles.logoText}>Patissio</Text>
+						<Img
+							src="https://patissio.xyz/logo-patissio-full.png"
+							alt="Patissio"
+							width="160"
+							height="auto"
+							style={styles.logo}
+						/>
 					</Section>
 
 					<Section style={styles.content}>{children}</Section>
@@ -73,45 +84,41 @@ const styles = {
 		padding: '20px',
 	},
 	header: {
-		backgroundColor: BRAND.dark,
-		padding: '24px 20px',
+		backgroundColor: BRAND.white,
+		padding: '28px 20px',
 		textAlign: 'center' as const,
-		borderRadius: '8px 8px 0 0',
+		borderRadius: '12px 12px 0 0',
+		borderBottom: `2px solid ${BRAND.accent}`,
 	},
-	logoText: {
-		color: BRAND.gold,
-		fontSize: '24px',
-		fontWeight: 'bold' as const,
-		margin: 0,
-		fontFamily: "'Georgia', 'Times New Roman', serif",
-		letterSpacing: '1px',
+	logo: {
+		margin: '0 auto',
 	},
 	content: {
-		backgroundColor: '#ffffff',
-		padding: '30px',
+		backgroundColor: BRAND.white,
+		padding: '32px',
 	},
 	footer: {
-		backgroundColor: BRAND.cream,
+		backgroundColor: BRAND.accent,
 		padding: '20px',
 		textAlign: 'center' as const,
-		borderRadius: '0 0 8px 8px',
+		borderRadius: '0 0 12px 12px',
 	},
 	hr: {
-		borderColor: BRAND.creamDark,
-		margin: '0 0 20px 0',
+		borderColor: BRAND.border,
+		margin: '0 0 16px 0',
 	},
 	footerText: {
 		fontSize: '12px',
-		color: '#9ca3af',
-		margin: '5px 0',
+		color: BRAND.muted,
+		margin: '4px 0',
 	},
 	footerLinks: {
 		fontSize: '12px',
-		color: '#9ca3af',
-		margin: '5px 0',
+		color: BRAND.muted,
+		margin: '4px 0',
 	},
 	footerLink: {
-		color: BRAND.gold,
+		color: BRAND.primary,
 		textDecoration: 'none',
 	},
 }
@@ -119,33 +126,33 @@ const styles = {
 export const emailStyles = {
 	heading: {
 		color: BRAND.dark,
-		fontSize: '24px',
+		fontSize: '22px',
 		fontWeight: 'bold' as const,
 		marginBottom: '20px',
 		marginTop: 0,
 	},
 	paragraph: {
-		color: '#4b5563',
-		fontSize: '16px',
-		lineHeight: '1.6',
-		marginBottom: '15px',
+		color: BRAND.text,
+		fontSize: '15px',
+		lineHeight: '1.7',
+		marginBottom: '16px',
 	},
 	button: {
 		display: 'inline-block' as const,
-		backgroundColor: BRAND.gold,
-		color: '#ffffff',
+		backgroundColor: BRAND.primary,
+		color: BRAND.white,
 		padding: '14px 32px',
 		textDecoration: 'none',
 		borderRadius: '8px',
 		fontWeight: '600' as const,
-		fontSize: '16px',
+		fontSize: '15px',
 	},
 	highlightBox: {
-		backgroundColor: BRAND.cream,
-		borderLeft: `4px solid ${BRAND.gold}`,
-		padding: '15px',
+		backgroundColor: BRAND.accent,
+		borderLeft: `4px solid ${BRAND.primary}`,
+		padding: '16px',
 		margin: '20px 0',
-		borderRadius: '0 4px 4px 0',
+		borderRadius: '0 8px 8px 0',
 	},
 	successBox: {
 		backgroundColor: '#f0fdf4',
@@ -154,23 +161,38 @@ export const emailStyles = {
 		margin: '20px 0',
 		borderRadius: '8px',
 	},
+	infoTable: {
+		width: '100%' as const,
+		borderCollapse: 'collapse' as const,
+		margin: '24px 0',
+	},
 	infoRow: {
 		padding: '12px 16px',
-		color: '#6b7280',
+		color: BRAND.muted,
 		fontSize: '14px',
+		borderBottom: `1px solid ${BRAND.accent}`,
 	},
 	infoValue: {
 		padding: '12px 16px',
 		fontWeight: '600' as const,
 		color: BRAND.dark,
 		fontSize: '14px',
+		borderBottom: `1px solid ${BRAND.accent}`,
+		textAlign: 'right' as const,
 	},
 	link: {
-		color: BRAND.gold,
+		color: BRAND.primary,
 		textDecoration: 'underline',
 	},
 	smallText: {
 		fontSize: '12px',
-		color: '#6b7280',
+		color: BRAND.muted,
+	},
+	signature: {
+		color: BRAND.text,
+		fontSize: '15px',
+		lineHeight: '1.7',
+		marginTop: '24px',
+		marginBottom: 0,
 	},
 }

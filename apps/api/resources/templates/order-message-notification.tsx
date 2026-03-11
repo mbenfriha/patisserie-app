@@ -30,13 +30,17 @@ export default function OrderMessageNotificationTemplate({
 
 			<Section style={emailStyles.highlightBox}>
 				<Text style={{ ...emailStyles.paragraph, marginBottom: 0, fontStyle: 'italic' }}>
-					"{messagePreview}"
+					&laquo; {messagePreview} &raquo;
 				</Text>
 			</Section>
 
 			<Text style={emailStyles.paragraph}>{t.footer}</Text>
 
-			<Text style={emailStyles.paragraph}>{common.seeYouSoon}</Text>
+			<Text style={emailStyles.signature}>
+				{common.seeYouSoon}
+				<br />
+				{common.teamSignature}
+			</Text>
 		</EmailLayout>
 	)
 }

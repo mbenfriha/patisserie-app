@@ -28,6 +28,18 @@ router
 		router
 			.post('/change-password', '#controllers/auth/auth_controller.changePassword')
 			.use([middleware.auth(), throttle('authStrict')])
+		router
+			.post('/login/2fa', '#controllers/auth/two_factor_controller.loginVerify')
+			.use(throttle('authStrict'))
+		router
+			.group(() => {
+				router.get('/status', '#controllers/auth/two_factor_controller.status')
+				router.post('/setup', '#controllers/auth/two_factor_controller.setup')
+				router.post('/verify', '#controllers/auth/two_factor_controller.verify')
+				router.post('/disable', '#controllers/auth/two_factor_controller.disable')
+			})
+			.prefix('/2fa')
+			.use([middleware.auth(), throttle('authStrict')])
 	})
 	.prefix('/auth')
 

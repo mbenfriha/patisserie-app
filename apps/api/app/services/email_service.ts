@@ -197,7 +197,7 @@ export default class EmailService {
 		const actionButton =
 			data.actionUrl && data.actionLabel
 				? `<p style="text-align: center; margin: 30px 0;">
-					<a href="${data.actionUrl}" style="background-color: #c2956b; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+					<a href="${data.actionUrl}" style="background-color: #D4816A; color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600;">
 						${data.actionLabel}
 					</a>
 				</p>`
@@ -213,17 +213,17 @@ export default class EmailService {
 					<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
 					<body style="margin: 0; padding: 0; background-color: #f5f5f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
 						<div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-							<div style="background-color: #1f2937; padding: 24px 20px; text-align: center; border-radius: 8px 8px 0 0;">
-								<span style="color: #c2956b; font-size: 24px; font-weight: bold; font-family: Georgia, serif;">Patissio</span>
+							<div style="background-color: #ffffff; padding: 28px 20px; text-align: center; border-radius: 12px 12px 0 0; border-bottom: 2px solid #F5ECE8;">
+								<img src="https://patissio.xyz/logo-patissio-full.png" alt="Patissio" width="160" style="display: inline-block;" />
 							</div>
-							<div style="background-color: #ffffff; padding: 30px;">
-								<h1 style="color: #1f2937; font-size: 24px;">Bonjour ${data.recipientName},</h1>
-								<h2 style="color: #1f2937;">${data.title}</h2>
-								<p style="color: #4b5563; font-size: 16px; line-height: 1.6;">${data.body}</p>
+							<div style="background-color: #ffffff; padding: 32px;">
+								<h1 style="color: #1A1A1A; font-size: 22px; margin-top: 0;">Bonjour ${data.recipientName},</h1>
+								<h2 style="color: #1A1A1A; font-size: 18px;">${data.title}</h2>
+								<p style="color: #4b5563; font-size: 15px; line-height: 1.7;">${data.body}</p>
 								${actionButton}
 							</div>
-							<div style="background-color: #faf8f5; padding: 20px; text-align: center; border-radius: 0 0 8px 8px;">
-								<p style="font-size: 12px; color: #9ca3af;">&copy; ${new Date().getFullYear()} Patissio. Tous droits réservés.</p>
+							<div style="background-color: #F5ECE8; padding: 20px; text-align: center; border-radius: 0 0 12px 12px;">
+								<p style="font-size: 12px; color: #8A8A8A;">&copy; ${new Date().getFullYear()} Patissio. Tous droits réservés.</p>
 							</div>
 						</div>
 					</body>

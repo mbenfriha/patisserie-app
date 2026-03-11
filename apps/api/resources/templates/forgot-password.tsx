@@ -7,10 +7,7 @@ interface ForgotPasswordProps {
 	resetUrl: string
 }
 
-export default function ForgotPasswordTemplate({
-	fullName,
-	resetUrl,
-}: ForgotPasswordProps) {
+export default function ForgotPasswordTemplate({ fullName, resetUrl }: ForgotPasswordProps) {
 	const t = emailTranslations.forgotPassword
 	const common = emailTranslations.common
 	const greeting = fullName ? `${common.greeting} ${fullName}` : common.greeting
@@ -31,9 +28,13 @@ export default function ForgotPasswordTemplate({
 
 			<Text style={emailStyles.smallText}>{t.expiry}</Text>
 
-			<Text style={emailStyles.paragraph}>{t.ignore}</Text>
+			<Text style={{ ...emailStyles.paragraph, ...emailStyles.smallText }}>{t.ignore}</Text>
 
-			<Text style={emailStyles.paragraph}>{common.seeYouSoon}</Text>
+			<Text style={emailStyles.signature}>
+				{common.seeYouSoon}
+				<br />
+				{common.teamSignature}
+			</Text>
 		</EmailLayout>
 	)
 }
