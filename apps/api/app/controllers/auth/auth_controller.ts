@@ -69,6 +69,19 @@ export default class AuthController {
 			})
 		}
 
+		// If 2FA is enabled, return a temporary token for the 2FA challenge
+		if (user.twoFactorEnabled) {
+			const tempToken = await User.accessTokens.create(user, ['two_factor_challenge'], {
+				expiresIn: '5 minutes',
+			})
+
+			return response.ok({
+				success: true,
+				twoFactorRequired: true,
+				tempToken: tempToken.value!.release(),
+			})
+		}
+
 		const token = await User.accessTokens.create(user)
 
 		return response.ok({

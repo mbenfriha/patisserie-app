@@ -48,6 +48,15 @@ export default class User extends compose(BaseModel, AuthFinder) {
 	@column()
 	declare suspendReason: string | null
 
+	@column({ serializeAs: null })
+	declare twoFactorSecret: string | null
+
+	@column()
+	declare twoFactorEnabled: boolean
+
+	@column({ serializeAs: null })
+	declare twoFactorBackupCodes: string[] | null
+
 	@column.dateTime({ autoCreate: true })
 	declare createdAt: DateTime
 

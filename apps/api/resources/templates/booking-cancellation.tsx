@@ -30,24 +30,17 @@ export default function BookingCancellationTemplate({
 				{common.greeting} {patissierName},
 			</Text>
 
-			<Text style={emailStyles.paragraph}>
-				<strong>{clientName}</strong> a annulé sa participation à l'atelier{' '}
-				<strong>{workshopTitle}</strong>.
-			</Text>
+			<Text style={emailStyles.paragraph}>{t.body(clientName, workshopTitle)}</Text>
 
 			<Section>
-				<table
-					style={{ width: '100%', borderCollapse: 'collapse', margin: '20px 0' }}
-					cellPadding="0"
-					cellSpacing="0"
-				>
-					<tr style={{ borderBottom: '1px solid #eee' }}>
+				<table style={emailStyles.infoTable} cellPadding="0" cellSpacing="0">
+					<tr>
 						<td style={emailStyles.infoRow}>{t.dateLabel}</td>
 						<td style={emailStyles.infoValue}>{date}</td>
 					</tr>
 					<tr>
-						<td style={emailStyles.infoRow}>{t.participantsLabel}</td>
-						<td style={emailStyles.infoValue}>{nbParticipants}</td>
+						<td style={{ ...emailStyles.infoRow, borderBottom: 'none' }}>{t.participantsLabel}</td>
+						<td style={{ ...emailStyles.infoValue, borderBottom: 'none' }}>{nbParticipants}</td>
 					</tr>
 				</table>
 			</Section>
@@ -60,7 +53,11 @@ export default function BookingCancellationTemplate({
 				</Section>
 			)}
 
-			<Text style={emailStyles.paragraph}>{common.seeYouSoon}</Text>
+			<Text style={emailStyles.signature}>
+				{common.seeYouSoon}
+				<br />
+				{common.teamSignature}
+			</Text>
 		</EmailLayout>
 	)
 }

@@ -37,35 +37,35 @@ export default function NewBookingNotificationTemplate({
 			<Text style={emailStyles.paragraph}>{t.body(workshopTitle)}</Text>
 
 			<Section>
-				<table
-					style={{ width: '100%', borderCollapse: 'collapse', margin: '20px 0' }}
-					cellPadding="0"
-					cellSpacing="0"
-				>
-					<tr style={{ borderBottom: '1px solid #eee' }}>
+				<table style={emailStyles.infoTable} cellPadding="0" cellSpacing="0">
+					<tr>
 						<td style={emailStyles.infoRow}>{t.clientLabel}</td>
 						<td style={emailStyles.infoValue}>
 							{clientName} ({clientEmail})
 						</td>
 					</tr>
-					<tr style={{ borderBottom: '1px solid #eee' }}>
+					<tr>
 						<td style={emailStyles.infoRow}>{t.dateLabel}</td>
 						<td style={emailStyles.infoValue}>
 							{date} à {startTime}
 						</td>
 					</tr>
-					<tr style={{ borderBottom: '1px solid #eee' }}>
+					<tr>
 						<td style={emailStyles.infoRow}>{t.participantsLabel}</td>
 						<td style={emailStyles.infoValue}>{nbParticipants}</td>
 					</tr>
 					<tr>
-						<td style={emailStyles.infoRow}>{t.depositLabel}</td>
-						<td style={emailStyles.infoValue}>{depositAmount}</td>
+						<td style={{ ...emailStyles.infoRow, borderBottom: 'none' }}>{t.depositLabel}</td>
+						<td style={{ ...emailStyles.infoValue, borderBottom: 'none' }}>{depositAmount}</td>
 					</tr>
 				</table>
 			</Section>
 
-			<Text style={emailStyles.paragraph}>{common.seeYouSoon}</Text>
+			<Text style={emailStyles.signature}>
+				{common.seeYouSoon}
+				<br />
+				{common.teamSignature}
+			</Text>
 		</EmailLayout>
 	)
 }

@@ -2,8 +2,10 @@
 
 import {
 	AlertCircle,
+	AlertTriangle,
 	Check,
 	CheckCircle2,
+	Copy,
 	CreditCard,
 	Eye,
 	EyeOff,
@@ -13,6 +15,10 @@ import {
 	Lock,
 	Palette,
 	Save,
+	Shield,
+	ShieldCheck,
+	ShieldOff,
+	Smartphone,
 	Trash2,
 	Upload,
 	X,
@@ -109,7 +115,7 @@ function PasswordStrengthIndicator({
 }
 
 export default function SettingsPage() {
-	const { user, refreshUser, changePassword } = useAuth()
+	const { refreshUser, changePassword } = useAuth()
 	const searchParams = useSearchParams()
 	const [profile, setProfile] = useState<any>(null)
 	const [isLoading, setIsLoading] = useState(true)
@@ -1027,6 +1033,9 @@ export default function SettingsPage() {
 					</CardContent>
 				</Card>
 
+				{/* Two-Factor Authentication Card */}
+				<TwoFactorCard />
+
 				{/* Stripe Connect Card */}
 				<Card>
 					<CardHeader>
@@ -1101,5 +1110,393 @@ export default function SettingsPage() {
 				</Card>
 			</div>
 		</div>
+	)
+}
+
+type TwoFactorStep = 'idle' | 'setup' | 'verify' | 'backup'
+
+function TwoFactorCard() {
+	const [enabled, setEnabled] = useState(false)
+	const [isLoading, setIsLoading] = useState(true)
+	const [step, setStep] = useState<TwoFactorStep>('idle')
+	const [qrCode, setQrCode] = useState('')
+	const [secret, setSecret] = useState('')
+	const [code, setCode] = useState('')
+	const [backupCodes, setBackupCodes] = useState<string[]>([])
+	const [error, setError] = useState('')
+	const [actionLoading, setActionLoading] = useState(false)
+	const [disablePassword, setDisablePassword] = useState('')
+	const [showDisableConfirm, setShowDisableConfirm] = useState(false)
+	const [copiedSecret, setCopiedSecret] = useState(false)
+	const [copiedBackup, setCopiedBackup] = useState(false)
+
+	const fetchStatus = useCallback(async () => {
+		try {
+			const res = await api.get<{ enabled: boolean }>('/auth/2fa/status')
+			setEnabled(res.data.enabled)
+		} catch {
+			// ignore
+		} finally {
+			setIsLoading(false)
+		}
+	}, [])
+
+	useEffect(() => {
+		fetchStatus()
+	}, [fetchStatus])
+
+	const handleSetup = async () => {
+		setError('')
+		setActionLoading(true)
+		try {
+			const res = await api.post<{ secret: string; qrCode: string }>('/auth/2fa/setup')
+			setSecret(res.data.secret)
+			setQrCode(res.data.qrCode)
+			setStep('setup')
+		} catch (err: any) {
+			setError(err.message || 'Erreur lors de la configuration')
+		} finally {
+			setActionLoading(false)
+		}
+	}
+
+	const handleVerify = async (e: React.FormEvent) => {
+		e.preventDefault()
+		setError('')
+		setActionLoading(true)
+		try {
+			const res = await api.post<{ backupCodes: string[] }>('/auth/2fa/verify', { code })
+			setBackupCodes(res.data.backupCodes)
+			setEnabled(true)
+			setStep('backup')
+			setCode('')
+		} catch (err: any) {
+			setError(err.message || 'Code invalide')
+		} finally {
+			setActionLoading(false)
+		}
+	}
+
+	const handleDisable = async (e: React.FormEvent) => {
+		e.preventDefault()
+		setError('')
+		setActionLoading(true)
+		try {
+			await api.post('/auth/2fa/disable', { password: disablePassword })
+			setEnabled(false)
+			setShowDisableConfirm(false)
+			setDisablePassword('')
+			setStep('idle')
+		} catch (err: any) {
+			setError(err.message || 'Erreur lors de la désactivation')
+		} finally {
+			setActionLoading(false)
+		}
+	}
+
+	const copyToClipboard = async (text: string, type: 'secret' | 'backup') => {
+		await navigator.clipboard.writeText(text)
+		if (type === 'secret') {
+			setCopiedSecret(true)
+			setTimeout(() => setCopiedSecret(false), 2000)
+		} else {
+			setCopiedBackup(true)
+			setTimeout(() => setCopiedBackup(false), 2000)
+		}
+	}
+
+	if (isLoading) {
+		return (
+			<Card>
+				<CardContent className="flex items-center justify-center py-8">
+					<Loader2 className="h-6 w-6 animate-spin text-primary" />
+				</CardContent>
+			</Card>
+		)
+	}
+
+	return (
+		<Card>
+			<CardHeader>
+				<div className="flex items-center justify-between">
+					<CardTitle className="flex items-center gap-2 text-lg">
+						{enabled ? (
+							<ShieldCheck className="h-5 w-5 text-green-600" />
+						) : (
+							<Shield className="h-5 w-5" />
+						)}
+						Double authentification
+					</CardTitle>
+					{enabled && step === 'idle' && (
+						<span className="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700">
+							Activée
+						</span>
+					)}
+				</div>
+			</CardHeader>
+			<CardContent className="space-y-4">
+				{error && (
+					<div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</div>
+				)}
+
+				{/* Idle - not enabled */}
+				{!enabled && step === 'idle' && (
+					<>
+						<div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4">
+							<AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+							<div className="text-sm text-amber-700">
+								<p className="font-medium">Recommandation de sécurité</p>
+								<p className="mt-1">
+									La double authentification protège votre compte même si votre mot de passe est
+									compromis.
+								</p>
+							</div>
+						</div>
+						<Button type="button" onClick={handleSetup} disabled={actionLoading}>
+							{actionLoading ? (
+								<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+							) : (
+								<Smartphone className="mr-2 h-4 w-4" />
+							)}
+							Activer la 2FA
+						</Button>
+					</>
+				)}
+
+				{/* Setup - QR code */}
+				{step === 'setup' && (
+					<div className="space-y-5">
+						<div>
+							<p className="text-sm font-medium">
+								1. Scannez ce QR code avec votre application d'authentification
+							</p>
+							<p className="mt-1 text-xs text-muted-foreground">
+								Google Authenticator, Authy, 1Password ou toute application compatible TOTP
+							</p>
+						</div>
+
+						<div className="flex justify-center">
+							<div className="rounded-lg border bg-white p-4">
+								{/* biome-ignore lint/performance/noImgElement: data URL QR code, not optimizable by next/image */}
+								<img src={qrCode} alt="QR Code 2FA" className="h-48 w-48" />
+							</div>
+						</div>
+
+						<div className="space-y-2">
+							<p className="text-sm text-muted-foreground">Ou entrez cette clé manuellement :</p>
+							<div className="flex items-center gap-2">
+								<code className="flex-1 break-all rounded-lg border bg-muted px-3 py-2 font-mono text-sm">
+									{secret}
+								</code>
+								<Button
+									type="button"
+									variant="outline"
+									size="icon"
+									onClick={() => copyToClipboard(secret, 'secret')}
+								>
+									{copiedSecret ? (
+										<Check className="h-4 w-4 text-green-600" />
+									) : (
+										<Copy className="h-4 w-4" />
+									)}
+								</Button>
+							</div>
+						</div>
+
+						<form onSubmit={handleVerify} className="space-y-4">
+							<div className="space-y-2">
+								<Label htmlFor="2fa-code">
+									2. Entrez le code à 6 chiffres de votre application
+								</Label>
+								<Input
+									id="2fa-code"
+									type="text"
+									inputMode="numeric"
+									pattern="[0-9]{6}"
+									maxLength={6}
+									value={code}
+									onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+									placeholder="000000"
+									className="max-w-xs text-center font-mono text-lg tracking-widest"
+									required
+									disabled={actionLoading}
+									autoComplete="one-time-code"
+								/>
+							</div>
+
+							<div className="flex items-center gap-3">
+								<Button type="submit" disabled={actionLoading || code.length !== 6}>
+									{actionLoading ? (
+										<>
+											<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+											Vérification...
+										</>
+									) : (
+										<>
+											<Check className="mr-2 h-4 w-4" />
+											Vérifier et activer
+										</>
+									)}
+								</Button>
+								<Button
+									type="button"
+									variant="ghost"
+									onClick={() => {
+										setStep('idle')
+										setError('')
+									}}
+								>
+									Annuler
+								</Button>
+							</div>
+						</form>
+					</div>
+				)}
+
+				{/* Backup codes */}
+				{step === 'backup' && (
+					<div className="space-y-5">
+						<div className="flex items-start gap-3 rounded-lg border border-green-200 bg-green-50 p-4">
+							<ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-green-600" />
+							<div className="text-sm text-green-700">
+								<p className="font-medium">Double authentification activée !</p>
+								<p className="mt-1">
+									Sauvegardez ces codes de secours dans un endroit sûr. Ils vous permettront de vous
+									connecter si vous perdez l'accès à votre application.
+								</p>
+							</div>
+						</div>
+
+						<div className="space-y-3">
+							<div className="flex items-center justify-between">
+								<p className="text-sm font-medium">Codes de secours</p>
+								<button
+									type="button"
+									onClick={() => copyToClipboard(backupCodes.join('\n'), 'backup')}
+									className="flex items-center gap-1 text-xs text-primary hover:underline"
+								>
+									{copiedBackup ? (
+										<>
+											<Check className="h-3 w-3" />
+											Copié !
+										</>
+									) : (
+										<>
+											<Copy className="h-3 w-3" />
+											Copier tous
+										</>
+									)}
+								</button>
+							</div>
+							<div className="grid grid-cols-2 gap-2">
+								{backupCodes.map((bCode) => (
+									<code
+										key={bCode}
+										className="rounded border bg-muted px-3 py-2 text-center font-mono text-sm"
+									>
+										{bCode}
+									</code>
+								))}
+							</div>
+							<p className="text-xs text-muted-foreground">
+								Chaque code ne peut être utilisé qu'une seule fois.
+							</p>
+						</div>
+
+						<Button
+							type="button"
+							onClick={() => {
+								setStep('idle')
+								setBackupCodes([])
+							}}
+						>
+							<Check className="mr-2 h-4 w-4" />
+							J'ai sauvegardé mes codes
+						</Button>
+					</div>
+				)}
+
+				{/* Enabled - option to disable */}
+				{enabled && step === 'idle' && !showDisableConfirm && (
+					<>
+						<div className="flex items-start gap-3 rounded-lg border border-green-200 bg-green-50 p-4">
+							<ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-green-600" />
+							<p className="text-sm text-green-700">
+								Votre compte est protégé par la double authentification.
+							</p>
+						</div>
+						<Button
+							type="button"
+							variant="outline"
+							className="border-destructive/30 text-destructive hover:bg-destructive/10"
+							onClick={() => setShowDisableConfirm(true)}
+						>
+							<ShieldOff className="mr-2 h-4 w-4" />
+							Désactiver la 2FA
+						</Button>
+					</>
+				)}
+
+				{/* Disable confirmation */}
+				{showDisableConfirm && (
+					<form onSubmit={handleDisable} className="space-y-4">
+						<div className="flex items-start gap-3 rounded-lg border border-destructive/20 bg-destructive/10 p-4">
+							<AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
+							<div className="text-sm text-destructive">
+								<p className="font-medium">Attention</p>
+								<p className="mt-1">
+									Désactiver la 2FA rendra votre compte moins sécurisé. Entrez votre mot de passe
+									pour confirmer.
+								</p>
+							</div>
+						</div>
+
+						<div className="space-y-2">
+							<Label htmlFor="disable-2fa-password">Mot de passe</Label>
+							<Input
+								id="disable-2fa-password"
+								type="password"
+								value={disablePassword}
+								onChange={(e) => setDisablePassword(e.target.value)}
+								className="max-w-sm"
+								required
+								disabled={actionLoading}
+							/>
+						</div>
+
+						<div className="flex items-center gap-3">
+							<Button
+								type="submit"
+								variant="destructive"
+								disabled={actionLoading || !disablePassword}
+							>
+								{actionLoading ? (
+									<>
+										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+										Désactivation...
+									</>
+								) : (
+									<>
+										<ShieldOff className="mr-2 h-4 w-4" />
+										Confirmer
+									</>
+								)}
+							</Button>
+							<Button
+								type="button"
+								variant="ghost"
+								onClick={() => {
+									setShowDisableConfirm(false)
+									setDisablePassword('')
+									setError('')
+								}}
+							>
+								Annuler
+							</Button>
+						</div>
+					</form>
+				)}
+			</CardContent>
+		</Card>
 	)
 }

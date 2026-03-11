@@ -1,7 +1,7 @@
 export const emailTranslations = {
 	common: {
 		greeting: 'Bonjour',
-		seeYouSoon: 'À bientôt !',
+		seeYouSoon: 'À bientôt,',
 		teamSignature: "L'équipe Patissio",
 	},
 
@@ -18,6 +18,8 @@ export const emailTranslations = {
 		title: 'Commande confirmée',
 		preview: (orderNumber: string) => `Votre commande ${orderNumber} a été enregistrée`,
 		heading: 'Commande enregistrée !',
+		body: (orderNumber: string, patissierName: string) =>
+			`Votre commande ${orderNumber} a bien été enregistrée auprès de ${patissierName}.`,
 		orderLabel: 'Numéro',
 		typeLabel: 'Type',
 		totalLabel: 'Total',
@@ -29,6 +31,8 @@ export const emailTranslations = {
 		title: 'Réservation confirmée',
 		preview: (workshopTitle: string) => `Votre réservation pour ${workshopTitle} est confirmée`,
 		heading: 'Réservation confirmée !',
+		body: (workshopTitle: string, patissierName: string) =>
+			`Votre réservation pour l'atelier ${workshopTitle} chez ${patissierName} est confirmée.`,
 		workshopLabel: 'Atelier',
 		dateLabel: 'Date & Heure',
 		participantsLabel: 'Participants',
@@ -74,7 +78,7 @@ export const emailTranslations = {
 	orderMessageNotification: {
 		title: 'Nouveau message',
 		preview: (orderNumber: string) => `Nouveau message sur la commande ${orderNumber}`,
-		heading: 'Nouveau message !',
+		heading: 'Nouveau message',
 		body: (senderName: string, orderNumber: string) =>
 			`${senderName} vous a envoyé un message concernant la commande ${orderNumber} :`,
 		footer: 'Connectez-vous pour consulter la conversation et répondre.',
@@ -84,6 +88,8 @@ export const emailTranslations = {
 		title: 'Annulation de réservation',
 		preview: (workshopTitle: string) => `Annulation pour ${workshopTitle}`,
 		heading: 'Réservation annulée',
+		body: (clientName: string, workshopTitle: string) =>
+			`${clientName} a annulé sa participation à l'atelier ${workshopTitle}.`,
 		dateLabel: 'Date',
 		participantsLabel: 'Participants',
 		reasonLabel: 'Raison',

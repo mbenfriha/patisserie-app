@@ -36,22 +36,26 @@ export default function PaymentConfirmationTemplate({
 
 	return (
 		<EmailLayout title={t.title} preview={t.preview(workshopTitle)}>
-			{/* Success icon */}
+			{/* Success badge */}
 			<Section style={{ textAlign: 'center', marginBottom: '24px' }}>
-				<div
-					style={{
-						display: 'inline-block',
-						width: '64px',
-						height: '64px',
-						lineHeight: '64px',
-						borderRadius: '50%',
-						backgroundColor: 'rgba(34,197,94,0.1)',
-						textAlign: 'center',
-						fontSize: '32px',
-					}}
-				>
-					&#10003;
-				</div>
+				<table cellPadding="0" cellSpacing="0" style={{ margin: '0 auto' }}>
+					<tr>
+						<td
+							style={{
+								width: '56px',
+								height: '56px',
+								borderRadius: '50%',
+								backgroundColor: '#f0fdf4',
+								textAlign: 'center',
+								verticalAlign: 'middle',
+								fontSize: '28px',
+								color: '#16a34a',
+							}}
+						>
+							&#10003;
+						</td>
+					</tr>
+				</table>
 			</Section>
 
 			<Text style={{ ...emailStyles.heading, textAlign: 'center' }}>{t.heading}</Text>
@@ -65,10 +69,10 @@ export default function PaymentConfirmationTemplate({
 			<Text
 				style={{
 					...emailStyles.heading,
-					fontSize: '18px',
+					fontSize: '16px',
 					marginTop: '32px',
 					paddingBottom: '8px',
-					borderBottom: '2px solid #c2956b',
+					borderBottom: '2px solid #D4816A',
 				}}
 			>
 				{t.subheading}
@@ -76,12 +80,8 @@ export default function PaymentConfirmationTemplate({
 
 			{/* Info table */}
 			<Section>
-				<table
-					style={{ width: '100%', borderCollapse: 'collapse' }}
-					cellPadding="0"
-					cellSpacing="0"
-				>
-					<tr style={{ backgroundColor: '#faf8f5' }}>
+				<table style={emailStyles.infoTable} cellPadding="0" cellSpacing="0">
+					<tr>
 						<td style={emailStyles.infoRow}>{t.workshopLabel}</td>
 						<td style={emailStyles.infoValue}>{workshopTitle}</td>
 					</tr>
@@ -89,7 +89,7 @@ export default function PaymentConfirmationTemplate({
 						<td style={emailStyles.infoRow}>{t.organizerLabel}</td>
 						<td style={emailStyles.infoValue}>{patissierName}</td>
 					</tr>
-					<tr style={{ backgroundColor: '#faf8f5' }}>
+					<tr>
 						<td style={emailStyles.infoRow}>{t.dateLabel}</td>
 						<td style={emailStyles.infoValue}>{date}</td>
 					</tr>
@@ -97,7 +97,7 @@ export default function PaymentConfirmationTemplate({
 						<td style={emailStyles.infoRow}>{t.timeLabel}</td>
 						<td style={emailStyles.infoValue}>{startTime}</td>
 					</tr>
-					<tr style={{ backgroundColor: '#faf8f5' }}>
+					<tr>
 						<td style={emailStyles.infoRow}>{t.durationLabel}</td>
 						<td style={emailStyles.infoValue}>{durationLabel}</td>
 					</tr>
@@ -107,9 +107,9 @@ export default function PaymentConfirmationTemplate({
 							<td style={emailStyles.infoValue}>{location}</td>
 						</tr>
 					)}
-					<tr style={{ backgroundColor: '#faf8f5' }}>
-						<td style={emailStyles.infoRow}>{t.participantsLabel}</td>
-						<td style={emailStyles.infoValue}>
+					<tr>
+						<td style={{ ...emailStyles.infoRow, borderBottom: 'none' }}>{t.participantsLabel}</td>
+						<td style={{ ...emailStyles.infoValue, borderBottom: 'none' }}>
 							{nbParticipants} personne{nbParticipants > 1 ? 's' : ''}
 						</td>
 					</tr>
@@ -149,7 +149,7 @@ export default function PaymentConfirmationTemplate({
 									padding: '6px 0',
 									textAlign: 'right',
 									fontWeight: 600,
-									color: '#1f2937',
+									color: '#1A1A1A',
 									fontSize: '14px',
 								}}
 							>
@@ -158,13 +158,7 @@ export default function PaymentConfirmationTemplate({
 						</tr>
 					)}
 					<tr style={{ borderTop: '1px solid #bbf7d0' }}>
-						<td
-							style={{
-								padding: '10px 0 6px',
-								color: '#6b7280',
-								fontSize: '14px',
-							}}
-						>
+						<td style={{ padding: '10px 0 6px', color: '#6b7280', fontSize: '14px' }}>
 							{t.totalLabel}
 						</td>
 						<td
@@ -172,7 +166,7 @@ export default function PaymentConfirmationTemplate({
 								padding: '10px 0 6px',
 								textAlign: 'right',
 								fontWeight: 600,
-								color: '#1f2937',
+								color: '#1A1A1A',
 								fontSize: '14px',
 							}}
 						>
@@ -186,7 +180,11 @@ export default function PaymentConfirmationTemplate({
 				{isFullPayment ? t.fullPaymentFooter : t.depositFooter(remainingAmount)}
 			</Text>
 
-			<Text style={emailStyles.paragraph}>{common.seeYouSoon}</Text>
+			<Text style={emailStyles.signature}>
+				{common.seeYouSoon}
+				<br />
+				{common.teamSignature}
+			</Text>
 		</EmailLayout>
 	)
 }

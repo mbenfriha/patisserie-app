@@ -26,9 +26,13 @@ export default function VerifyEmailTemplate({ fullName, verificationUrl }: Verif
 				</Link>
 			</Section>
 
-			<Text style={emailStyles.paragraph}>{t.ignore}</Text>
+			<Text style={{ ...emailStyles.paragraph, ...emailStyles.smallText }}>{t.ignore}</Text>
 
-			<Text style={emailStyles.paragraph}>{common.seeYouSoon}</Text>
+			<Text style={emailStyles.signature}>
+				{common.seeYouSoon}
+				<br />
+				{common.teamSignature}
+			</Text>
 		</EmailLayout>
 	)
 }

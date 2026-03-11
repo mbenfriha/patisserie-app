@@ -8,6 +8,7 @@ import {
 	Home,
 	Loader2,
 	LogOut,
+	Settings,
 	ShoppingBag,
 	Store,
 	Users,
@@ -26,6 +27,7 @@ const navItems = [
 	{ href: '/subscriptions', label: 'Abonnements', icon: CreditCard },
 	{ href: '/stats', label: 'Statistiques', icon: BarChart3 },
 	{ href: '/audit-logs', label: 'Audit Logs', icon: FileText },
+	{ href: '/settings', label: 'Parametres', icon: Settings },
 ]
 
 interface User {
