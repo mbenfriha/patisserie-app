@@ -7,6 +7,7 @@ import {
 	Home,
 	Loader2,
 	LogOut,
+	Settings,
 	ShoppingBag,
 	Store,
 	Users,
@@ -24,6 +25,7 @@ const navItems = [
 	{ href: '/workshops', label: 'Ateliers', icon: CalendarDays },
 	{ href: '/subscriptions', label: 'Abonnements', icon: CreditCard },
 	{ href: '/stats', label: 'Statistiques', icon: BarChart3 },
+	{ href: '/settings', label: 'Parametres', icon: Settings },
 ]
 
 interface User {
