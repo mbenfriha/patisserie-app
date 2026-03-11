@@ -1,4 +1,6 @@
 export interface SiteConfig {
+	seoTitle?: string
+	seoDescription?: string
 	heroSubtitle?: string
 	heroCtaLabel?: string
 	heroCtaHref?: string

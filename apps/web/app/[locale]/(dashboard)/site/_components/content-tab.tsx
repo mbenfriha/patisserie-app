@@ -1,6 +1,6 @@
 'use client'
 
-import { Lock, Plus, RefreshCw, Trash2, Upload, X } from 'lucide-react'
+import { Globe, Lock, Plus, RefreshCw, Trash2, Upload, X } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Badge } from '@/components/ui/badge'
@@ -18,6 +18,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
 import { getImageUrl } from '@/lib/utils/image-url'
 import { AccordionSection } from './accordion'
 import type { Profile, SiteConfig } from './types'
@@ -174,6 +175,68 @@ export function ContentTab({
 		<div className="space-y-6">
 			<Card>
 				<CardContent className="divide-y pt-6">
+					{/* SEO */}
+					<AccordionSection
+						title={
+							<span className="flex items-center gap-2">
+								<Globe className="size-4 text-muted-foreground" />
+								Référencement (SEO)
+							</span>
+						}
+					>
+						<div className="space-y-4">
+							<p className="text-xs text-muted-foreground">
+								Ces informations apparaissent dans les résultats Google et les aperçus de liens
+								partagés sur les réseaux sociaux.
+							</p>
+							<div className="space-y-2">
+								<Label>Titre SEO</Label>
+								<Input
+									type="text"
+									value={siteConfig.seoTitle || ''}
+									onChange={(e) => updateSiteConfigField('seoTitle', e.target.value)}
+									placeholder={profile.businessName}
+									maxLength={70}
+								/>
+								<p className="text-xs text-muted-foreground">
+									{(siteConfig.seoTitle || '').length}/70 caractères
+								</p>
+							</div>
+							<div className="space-y-2">
+								<Label>Description SEO</Label>
+								<Textarea
+									value={siteConfig.seoDescription || ''}
+									onChange={(e) => updateSiteConfigField('seoDescription', e.target.value)}
+									placeholder={profile.description || 'Décrivez votre activité en 1-2 phrases...'}
+									maxLength={160}
+									rows={3}
+								/>
+								<p className="text-xs text-muted-foreground">
+									{(siteConfig.seoDescription || '').length}/160 caractères
+								</p>
+							</div>
+							<div className="rounded-lg border bg-muted/30 p-4">
+								<p className="mb-2 text-xs font-medium text-muted-foreground">Aperçu Google</p>
+								<div className="space-y-1">
+									<p className="text-base text-blue-700">
+										{siteConfig.seoTitle || profile.businessName}
+									</p>
+									<p className="text-xs text-green-700">{profile.slug}.patissio.com</p>
+									<p className="text-sm text-muted-foreground">
+										{(
+											siteConfig.seoDescription ||
+											profile.description ||
+											'Aucune description'
+										).slice(0, 160)}
+									</p>
+								</div>
+								<p className="mt-3 text-xs text-muted-foreground">
+									L'image de partage est générée automatiquement avec votre logo et vos couleurs.
+								</p>
+							</div>
+						</div>
+					</AccordionSection>
+
 					{/* Hero Section */}
 					<AccordionSection title={t('heroTitle')} defaultOpen>
 						<div className="space-y-4">

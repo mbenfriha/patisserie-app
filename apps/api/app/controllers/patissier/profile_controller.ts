@@ -85,7 +85,7 @@ export default class ProfileController {
 			}
 		}
 
-		const key = await storage.uploadImage(logo, `logos/${profile.id}`)
+		const key = await storage.uploadImage(logo, `logos/${profile.id}`, { keepFormat: true })
 		profile.logoUrl = key
 		await profile.save()
 
@@ -332,7 +332,7 @@ export default class ProfileController {
 			}
 		}
 
-		const key = await storage.uploadImage(image, `favicon/${profile.id}`)
+		const key = await storage.uploadImage(image, `favicon/${profile.id}`, { keepFormat: true })
 		profile.faviconUrl = key
 		await profile.save()
 

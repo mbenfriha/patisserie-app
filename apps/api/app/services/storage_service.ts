@@ -1,21 +1,56 @@
+import { readFile } from 'node:fs/promises'
 import type { MultipartFile } from '@adonisjs/core/bodyparser'
 import { cuid } from '@adonisjs/core/helpers'
 import drive from '@adonisjs/drive/services/main'
+import sharp from 'sharp'
 import env from '#start/env'
 
 export default class StorageService {
 	/**
 	 * Upload an image to the public R2 bucket.
-	 *
-	 * @param file - The multipart file from the request
-	 * @param folder - The folder path (e.g. 'creations', 'products', 'workshops', 'logos')
-	 * @returns The storage key for the uploaded file
+	 * Auto-rotates based on EXIF orientation and strips metadata.
+	 * Converts photos to webp; preserves PNG transparency for logos/favicons.
 	 */
-	async uploadImage(file: MultipartFile, folder: string): Promise<string> {
-		const extension = file.extname || 'jpg'
-		const key = `${folder}/${cuid()}.${extension}`
+	async uploadImage(
+		file: MultipartFile,
+		folder: string,
+		options?: { keepFormat?: boolean }
+	): Promise<string> {
+		const disk = drive.use('r2_public')
 
-		await file.moveToDisk(key, 'r2_public')
+		const filePath = file.tmpPath
+		if (!filePath) {
+			throw new Error('File has no temporary path')
+		}
+
+		const ext = file.extname || 'jpg'
+		const buffer = await readFile(filePath)
+
+		// SVG/ICO: store as-is (sharp doesn't support them)
+		if (ext === 'svg' || ext === 'ico') {
+			const key = `${folder}/${cuid()}.${ext}`
+			const contentType = ext === 'svg' ? 'image/svg+xml' : 'image/x-icon'
+			await disk.put(key, buffer, { contentType })
+			return key
+		}
+
+		const pipeline = sharp(buffer).rotate()
+
+		let key: string
+		let contentType: string
+
+		if (options?.keepFormat && ext === 'png') {
+			// Preserve PNG (transparency for logos/favicons)
+			const processed = await pipeline.png().toBuffer()
+			key = `${folder}/${cuid()}.png`
+			contentType = 'image/png'
+			await disk.put(key, processed, { contentType })
+		} else {
+			const processed = await pipeline.webp({ quality: 85 }).toBuffer()
+			key = `${folder}/${cuid()}.webp`
+			contentType = 'image/webp'
+			await disk.put(key, processed, { contentType })
+		}
 
 		return key
 	}

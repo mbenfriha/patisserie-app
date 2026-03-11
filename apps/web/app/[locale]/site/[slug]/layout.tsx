@@ -41,7 +41,7 @@ async function getDomain(): Promise<string | undefined> {
 	const headersList = await headers()
 	const host = headersList.get('host') || ''
 	const hostWithoutPort = host.split(':')[0]
-	const mainDomain = 'patissio.com'
+	const mainDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'patissio.com'
 
 	// Custom domain: not localhost, not main domain, not subdomain of main domain
 	const isLocalhost = hostWithoutPort === 'localhost' || hostWithoutPort === '127.0.0.1'
@@ -66,18 +66,16 @@ export async function generateMetadata({
 	const profile = await resolveProfile(slug, domain)
 	if (!profile) return {}
 
-	const heroImage = getImageUrl(profile.heroImageUrl)
 	const faviconImage = getImageUrl(profile.faviconUrl)
 
 	return {
 		title: {
 			template: `%s | ${profile.businessName}`,
-			default: profile.businessName,
+			default: profile.siteConfig?.seoTitle || profile.businessName,
 		},
-		description: profile.description || undefined,
+		description: profile.siteConfig?.seoDescription || profile.description || undefined,
 		openGraph: {
 			siteName: profile.businessName,
-			...(heroImage ? { images: [heroImage] } : {}),
 		},
 		...(faviconImage
 			? {
